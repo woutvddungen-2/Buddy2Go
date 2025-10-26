@@ -120,10 +120,10 @@ namespace Server.Controllers
                 logger.LogWarning("Unauthorized access attempt: {ErrorMessage}", ex.Message);
                 return StatusCode(StatusCodes.Status403Forbidden, new { message = ex.Message });
             }
-            catch (Exception ex)
+            catch (KeyNotFoundException ex)
             {
                 logger.LogError(ex, "Error retrieving user info for user ID {UserId}", GetUserIdFromJwt());
-                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Internal server error" });
+                return StatusCode(StatusCodes.Status404NotFound, new { message = "user not found in Database"});
             }
         }
 

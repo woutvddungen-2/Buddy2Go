@@ -24,10 +24,10 @@ namespace Server.Services
         /// <summary>
         /// Registers a new user with the specified credentials and contact information.
         /// </summary>
-        /// <param name="username">The username for the new user. Must be unique and not null or empty.</param>
-        /// <param name="password">The password for the new user. Must be strong and not null or empty.</param>
-        /// <param name="email">The email address for the new user. Must not be null or empty.</param>
-        /// <param name="phoneNumber">The phone number for the new user. Must not be null or empty.</param>
+        /// <param name="username">The username for the new user.</param>
+        /// <param name="password">The password for the new user.</param>
+        /// <param name="email">The email address for the new user.</param>
+        /// <param name="phoneNumber">The phone number for the new user.</param>
         /// <returns>A <see cref="RegisterResult"/> indicating the outcome of the registration process</returns>
         public async Task<RegisterResult> Register(string username, string password, string email, string phoneNumber)
         {
@@ -54,9 +54,11 @@ namespace Server.Services
         }
 
         /// <summary>
-        /// Login a user with username and password.
-        /// Returns JWT token if successful, null otherwise.
+        /// Authenticates a user based on the provided username and password.
         /// </summary>
+        /// <param name="username">The username of the user attempting to log in</param>
+        /// <param name="password">The password of the user attempting to log in</param>
+        /// <returns>A JSON Web Token (JWT) as a string if the authentication is successful; otherwise, <see langword="null"/>.</returns>
         public string? Login(string username, string password)
         {
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
@@ -73,6 +75,10 @@ namespace Server.Services
         /// <summary>
         /// Retrieves user information based on the specified user ID.
         /// </summary>
+        /// <param name="Id">The unique identifier of the user to retrieve.</param>
+        /// <returns>A <see cref="UserDto"/> containing the user's details, such as ID, username, email, phone number, and
+        /// creation date.</returns>
+        /// <exception cref="KeyNotFoundException">Thrown if no user is found with the specified <paramref name="Id"/>.</exception>
         public async Task<UserDto> GetUserInfo(int Id)
         {
             User? user = await db.Users.FindAsync(Id);
