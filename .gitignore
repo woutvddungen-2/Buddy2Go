@@ -364,3 +364,4 @@ FodyWeavers.xsd
 
 # File with the envirement variables:
 /Server/Properties/launchSettings.json
+/Server/Migrations/20251026171446_Seed_Data.cs

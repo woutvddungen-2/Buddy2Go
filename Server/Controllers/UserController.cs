@@ -11,11 +11,11 @@ namespace Server.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly UserService _service;
+        private readonly UserService service;
         ILogger logger;
         public UserController(UserService service)
         {
-            _service = service;
+            this.service = service;
             logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<UserController>();
         }
 
@@ -30,7 +30,7 @@ namespace Server.Controllers
 
             try
             {
-                RegisterResult result = await _service.Register(register.Username, register.Password, register.Email, register.PhoneNumber);
+                RegisterResult result = await service.Register(register.Username, register.Password, register.Email, register.PhoneNumber);
                 switch (result)
                 {
                     case RegisterResult.MissingData:
@@ -65,7 +65,7 @@ namespace Server.Controllers
         [HttpPost("login")]
         public IActionResult Login([FromBody] LoginDto login)
         {
-            string? token = _service.Login(login.Username, login.Password);
+            string? token = service.Login(login.Username, login.Password);
             if (token == null)
             {
                 logger.LogWarning("Login failed for user {Username}", login.Username);
@@ -104,7 +104,7 @@ namespace Server.Controllers
             try
             {
                 int userId = GetUserIdFromJwt();
-                UserDto user = await _service.GetUserInfo(userId);
+                UserDto user = await service.GetUserInfo(userId);
 
                 if (user == null)
                 {
@@ -138,6 +138,7 @@ namespace Server.Controllers
             return Ok(new { message = "Logged out" });
         }
 
+        // Helper method to extract user ID from JWT
         private int GetUserIdFromJwt()
         {
             Claim? claim = User.FindFirst(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedAccessException();
