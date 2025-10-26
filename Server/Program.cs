@@ -91,6 +91,7 @@ builder.Services.AddControllers();
 
 //-------------------- Services --------------------
 builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<JourneyService>();
 
 // -------------------- Swagger --------------------
 builder.Services.AddEndpointsApiExplorer();
