@@ -5,7 +5,8 @@ using System.Security.Cryptography;
 using System.Text;
 using Server.Data;
 using Server.Models;
-using Shared.Models;
+using Shared.Models.Dtos;
+using Microsoft.EntityFrameworkCore;
 
 namespace Server.Services
 {
@@ -21,34 +22,35 @@ namespace Server.Services
         }
 
         /// <summary>
-        /// Register a new user with username and password.
+        /// Registers a new user with the specified credentials and contact information.
         /// </summary>
-        public async Task<UserDto> Register(string username, string password, string email, string phoneNumber)
+        /// <param name="username">The username for the new user. Must be unique and not null or empty.</param>
+        /// <param name="password">The password for the new user. Must be strong and not null or empty.</param>
+        /// <param name="email">The email address for the new user. Must not be null or empty.</param>
+        /// <param name="phoneNumber">The phone number for the new user. Must not be null or empty.</param>
+        /// <returns>A <see cref="RegisterResult"/> indicating the outcome of the registration process</returns>
+        public async Task<RegisterResult> Register(string username, string password, string email, string phoneNumber)
         {
-            if (db.Users.Any(u => u.Username == username))
-                throw new Exception("Username already exists");
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(phoneNumber))
+                return RegisterResult.MissingData;
+            if (await db.Users.AnyAsync(u => u.Username == username))
+                return RegisterResult.UsernameExists;
             if (!IsPasswordStrong(password))
-                throw new Exception("Password does not meet strength requirements");
+                return RegisterResult.WeakPassword;
 
-            User user = new User 
-            { 
-                Username = username, 
-                PasswordHash = HashPassword(password), 
-                Email = email, 
-                Phonenumber = phoneNumber 
+            User user = new User
+            {
+                Username = username,
+                PasswordHash = HashPassword(password),
+                Email = email,
+                Phonenumber = phoneNumber,
+                CreatedAt = DateTime.UtcNow
             };
 
             await db.Users.AddAsync(user);
             await db.SaveChangesAsync();
 
-            return new UserDto
-            {
-                Id = user.Id,
-                Username = user.Username,
-                Email = user.Email,
-                PhoneNumber = user.Phonenumber,
-                CreatedAt = user.CreatedAt
-            };
+            return RegisterResult.Success;
         }
 
         /// <summary>
@@ -57,6 +59,9 @@ namespace Server.Services
         /// </summary>
         public string? Login(string username, string password)
         {
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+                return null;
+
             User? user = db.Users.FirstOrDefault(u => u.Username == username);
             if (user == null || !VerifyPassword(password, user.PasswordHash))
                 return null;
@@ -160,20 +165,36 @@ namespace Server.Services
         /// <returns><see langword="true"/> if the password matches the stored hash; otherwise, <see langword="false"/>.</returns>
         public static bool VerifyPassword(string password, string storedHash)
         {
-            byte[] hashBytes = Convert.FromBase64String(storedHash);
-            byte[] salt = new byte[16];
-            Array.Copy(hashBytes, 0, salt, 0, 16);
-
-            Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(password, salt, 100_000, HashAlgorithmName.SHA256);
-            byte[] hash = pbkdf2.GetBytes(32);
-
-            for (int i = 0; i < 32; i++)
+            try
             {
-                if (hashBytes[i + 16] != hash[i])
-                    return false;
-            }
+                byte[] hashBytes = Convert.FromBase64String(storedHash);
+                byte[] salt = new byte[16];
+                Array.Copy(hashBytes, 0, salt, 0, 16);
 
+                Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(password, salt, 100_000, HashAlgorithmName.SHA256);
+                byte[] hash = pbkdf2.GetBytes(32);
+
+                for (int i = 0; i < 32; i++)
+                {
+                    if (hashBytes[i + 16] != hash[i])
+                    {
+                        return false;
+                    }
+                }
+            }
+            catch (FormatException)
+            {
+                return false;
+            }
             return true;
         }
+    }
+    //small enum to represent registration result
+    public enum RegisterResult
+    {
+        Success,
+        UsernameExists,
+        WeakPassword,
+        MissingData
     }
 }

@@ -50,7 +50,7 @@ builder.Services.AddAuthentication(options =>
 
             if (!string.IsNullOrEmpty(token) && env.IsDevelopment())
             {
-                log.LogInformation("JWT cookie received: {Snippet}...", token[..Math.Min(token.Length, 20)]);
+                log.LogDebug("JWT cookie received: {Snippet}...", token[..Math.Min(token.Length, 20)]);
             }
             return Task.CompletedTask;
         },
@@ -75,7 +75,7 @@ builder.Services.AddAuthentication(options =>
                     expText = expDate.ToString("yyyy-MM-dd HH:mm:ss UTC");
                 }
 
-                log.LogInformation("JWT Validated: UserId={UserId}, Username={Username}, ExpiresAt={Expiration}",
+                log.LogDebug("JWT Validated: UserId={UserId}, Username={Username}, ExpiresAt={Expiration}",
                     idClaim, nameClaim, expText);
             }
             return Task.CompletedTask;
@@ -96,7 +96,7 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Buddy2Go", Version = "v0.1" });
 
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -161,7 +161,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API v1");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Buddy2Go API v0.1");
         c.RoutePrefix = "";
     });
     Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
