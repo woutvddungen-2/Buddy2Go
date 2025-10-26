@@ -27,8 +27,8 @@ namespace Server.Helpers
         }
         public static bool TestDatabaseConnection(IServiceProvider serviceProvider, out Exception? exception)
         {
-            using var scope = serviceProvider.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            using IServiceScope scope = serviceProvider.CreateScope();
+            AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
             try
             {
