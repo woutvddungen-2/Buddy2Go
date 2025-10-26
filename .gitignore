@@ -363,5 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 
 # File with the envirement variables:
-LaunchSettings.json
 /Server/Properties/launchSettings.json
