@@ -133,7 +133,7 @@ builder.Services.AddCors(options =>
 });
 
 // -------------------- Database --------------------
-DbConnectHelper.AddDatabase(builder.Services, builder.Configuration.GetSection("DatabaseSettings"));
+DbConnectHelper.AddDatabase(builder.Services, builder.Configuration.GetSection("DbSettings"));
 
 // -------------------- Build App --------------------
 WebApplication? app = builder.Build();

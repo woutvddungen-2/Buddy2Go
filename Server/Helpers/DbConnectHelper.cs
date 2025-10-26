@@ -8,7 +8,7 @@ namespace Server.Helpers
         public static void AddDatabase(IServiceCollection services, IConfigurationSection config)
         {
             string server = config["Ip"] ?? "localhost";
-            string database = config["DatabaseName"] ?? throw new Exception("Database name missing.");
+            string database = config["DbName"] ?? throw new Exception("Database name missing.");
             string user = config["UserID"] ?? throw new Exception("Database user missing.");
             string password = config["Password"] ?? throw new Exception("Database password missing.");
             string port = config["Port"] ?? "3306";
