@@ -46,13 +46,13 @@ namespace Server.Services
 
 
         // This method adds a new journey for a specific user.
-        public async Task<ServiceResult<JourneyDto>> AddJourneyAsync(int userId, string startGPS, string endGPS)
+        public async Task<ServiceResult> AddJourneyAsync(int userId, string startGPS, string endGPS)
         {
             User? user = await db.Users.FindAsync(userId);
             if (user == null)
-                return ServiceResult<JourneyDto>.Fail(ServiceResultStatus.UserNotFound, "User not found");
+                return ServiceResult.Fail(ServiceResultStatus.UserNotFound, "User not found");
             if (startGPS == null || endGPS == null)
-                return ServiceResult<JourneyDto>.Fail(ServiceResultStatus.ValidationError, "StartGPS and EndGPS cannot be null");
+                return ServiceResult.Fail(ServiceResultStatus.ValidationError, "StartGPS and EndGPS cannot be null");
 
             Journey journey = new Journey
             {
@@ -67,15 +67,7 @@ namespace Server.Services
             await db.Journeys.AddAsync(journey);
             await db.SaveChangesAsync();
 
-            return ServiceResult<JourneyDto>.Succes(new JourneyDto
-            {
-                Id = journey.Id,
-                OwnedBy = journey.OwnedBy,
-                StartGPS = journey.StartGPS,
-                EndGPS = journey.EndGPS,
-                CreatedAt = journey.CreatedAt,
-                FinishedAt = journey.FinishedAt
-            });
+            return ServiceResult.Succes();
         }
 
         /// <summary>
@@ -87,21 +79,21 @@ namespace Server.Services
         /// <param name="endGps"> New End GPS coordinates, can be Null</param>
         /// <returns>Updated JourneyDto or null if not found</returns>
         /// <exception cref="ArgumentException"> Thrown when user or journey is not found or access is denied</exception>
-        public async Task<ServiceResult<JourneyDto>> UpdateJourneyGpsAsync(int userId, int journeyId, string? startGps, string? endGps)
+        public async Task<ServiceResult> UpdateJourneyGpsAsync(int userId, int journeyId, string? startGps, string? endGps)
         {
             User? user = await db.Users.FindAsync(userId);
             if (user == null)
-                return ServiceResult<JourneyDto>.Fail(ServiceResultStatus.UserNotFound, "User not found");
+                return ServiceResult.Fail(ServiceResultStatus.UserNotFound, "User not found");
             
             Journey? journey = await db.Journeys.FindAsync(journeyId);
             if (journey == null)
-                return ServiceResult<JourneyDto>.Fail(ServiceResultStatus.ResourceNotFound, "Journey not found");
+                return ServiceResult.Fail(ServiceResultStatus.ResourceNotFound, "Journey not found");
 
             if (journey .FinishedAt != DateTime.MinValue)
-                return ServiceResult<JourneyDto>.Fail(ServiceResultStatus.ValidationError, "Cannot update a finished journey");
+                return ServiceResult.Fail(ServiceResultStatus.ValidationError, "Cannot update a finished journey");
 
             if (journey.OwnedBy != userId)
-                return ServiceResult<JourneyDto>.Fail(ServiceResultStatus.Unauthorized, "Access denied");
+                return ServiceResult.Fail(ServiceResultStatus.Unauthorized, "Access denied");
             
             
 
@@ -110,42 +102,26 @@ namespace Server.Services
 
             await db.SaveChangesAsync();
 
-            return ServiceResult<JourneyDto>.Succes(new JourneyDto
-            {
-                Id = journey.Id,
-                OwnedBy = journey.OwnedBy,
-                StartGPS = journey.StartGPS,
-                EndGPS = journey.EndGPS,
-                CreatedAt = journey.CreatedAt,
-                FinishedAt = journey.FinishedAt
-            });
+            return ServiceResult.Succes();
         }
 
-        public async Task<ServiceResult<JourneyDto>> FinishJourneyAsync(int userId, int journeyId)
+        public async Task<ServiceResult> FinishJourneyAsync(int userId, int journeyId)
         {
             User? user = await db.Users.FindAsync(userId);
             if (user == null)
-                return ServiceResult<JourneyDto>.Fail(ServiceResultStatus.UserNotFound, "User not found");
+                return ServiceResult.Fail(ServiceResultStatus.UserNotFound, "User not found");
 
             Journey? journey = await db.Journeys.FindAsync(journeyId);
             if (journey == null)
-                return ServiceResult<JourneyDto>.Fail(ServiceResultStatus.ResourceNotFound, "Journey not found");
+                return ServiceResult.Fail(ServiceResultStatus.ResourceNotFound, "Journey not found");
 
             if (journey.OwnedBy != userId)
-                return ServiceResult<JourneyDto>.Fail(ServiceResultStatus.Unauthorized, "Access denied");
+                return ServiceResult.Fail(ServiceResultStatus.Unauthorized, "Access denied");
 
             journey.FinishedAt = DateTime.UtcNow;
             await db.SaveChangesAsync();
 
-            return ServiceResult<JourneyDto>.Succes(new JourneyDto
-            {
-                Id = journey.Id,
-                OwnedBy = journey.OwnedBy,
-                StartGPS = journey.StartGPS,
-                EndGPS = journey.EndGPS,
-                CreatedAt = journey.CreatedAt,
-                FinishedAt = journey.FinishedAt
-            });
+            return ServiceResult.Succes();
 
         }
     }

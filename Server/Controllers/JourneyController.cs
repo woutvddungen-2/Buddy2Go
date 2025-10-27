@@ -53,7 +53,7 @@ namespace Server.Controllers
             }
 
             int userId = GetUserIdFromJwt();
-            ServiceResult<JourneyDto> result = await service.AddJourneyAsync(userId, dto.StartGPS, dto.EndGPS);
+            ServiceResult result = await service.AddJourneyAsync(userId, dto.StartGPS, dto.EndGPS);
 
             switch (result.Status)
             {
@@ -82,7 +82,7 @@ namespace Server.Controllers
             }
 
             int userId = GetUserIdFromJwt();
-            ServiceResult<JourneyDto> result = await service.UpdateJourneyGpsAsync(userId, JourneyId, dto.StartGPS, dto.EndGPS);
+            ServiceResult result = await service.UpdateJourneyGpsAsync(userId, JourneyId, dto.StartGPS, dto.EndGPS);
 
             switch (result.Status)
             {
@@ -112,7 +112,7 @@ namespace Server.Controllers
         public async Task<IActionResult> FinishJourney(int JourneyId)
         {
             int userId = GetUserIdFromJwt();
-            ServiceResult<JourneyDto> result = await service.FinishJourneyAsync(userId, JourneyId);
+            ServiceResult result = await service.FinishJourneyAsync(userId, JourneyId);
 
             switch (result.Status)
             {
