@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Shared.Models.Dtos
+﻿namespace Shared.Models.Dtos
 {
     public class JourneyDto
     {
+        public int Id { get; set; }
         public int OwnedBy { get; set; }
         public string StartGPS { get; set; } = string.Empty;
         public string EndGPS { get; set; } = string.Empty;
