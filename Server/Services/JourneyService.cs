@@ -25,7 +25,7 @@ namespace Server.Services
                 return ServiceResult<List<JourneyDto>>.Fail(ServiceResultStatus.UserNotFound, "User not found");
 
             List<Journey> journeys = await db.Journeys
-                .Where(j => j.Owner.Id == userId)
+                .Where(j => j.Owner!.Id == userId)
                 .ToListAsync();
 
             if (journeys.Count == 0)

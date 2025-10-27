@@ -2,7 +2,6 @@
 ;
 using Server.Models;
 using Shared.Models;
-using System.Security.AccessControl;
 
 namespace Server.Data
 {
@@ -15,6 +14,9 @@ namespace Server.Data
         public DbSet<JourneyMessages> Messages { get; set; }
         public DbSet<JourneyParticipants> JourneyParticipants { get; set; }
         public DbSet<DangerousPlace> DangerousPlace { get; set; }
+        public DbSet<Buddy> Buddys { get; set; }
+
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -24,9 +26,9 @@ namespace Server.Data
             // Seed Users
             // --------------------
             modelBuilder.Entity<User>().HasData(
-                new User { Id = 1, Username = "Alice", Email = "alice@test.com", Phonenumber = "0612345678", PasswordHash = "hashed1", CreatedAt = DateTime.UtcNow },
-                new User { Id = 2, Username = "Bob", Email = "bob@test.com", Phonenumber = "0687654321", PasswordHash = "hashed2", CreatedAt = DateTime.UtcNow },
-                new User { Id = 3, Username = "Charlie", Email = "charlie@test.com", Phonenumber = "0678901234", PasswordHash = "hashed3", CreatedAt = DateTime.UtcNow }
+                new User { Id = 1, Username = "Alice", Email = "alice@test.com", Phonenumber = "0612345678", PasswordHash = "Btd5kOga0bCQboFgEC27wQXmHO/7+ycka95ivGi4EXXAEOj303ehnFqmaGr3+rHi", CreatedAt = DateTime.UtcNow },
+                new User { Id = 2, Username = "Bob", Email = "bob@test.com", Phonenumber = "0687654321", PasswordHash = "DbjdjPrHA2CdSDtuDrpWqWbAcxPQIoxHxNz73a0P8CFWd/Sg55yo/+FTDbdsxtdL", CreatedAt = DateTime.UtcNow },
+                new User { Id = 3, Username = "Charlie", Email = "charlie@test.com", Phonenumber = "0678901234", PasswordHash = "JULrd1HVJ17woc2HEqrjpsOx6Ac+z60MWP0lmhPlKB7HupLEX7ANdCZeqTABaBOO", CreatedAt = DateTime.UtcNow }
             );
 
             // --------------------
@@ -64,11 +66,21 @@ namespace Server.Data
                 new DangerousPlace { Id = 2, ReportedById = 2, GPS = "51.924420,4.477733", PlaceType = DangerousPlaceType.HazardousRoad, Description = "Lots of garbage here" }
             );
 
+            //---------------------
+            // Seed Buddy (composite key)
+            //---------------------
+            modelBuilder.Entity<Buddy>().HasData(
+                new Buddy { RequesterId = 1, AddresseeId = 2, Status = RequestStatus.Accepted },
+                new Buddy { RequesterId = 2, AddresseeId = 3, Status = RequestStatus.Pending }
+            );
+
             // --------------------
             // Configure composite key for JourneyParticipants
             // --------------------
             modelBuilder.Entity<JourneyParticipants>()
                 .HasKey(jp => new { jp.UserId, jp.JourneyId });
+            modelBuilder.Entity<Buddy>()
+                .HasKey(b => new { b.RequesterId, b.AddresseeId });
 
             // --------------------
             // Configure relationships
@@ -102,6 +114,16 @@ namespace Server.Data
                 .HasOne(j => j.Owner)
                 .WithMany(u => u.OwnedJourneys)
                 .HasForeignKey(j => j.OwnedBy);
+
+            modelBuilder.Entity<Buddy>()
+                .HasOne(b => b.Requester)
+                .WithMany()
+                .HasForeignKey(b => b.RequesterId);
+
+            modelBuilder.Entity<Buddy>()
+                .HasOne(b => b.Addressee)
+                .WithMany()
+                .HasForeignKey(b => b.AddresseeId);
         }
 
     }
