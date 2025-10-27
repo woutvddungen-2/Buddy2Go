@@ -1,12 +1,13 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Server.Common;
+using Server.Data;
+using Server.Models;
+using Shared.Models.Dtos;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using Server.Data;
-using Server.Models;
-using Shared.Models.Dtos;
-using Microsoft.EntityFrameworkCore;
 
 namespace Server.Services
 {
@@ -14,6 +15,8 @@ namespace Server.Services
     {
         private readonly AppDbContext db;
         private readonly string jwtSecret;
+
+
 
         public UserService(AppDbContext db, IConfiguration config)
         {
@@ -28,15 +31,17 @@ namespace Server.Services
         /// <param name="password">The password for the new user.</param>
         /// <param name="email">The email address for the new user.</param>
         /// <param name="phoneNumber">The phone number for the new user.</param>
-        /// <returns>A <see cref="RegisterResult"/> indicating the outcome of the registration process</returns>
-        public async Task<RegisterResult> Register(string username, string password, string email, string phoneNumber)
+        /// <returns> A <see cref="ServiceResult"/> indicating the success or failure of the registration process.</returns>
+        public async Task<ServiceResult> Register(string username, string password, string email, string phoneNumber)
         {
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(phoneNumber))
-                return RegisterResult.MissingData;
+                return ServiceResult.Fail(ServiceResultStatus.ValidationError, "Missing required data");
+
             if (await db.Users.AnyAsync(u => u.Username == username))
-                return RegisterResult.UsernameExists;
+                return ServiceResult.Fail(ServiceResultStatus.ValidationError, $"Username {username} already exists");
+
             if (!IsPasswordStrong(password))
-                return RegisterResult.WeakPassword;
+                return ServiceResult.Fail(ServiceResultStatus.ValidationError, "Weak password");
 
             User user = new User
             {
@@ -50,7 +55,7 @@ namespace Server.Services
             await db.Users.AddAsync(user);
             await db.SaveChangesAsync();
 
-            return RegisterResult.Success;
+            return ServiceResult.Succes("User registered successfully");
         }
 
         /// <summary>
@@ -58,17 +63,18 @@ namespace Server.Services
         /// </summary>
         /// <param name="username">The username of the user attempting to log in</param>
         /// <param name="password">The password of the user attempting to log in</param>
-        /// <returns>A JSON Web Token (JWT) as a string if the authentication is successful; otherwise, <see langword="null"/>.</returns>
-        public string? Login(string username, string password)
+        /// <returns> A <see cref="ServiceResult{T}"/> containing a JWT token if authentication is successful; otherwise, an error message.</returns>
+        public async Task<ServiceResult<string>> Login(string username, string password)
         {
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
-                return null;
+                return ServiceResult<string>.Fail(ServiceResultStatus.ValidationError, "Username and password are required");
 
-            User? user = db.Users.FirstOrDefault(u => u.Username == username);
+            User? user = await db.Users.FirstOrDefaultAsync(u => u.Username == username);
             if (user == null || !VerifyPassword(password, user.PasswordHash))
-                return null;
+                return ServiceResult<string>.Fail(ServiceResultStatus.Unauthorized, "Invalid username or password");
 
-            return GenerateJwtToken(user.Id, user.Username);
+            string token = GenerateJwtToken(user.Id, user.Username);
+            return ServiceResult<string>.Succes(token);
         }
 
 
@@ -76,23 +82,21 @@ namespace Server.Services
         /// Retrieves user information based on the specified user ID.
         /// </summary>
         /// <param name="Id">The unique identifier of the user to retrieve.</param>
-        /// <returns>A <see cref="UserDto"/> containing the user's details, such as ID, username, email, phone number, and
-        /// creation date.</returns>
-        /// <exception cref="KeyNotFoundException">Thrown if no user is found with the specified <paramref name="Id"/>.</exception>
-        public async Task<UserDto> GetUserInfo(int Id)
+        /// <returns> A <see cref="ServiceResult{T}"/> containing a <see cref="UserDto"/> with user information if found; otherwise, an error message.</returns>
+        public async Task<ServiceResult<UserDto>> GetUserInfo(int id)
         {
-            User? user = await db.Users.FindAsync(Id);
+            User? user = await db.Users.FindAsync(id);
             if (user == null)
-                throw new KeyNotFoundException("User not found");
+                return ServiceResult<UserDto>.Fail(ServiceResultStatus.UserNotFound, "User not found");
 
-            return new UserDto 
-            { 
-                Id = user.Id, 
-                Username = user.Username, 
-                Email = user.Email, 
-                PhoneNumber = user.Phonenumber, 
-                CreatedAt = user.CreatedAt 
-            };
+            return ServiceResult<UserDto>.Succes(new UserDto
+            {
+                Id = user.Id,
+                Username = user.Username,
+                Email = user.Email,
+                PhoneNumber = user.Phonenumber,
+                CreatedAt = user.CreatedAt
+            });
         }
 
         //---------------------- Helpers ----------------------
@@ -194,13 +198,5 @@ namespace Server.Services
             }
             return true;
         }
-    }
-    //small enum to represent registration result
-    public enum RegisterResult
-    {
-        Success,
-        UsernameExists,
-        WeakPassword,
-        MissingData
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Server.Common;
 using Server.Services;
 using Shared.Models.Dtos;
 using System.Security.Claims;
@@ -25,61 +26,52 @@ namespace Server.Controllers
             if (register == null)
             {
                 logger.LogWarning("Register request body is null");
-                return BadRequest(new { message = "Username and password are required" });
+                return BadRequest(new { message = "Required data missing" });
             }
 
-            try
+            ServiceResult result = await service.Register(register.Username, register.Password, register.Email, register.PhoneNumber);
+
+            switch (result.Status)
             {
-                RegisterResult result = await service.Register(register.Username, register.Password, register.Email, register.PhoneNumber);
-                switch (result)
-                {
-                    case RegisterResult.MissingData:
-                        logger.LogInformation("Registration failed due to missing data for user");
-                        return BadRequest(new { message = $"Registration failed due to missing data for user"});
+                case ServiceResultStatus.Success:
+                    logger.LogInformation("User {Username} registered successfully", register.Username);
+                    return Ok(new { message = $"User {register.Username} registered successfully" });
 
-                    case RegisterResult.UsernameExists:
-                        logger.LogInformation("Registration failed: Username {Username} already exists", register.Username);
-                        return BadRequest(new { message = $"Registration failed: Username {register.Username} already exists"});
+                case ServiceResultStatus.ValidationError:
+                    logger.LogWarning("Registration failed: {Message}", result.Message);
+                    return BadRequest(new { message = result.Message });
 
-                    case RegisterResult.WeakPassword:
-                        logger.LogInformation("Registration failed: Weak password for user {Username}", register.Username);
-                        return BadRequest(new { message = $"Registration failed: Weak password for user {register.Username}"});
-
-                    case RegisterResult.Success:
-                        logger.LogInformation("User {Username} registered successfully", register.Username);
-                        return Ok(new { message = $"User {register.Username} registered successfully"});
-
-                    default:
-                        logger.LogError("Unknown registration error for user {Username}", register.Username);
-                        return BadRequest(new { message = $"Unknown registration error for user {register.Username}"});
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning("Error during registration for user {Username}: {ErrorMessage}", register.Username, ex.Message);
-                return BadRequest(new { message = "Error during registration for user {Username}: {ErrorMessage}", register.Username, ex.Message });
+                default:
+                    logger.LogError("Unknown registration error: {Message}", result.Message);
+                    return StatusCode(500, new { message = "Unknown registration error" });
             }
         }
 
 
         [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginDto login)
+        public async Task<IActionResult> Login([FromBody] LoginDto login)
         {
-            string? token = service.Login(login.Username, login.Password);
-            if (token == null)
-            {
-                logger.LogWarning("Login failed for user {Username}", login.Username);
-                return Unauthorized(new { message = "Invalid username or password" });
-            }
+            ServiceResult<string> result = await service.Login(login.Username, login.Password);
 
-                Response.Cookies.Append("jwt", token, new CookieOptions
+            switch (result.Status)
             {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Lax,
-            });
-            logger.LogInformation("User {Username} logged in successfully", login.Username);
-            return Ok(new { token });
+                case ServiceResultStatus.Success:
+                    Response.Cookies.Append("jwt", result.Data!, new CookieOptions { HttpOnly = true, Secure = true, SameSite = SameSiteMode.Lax });
+                    logger.LogInformation("User {Username} logged in successfully", login.Username);
+                    return Ok(new { token = result.Data });
+
+                case ServiceResultStatus.Unauthorized:
+                    logger.LogWarning("Login failed for user {Username}: {Message}", login.Username, result.Message);
+                    return Unauthorized(new { message = result.Message });
+
+                case ServiceResultStatus.ValidationError:
+                    logger.LogWarning("Login validation failed for user {Username}: {Message}", login.Username, result.Message);
+                    return BadRequest(new { message = result.Message });
+
+                default:
+                    logger.LogError("Unexpected login error for user {Username}: {Message}", login.Username, result.Message);
+                    return StatusCode(500, new { message = "Unexpected login error" });
+            }
         }
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -98,32 +90,25 @@ namespace Server.Controllers
         }
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        [HttpGet("GetUserInfoFromDb")]
-        public async Task<ActionResult<UserDto>> GetUserInfoFromDbAsync()
+        [HttpGet("GetUserInfo")]
+        public async Task<IActionResult> GetUserInfo()
         {
-            try
-            {
-                int userId = GetUserIdFromJwt();
-                UserDto user = await service.GetUserInfo(userId);
+            int userId = GetUserIdFromJwt();
+            ServiceResult<UserDto> result = await service.GetUserInfo(userId);
 
-                if (user == null)
-                {
-                    logger.LogWarning("User with ID {UserId} not found", userId);
-                    return NotFound(new { message = "User not found" });
-                }
+            switch (result.Status)
+            {
+                case ServiceResultStatus.Success:
+                    logger.LogInformation("Retrieved user info for UserID {UserId}", userId);
+                    return Ok(result.Data);
 
-                logger.LogInformation("Retrieved user info for user ID {UserId}", userId);
-                return Ok(user);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                logger.LogWarning("Unauthorized access attempt: {ErrorMessage}", ex.Message);
-                return StatusCode(StatusCodes.Status403Forbidden, new { message = ex.Message });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                logger.LogError(ex, "Error retrieving user info for user ID {UserId}", GetUserIdFromJwt());
-                return StatusCode(StatusCodes.Status404NotFound, new { message = "user not found in Database"});
+                case ServiceResultStatus.UserNotFound:
+                    logger.LogWarning("User not found: UserID {UserId}", userId);
+                    return NotFound(new { message = result.Message });
+
+                default:
+                    logger.LogError("Unexpected error retrieving user info for UserID {UserId}: {Message}", userId, result.Message);
+                    return StatusCode(500, new { message = "Unexpected error retrieving user info" });
             }
         }
 
