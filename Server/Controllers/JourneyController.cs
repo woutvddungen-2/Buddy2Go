@@ -14,15 +14,15 @@ namespace Server.Controllers
     public class JourneyController : ControllerBase
     {
         private readonly JourneyService service;
-        ILogger logger;
+        private readonly ILogger logger;
         public JourneyController(JourneyService service)
         {
             this.service = service;
             logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<JourneyController>();
         }
 
-        [HttpGet("GetJourneys")]
-        public async Task<IActionResult> GetJourneys()
+        [HttpGet("GetMyJourneys")]
+        public async Task<IActionResult> GetMyJourneys()
         {
             int userId = GetUserIdFromJwt();
             ServiceResult<List<JourneyDto>> result = await service.GetJourneysByUserAsync(userId);
@@ -40,6 +40,81 @@ namespace Server.Controllers
                 default:
                     logger.LogError("Unknown registration error: {Message}", result.Message);
                     return StatusCode(500, new { message = "Unknown registration error" });
+            }
+        }
+
+        //probalby do not need this endpoint, lists of journeys or users should probably be returned in more discrete functions
+        //
+        //[HttpGet("GetJourneys/{userId}")]
+        //public async Task<IActionResult> GetJourneys(int userId)
+        //{
+        //    ServiceResult<List<JourneyDto>> result = await service.GetJourneysByUserAsync(userId);
+        //    switch (result.Status)
+        //    {
+        //        case ServiceResultStatus.Success:
+        //            logger.LogInformation("GetJourneys, successfully retrieved journeys for User:{user}", userId);
+        //            return Ok(result.Data);
+        //        case ServiceResultStatus.UserNotFound:
+        //            logger.LogWarning("GetJourneys, user not found, User:{user}, Message:{message}", userId, result.Message);
+        //            return NotFound($"GetJourneys, user not found: {result.Message}");
+        //        case ServiceResultStatus.ResourceNotFound:
+        //            logger.LogWarning("GetJourneys, no journeys found for User:{user}, Message:{message}", userId, result.Message);
+        //            return NotFound($"No journeys found: {result.Message}");
+        //        default:
+        //            logger.LogError("Unknown registration error: {Message}", result.Message);
+        //            return StatusCode(500, new { message = "Unknown registration error" });
+        //    }
+        //}
+
+        [HttpGet("GetBuddyJourneys")]
+        public async Task<IActionResult> GetBuddyJourneys()
+        {
+            int userId = GetUserIdFromJwt();
+            ServiceResult<List<JourneyDto>> result = await service.GetBuddyJourneysAsync(userId);
+
+            switch (result.Status)
+            {
+                case ServiceResultStatus.Success:
+                    logger.LogInformation("GetBuddyJourneys, successfully retrieved for User:{user}", userId);
+                    return Ok(result.Data);
+                case ServiceResultStatus.UserNotFound:
+                    logger.LogWarning("GetBuddyJourneys, user not found: {user}", userId);
+                    return NotFound($"User not found: {result.Message}");
+                case ServiceResultStatus.ResourceNotFound:
+                    logger.LogWarning("GetJourneys, no journeys found for User:{user}, Message:{message}", userId, result.Message);
+                    return NotFound($"No journeys found: {result.Message}");
+                default:
+                    logger.LogError("Error in GetBuddyJourneys for User:{user}, Message:{message}", userId, result.Message);
+                    return StatusCode(500, new { message = "Error retrieving buddy journeys" });
+            }
+        }
+
+        [HttpPost("JoinJourney/{journeyId}")]
+        public async Task<IActionResult> JoinJourney(int journeyId)
+        {
+            int userId = GetUserIdFromJwt();
+
+            ServiceResult result = await service.JoinJourneyAsync(userId, journeyId);
+
+            switch (result.Status)
+            {
+                case ServiceResultStatus.Success:
+                    logger.LogInformation("User:{userId} joined Journey:{journeyId}", userId, journeyId);
+                    return Ok(new { message = result.Message });
+
+                case ServiceResultStatus.UserNotFound:
+                case ServiceResultStatus.ResourceNotFound:
+                    logger.LogWarning("JoinJourney failed for User:{userId}, Reason:{message}", userId, result.Message);
+                    return NotFound(new { message = result.Message });
+
+                case ServiceResultStatus.Unauthorized:
+                case ServiceResultStatus.InvalidOperation:
+                    logger.LogWarning("JoinJourney invalid for User:{userId}, Reason:{message}", userId, result.Message);
+                    return BadRequest(new { message = result.Message });
+
+                default:
+                    logger.LogError("JoinJourney unknown error for User:{userId}, Message:{message}", userId, result.Message);
+                    return StatusCode(500, new { message = "Unexpected error occurred" });
             }
         }
 
@@ -125,9 +200,41 @@ namespace Server.Controllers
                 case ServiceResultStatus.Unauthorized:
                     logger.LogWarning("FinishJourney, unauthorized attempt, User:{user}, Journey:{journey}", userId, JourneyId);
                     return Unauthorized("Access denied.");
+                case ServiceResultStatus.ResourceNotFound:
+                    logger.LogWarning("FinishJourney, journey not found, User:{user}, Journey:{journey}, Message:{message}", userId, JourneyId, result.Message);
+                    return NotFound($"Journey not found: {result.Message}");
+                case ServiceResultStatus.UserNotFound:
+                    logger.LogWarning("FinishJourney, user not found, User:{user}, Journey:{journey}, Message:{message}", userId, JourneyId, result.Message);
+                    return NotFound($"FinishJourney, user not found: {result.Message}");
                 default:
                     logger.LogError("FinishJourney, error for User:{user}, Journey:{journey}, Message:{message}", userId, JourneyId, result.Message);
                     return StatusCode(500, $"Error finishing journey: {result.Message}");
+            }
+        }
+
+        [HttpDelete("LeaveJourney/{JourneyId}")]
+        public async Task<IActionResult> LeaveJourney(int JourneyId)
+        {
+            int userId = GetUserIdFromJwt();
+            ServiceResult result = await service.LeaveJourneyAsync(userId, JourneyId);
+
+            switch (result.Status)
+            {
+                case ServiceResultStatus.Success:
+                    logger.LogInformation("LeaveJourney, User:{userId} left Journey:{journeyId}", userId, JourneyId);
+                    return Ok(result.Message);
+                case ServiceResultStatus.UserNotFound:
+                    logger.LogWarning("LeaveJourney failed, User:{userId} not found, Message:{message}", userId, result.Message);
+                    return NotFound(result.Message);
+                case ServiceResultStatus.ResourceNotFound:
+                    logger.LogWarning("LeaveJourney failed, Journey:{journeyId} not found for User:{userId}, Message:{message}", JourneyId, userId, result.Message);
+                    return NotFound(result.Message);
+                case ServiceResultStatus.InvalidOperation:
+                    logger.LogWarning("LeaveJourney invalid operation for User:{userId} on Journey:{journeyId}, Message:{message}", userId, JourneyId, result.Message);
+                    return BadRequest(result.Message);
+                default:
+                    logger.LogError("LeaveJourney unknown error for User:{userId} on Journey:{journeyId}, Message:{message}", userId, JourneyId, result.Message);
+                    return StatusCode(500, result.Message);
             }
         }
 

@@ -6,6 +6,7 @@
         UserNotFound,
         Unauthorized,
         ValidationError,
+        InvalidOperation,
         Error
     }
 
