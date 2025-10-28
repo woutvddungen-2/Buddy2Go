@@ -13,7 +13,7 @@ namespace Server.Controllers
     public class UserController : ControllerBase
     {
         private readonly UserService service;
-        ILogger logger;
+        private readonly ILogger logger;
         public UserController(UserService service)
         {
             this.service = service;
