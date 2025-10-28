@@ -7,7 +7,7 @@
         public string StartGPS { get; set; } = string.Empty;
         public string EndGPS { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
-        public DateTime FinishedAt { get; set; }
+        public DateTime? FinishedAt { get; set; } = null;
 
         // Navigation
         public User? Owner { get; set; }

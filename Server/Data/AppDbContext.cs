@@ -26,27 +26,34 @@ namespace Server.Data
             // Seed Users
             // --------------------
             modelBuilder.Entity<User>().HasData(
-                new User { Id = 1, Username = "Alice", Email = "alice@test.com", Phonenumber = "0612345678", PasswordHash = "Btd5kOga0bCQboFgEC27wQXmHO/7+ycka95ivGi4EXXAEOj303ehnFqmaGr3+rHi", CreatedAt = DateTime.UtcNow },
-                new User { Id = 2, Username = "Bob", Email = "bob@test.com", Phonenumber = "0687654321", PasswordHash = "DbjdjPrHA2CdSDtuDrpWqWbAcxPQIoxHxNz73a0P8CFWd/Sg55yo/+FTDbdsxtdL", CreatedAt = DateTime.UtcNow },
-                new User { Id = 3, Username = "Charlie", Email = "charlie@test.com", Phonenumber = "0678901234", PasswordHash = "JULrd1HVJ17woc2HEqrjpsOx6Ac+z60MWP0lmhPlKB7HupLEX7ANdCZeqTABaBOO", CreatedAt = DateTime.UtcNow }
+                new User { Id = 1, Username = "Alice", Email = "alice@test.com", Phonenumber = "0600000000", PasswordHash = "Btd5kOga0bCQboFgEC27wQXmHO/7+ycka95ivGi4EXXAEOj303ehnFqmaGr3+rHi", CreatedAt = DateTime.UtcNow },
+                new User { Id = 2, Username = "Bob", Email = "bob@test.com", Phonenumber = "0611111111", PasswordHash = "DbjdjPrHA2CdSDtuDrpWqWbAcxPQIoxHxNz73a0P8CFWd/Sg55yo/+FTDbdsxtdL", CreatedAt = DateTime.UtcNow },
+                new User { Id = 3, Username = "Charlie", Email = "charlie@test.com", Phonenumber = "0622222222", PasswordHash = "JULrd1HVJ17woc2HEqrjpsOx6Ac+z60MWP0lmhPlKB7HupLEX7ANdCZeqTABaBOO", CreatedAt = DateTime.UtcNow },
+                new User { Id = 4, Username = "Joseph", Email = "Joseph@test.com", Phonenumber = "0633333333", PasswordHash = "JULrd1HVJ17woc2HEqrjpsOx6Ac+z60MWP0lmhPlKB7HupLEX7ANdCZeqTABaBOO", CreatedAt = DateTime.UtcNow },
+                new User { Id = 5, Username = "Diana", Email = "Diana@test.com", Phonenumber = "0644444444", PasswordHash = "JULrd1HVJ17woc2HEqrjpsOx6Ac+z60MWP0lmhPlKB7HupLEX7ANdCZeqTABaBOO", CreatedAt = DateTime.UtcNow }
             );
 
             // --------------------
             // Seed Journey
             // --------------------
             modelBuilder.Entity<Journey>().HasData(
-                new Journey { Id = 1, OwnedBy = 1, StartGPS = "52.370216,4.895168", EndGPS = "51.924420,4.477733", CreatedAt = DateTime.UtcNow },
-                new Journey { Id = 2, OwnedBy = 2, StartGPS = "52.090737,5.121420", EndGPS = "51.441642,5.469722", CreatedAt = DateTime.UtcNow }
+                new Journey { Id = 1, OwnedBy = 1, StartGPS = "52.370216,4.895168", EndGPS = "51.924420,4.477733", CreatedAt = DateTime.UtcNow, FinishedAt = null },
+                new Journey { Id = 2, OwnedBy = 2, StartGPS = "52.090737,5.121420", EndGPS = "51.441642,5.469722", CreatedAt = DateTime.UtcNow, FinishedAt = null },
+                new Journey { Id = 3, OwnedBy = 4, StartGPS = "111222333", EndGPS = "444556677", CreatedAt = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1)), FinishedAt = null },
+                new Journey { Id = 4, OwnedBy = 4, StartGPS = "444556677", EndGPS = "111222333", CreatedAt = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1)), FinishedAt = DateTime.UtcNow}
             );
 
             // --------------------
             // Seed JourneyParticipants (composite key)
             // --------------------
             modelBuilder.Entity<JourneyParticipants>().HasData(
-                new JourneyParticipants { UserId = 1, JourneyId = 1, JoinedAt = DateTime.UtcNow },
                 new JourneyParticipants { UserId = 2, JourneyId = 1, JoinedAt = DateTime.UtcNow },
-                new JourneyParticipants { UserId = 2, JourneyId = 2, JoinedAt = DateTime.UtcNow },
-                new JourneyParticipants { UserId = 3, JourneyId = 2, JoinedAt = DateTime.UtcNow }
+                new JourneyParticipants { UserId = 3, JourneyId = 1, JoinedAt = DateTime.UtcNow },
+                new JourneyParticipants { UserId = 4, JourneyId = 1, JoinedAt = DateTime.UtcNow },
+
+                new JourneyParticipants { UserId = 1, JourneyId = 2, JoinedAt = DateTime.UtcNow },
+                new JourneyParticipants { UserId = 4, JourneyId = 2, JoinedAt = DateTime.UtcNow },
+                new JourneyParticipants { UserId = 5, JourneyId = 2, JoinedAt = DateTime.UtcNow }
             );
 
             // --------------------
@@ -55,7 +62,11 @@ namespace Server.Data
             modelBuilder.Entity<JourneyMessages>().HasData(
                 new JourneyMessages { Id = 1, JourneyId = 1, SenderId = 1, Content = "Hi Bob!", SentAt = DateTime.UtcNow },
                 new JourneyMessages { Id = 2, JourneyId = 1, SenderId = 2, Content = "Hey Alice!", SentAt = DateTime.UtcNow },
-                new JourneyMessages { Id = 3, JourneyId = 2, SenderId = 2, Content = "Hello Charlie!", SentAt = DateTime.UtcNow }
+                new JourneyMessages { Id = 3, JourneyId = 1, SenderId = 2, Content = "Hello Charlie!", SentAt = DateTime.UtcNow },
+
+                new JourneyMessages { Id = 4, JourneyId = 2, SenderId = 1, Content = "Hi Bob!", SentAt = DateTime.UtcNow },
+                new JourneyMessages { Id = 5, JourneyId = 2, SenderId = 2, Content = "Hey Alice!", SentAt = DateTime.UtcNow },
+                new JourneyMessages { Id = 6, JourneyId = 2, SenderId = 2, Content = "Hello Charlie!", SentAt = DateTime.UtcNow }
             );
 
             // --------------------
@@ -71,7 +82,14 @@ namespace Server.Data
             //---------------------
             modelBuilder.Entity<Buddy>().HasData(
                 new Buddy { RequesterId = 1, AddresseeId = 2, Status = RequestStatus.Accepted },
-                new Buddy { RequesterId = 2, AddresseeId = 3, Status = RequestStatus.Pending }
+                new Buddy { RequesterId = 1, AddresseeId = 3, Status = RequestStatus.Accepted },
+                new Buddy { RequesterId = 4, AddresseeId = 1, Status = RequestStatus.Accepted },
+
+                new Buddy { RequesterId = 2, AddresseeId = 4, Status = RequestStatus.Accepted },
+                new Buddy { RequesterId = 5, AddresseeId = 2, Status = RequestStatus.Accepted },
+                
+                new Buddy { RequesterId = 3, AddresseeId = 4, Status = RequestStatus.Pending }
+
             );
 
             // --------------------
