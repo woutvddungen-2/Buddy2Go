@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Server.Common;
+using Server.Models;
 using Server.Services;
 using Shared.Models.Dtos;
 using System.Security.Claims;
@@ -43,29 +44,6 @@ namespace Server.Controllers
             }
         }
 
-        //probalby do not need this endpoint, lists of journeys or users should probably be returned in more discrete functions
-        //
-        //[HttpGet("GetJourneys/{userId}")]
-        //public async Task<IActionResult> GetJourneys(int userId)
-        //{
-        //    ServiceResult<List<JourneyDto>> result = await service.GetJourneysByUserAsync(userId);
-        //    switch (result.Status)
-        //    {
-        //        case ServiceResultStatus.Success:
-        //            logger.LogInformation("GetJourneys, successfully retrieved journeys for User:{user}", userId);
-        //            return Ok(result.Data);
-        //        case ServiceResultStatus.UserNotFound:
-        //            logger.LogWarning("GetJourneys, user not found, User:{user}, Message:{message}", userId, result.Message);
-        //            return NotFound($"GetJourneys, user not found: {result.Message}");
-        //        case ServiceResultStatus.ResourceNotFound:
-        //            logger.LogWarning("GetJourneys, no journeys found for User:{user}, Message:{message}", userId, result.Message);
-        //            return NotFound($"No journeys found: {result.Message}");
-        //        default:
-        //            logger.LogError("Unknown registration error: {Message}", result.Message);
-        //            return StatusCode(500, new { message = "Unknown registration error" });
-        //    }
-        //}
-
         [HttpGet("GetBuddyJourneys")]
         public async Task<IActionResult> GetBuddyJourneys()
         {
@@ -86,6 +64,29 @@ namespace Server.Controllers
                 default:
                     logger.LogError("Error in GetBuddyJourneys for User:{user}, Message:{message}", userId, result.Message);
                     return StatusCode(500, new { message = "Error retrieving buddy journeys" });
+            }
+        }
+
+        [HttpGet("GetParticipants/{journeyId}")]
+        public async Task<IActionResult> GetJourneyParticipants(int journeyId)
+        {
+            int userId = GetUserIdFromJwt();
+            ServiceResult<List<JourneyParticipantDto>> result = await service.GetJourneyParticipantsAsync(journeyId, userId);
+
+            switch (result.Status)
+            {
+                case ServiceResultStatus.Success:
+                    logger.LogInformation("GetJourneyParticipants,successfully retrieved for User:{user}, journeyId:{journey}", userId, journeyId);
+                    return Ok(result.Data);
+                case ServiceResultStatus.ResourceNotFound:
+                    logger.LogWarning("GetJourneyParticipants, {message}, User:{User} JourneyId:{journey}", result.Message, userId, journeyId);
+                    return NotFound($"GetJourneyParticipants, {result.Message}, JourneyId:{journeyId}");
+                case ServiceResultStatus.Unauthorized:
+                    logger.LogWarning("GetBuddyJourneys, unauthorized access attempt by User:{user}, in Journey:{Journey}", userId, journeyId);
+                    return Unauthorized("Access denied.");
+                default:
+                    logger.LogError("Error in GetBuddyJourneys for User:{User}, Journey:{journey}, Message:{message}",userId, journeyId, result.Message);
+                    return StatusCode(500, new { message = "Error retrieving Journeys participants" });
             }
         }
 
@@ -117,6 +118,7 @@ namespace Server.Controllers
                     return StatusCode(500, new { message = "Unexpected error occurred" });
             }
         }
+
 
         [HttpPost("AddJourney")]
         public async Task<IActionResult> AddJourney([FromBody] JourneyCreateDto dto)

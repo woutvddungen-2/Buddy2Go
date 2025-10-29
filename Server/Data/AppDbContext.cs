@@ -37,23 +37,28 @@ namespace Server.Data
             // Seed Journey
             // --------------------
             modelBuilder.Entity<Journey>().HasData(
-                new Journey { Id = 1, OwnedBy = 1, StartGPS = "52.370216,4.895168", EndGPS = "51.924420,4.477733", CreatedAt = DateTime.UtcNow, FinishedAt = null },
-                new Journey { Id = 2, OwnedBy = 2, StartGPS = "52.090737,5.121420", EndGPS = "51.441642,5.469722", CreatedAt = DateTime.UtcNow, FinishedAt = null },
-                new Journey { Id = 3, OwnedBy = 4, StartGPS = "111222333", EndGPS = "444556677", CreatedAt = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1)), FinishedAt = null },
-                new Journey { Id = 4, OwnedBy = 4, StartGPS = "444556677", EndGPS = "111222333", CreatedAt = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1)), FinishedAt = DateTime.UtcNow}
+                new Journey { Id = 1, StartGPS = "52.370216,4.895168", EndGPS = "51.924420,4.477733", CreatedAt = DateTime.UtcNow, FinishedAt = null },
+                new Journey { Id = 2, StartGPS = "52.090737,5.121420", EndGPS = "51.441642,5.469722", CreatedAt = DateTime.UtcNow, FinishedAt = null },
+                new Journey { Id = 3, StartGPS = "111222333", EndGPS = "444556677", CreatedAt = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1)), FinishedAt = null },
+                new Journey { Id = 4, StartGPS = "444556677", EndGPS = "111222333", CreatedAt = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1)), FinishedAt = DateTime.UtcNow}
             );
 
             // --------------------
             // Seed JourneyParticipants (composite key)
             // --------------------
             modelBuilder.Entity<JourneyParticipants>().HasData(
-                new JourneyParticipants { UserId = 2, JourneyId = 1, JoinedAt = DateTime.UtcNow },
-                new JourneyParticipants { UserId = 3, JourneyId = 1, JoinedAt = DateTime.UtcNow },
-                new JourneyParticipants { UserId = 4, JourneyId = 1, JoinedAt = DateTime.UtcNow },
+                new JourneyParticipants { UserId = 1, JourneyId = 1, Role = JourneyRole.Owner, JoinedAt = DateTime.UtcNow },
+                new JourneyParticipants { UserId = 2, JourneyId = 1, Role = JourneyRole.Participant, JoinedAt = DateTime.UtcNow },
+                new JourneyParticipants { UserId = 3, JourneyId = 1, Role = JourneyRole.Participant, JoinedAt = DateTime.UtcNow },
+                new JourneyParticipants { UserId = 4, JourneyId = 1, Role = JourneyRole.Participant, JoinedAt = DateTime.UtcNow },
 
-                new JourneyParticipants { UserId = 1, JourneyId = 2, JoinedAt = DateTime.UtcNow },
-                new JourneyParticipants { UserId = 4, JourneyId = 2, JoinedAt = DateTime.UtcNow },
-                new JourneyParticipants { UserId = 5, JourneyId = 2, JoinedAt = DateTime.UtcNow }
+                new JourneyParticipants { UserId = 2, JourneyId = 2, Role = JourneyRole.Owner, JoinedAt = DateTime.UtcNow },
+                new JourneyParticipants { UserId = 1, JourneyId = 2, Role = JourneyRole.Participant, JoinedAt = DateTime.UtcNow },
+                new JourneyParticipants { UserId = 4, JourneyId = 2, Role = JourneyRole.Participant, JoinedAt = DateTime.UtcNow },
+                new JourneyParticipants { UserId = 5, JourneyId = 2, Role = JourneyRole.Participant, JoinedAt = DateTime.UtcNow },
+
+                new JourneyParticipants { UserId = 4, JourneyId = 3, Role = JourneyRole.Owner, JoinedAt = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1)) },
+                new JourneyParticipants { UserId = 4, JourneyId = 4, Role = JourneyRole.Owner, JoinedAt = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1)) }
             );
 
             // --------------------
@@ -127,11 +132,6 @@ namespace Server.Data
                 .HasOne(d => d.ReportedBy)
                 .WithMany(u => u.Reports)
                 .HasForeignKey(d => d.ReportedById);
-
-            modelBuilder.Entity<Journey>()
-                .HasOne(j => j.Owner)
-                .WithMany(u => u.OwnedJourneys)
-                .HasForeignKey(j => j.OwnedBy);
 
             modelBuilder.Entity<Buddy>()
                 .HasOne(b => b.Requester)

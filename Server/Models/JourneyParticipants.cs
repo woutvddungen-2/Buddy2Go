@@ -1,4 +1,6 @@
-﻿namespace Server.Models
+﻿using Shared.Models;
+
+namespace Server.Models
 {
     public class JourneyParticipants
     {
@@ -7,6 +9,7 @@
 
         public int UserId { get; set; }
         public User User { get; set; } = null!;
+        public JourneyRole Role { get; set; } = JourneyRole.Participant;
 
         public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
     }

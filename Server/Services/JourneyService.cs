@@ -23,40 +23,65 @@ namespace Server.Services
         /// <summary>
         /// Retrieves all journeys associated with a specific user, either as an owner or participant.
         /// </summary>
-        public async Task<ServiceResult<List<JourneyDto>>> GetJourneysByUserAsync(int userId, bool onlyOpen = false)
+        public async Task<ServiceResult<List<JourneyDto>>> GetJourneysByUserAsync(int userId)
         {
             if (!await db.Users.AnyAsync(u => u.Id == userId))
                 return ServiceResult<List<JourneyDto>>.Fail(ServiceResultStatus.UserNotFound, "User not found");
 
-            var query = db.Journeys
+            List<Journey> journeys = await db.Journeys
                 .Include(j => j.Participants)
-                .Where(j =>
-                    j.Owner!.Id == userId ||
-                    j.Participants.Any(p => p.UserId == userId));
+                    .ThenInclude(p => p.User)
+                .Where(j => j.Participants.Any(p => p.UserId == userId))
+                .ToListAsync();
 
-            if (onlyOpen)
-            {
-                query = query.Where(j => j.FinishedAt == null);
-            }
-
-            List<Journey> journeys = await query.ToListAsync();
-
-            if (journeys.Count == 0)
+            if (!journeys.Any())
                 return ServiceResult<List<JourneyDto>>.Fail(ServiceResultStatus.ResourceNotFound, "No journeys found for this user");
 
             List<JourneyDto> dtos = journeys.Select(j => new JourneyDto
             {
                 Id = j.Id,
-                OwnedBy = j.OwnedBy,
+                OwnerId = j.Participants.First(p => p.Role == JourneyRole.Owner).UserId,
+                OwnerName = j.Participants.First(p => p.Role == JourneyRole.Owner).User.Username,
                 StartGPS = j.StartGPS,
                 EndGPS = j.EndGPS,
                 CreatedAt = j.CreatedAt,
                 FinishedAt = j.FinishedAt,
-                IsOwner = (j.OwnedBy == userId),
+                IsOwner = (j.Participants.First(p => p.UserId == userId).Role == JourneyRole.Owner),
                 IsParticipant = (j.Participants.Any(p => p.UserId == userId)),
                 CanJoin = false
             }).ToList();
             return ServiceResult<List<JourneyDto>>.Succes(dtos);
+        }
+
+        /// <summary>
+        /// Returns all participants of a given journey, including their role (Owner, Participant, etc.).
+        /// </summary>
+        public async Task<ServiceResult<List<JourneyParticipantDto>>> GetJourneyParticipantsAsync(int journeyId, int userId)
+        {
+            Journey? journey = await db.Journeys
+                .Include(j => j.Participants)
+                    .ThenInclude(jp => jp.User)
+                .FirstOrDefaultAsync(j => j.Id == journeyId);
+
+            if (journey == null)
+                return ServiceResult<List<JourneyParticipantDto>>.Fail(ServiceResultStatus.ResourceNotFound, "Journey not found");
+
+            if (journey.Participants == null || journey.Participants.Count == 0)
+                return ServiceResult<List<JourneyParticipantDto>>.Fail(ServiceResultStatus.ResourceNotFound, "No participants found for this journey");
+
+            if (!journey.Participants.Any(p => p.UserId == userId))
+                return ServiceResult<List<JourneyParticipantDto>>.Fail(ServiceResultStatus.Unauthorized, "Access denied: You are not part of this journey");
+
+
+            List<JourneyParticipantDto> participants = journey.Participants.Select(jp => new JourneyParticipantDto
+            {
+                UserId = jp.UserId,
+                UserName = jp.User?.Username ?? "Unknown",
+                Role = jp.Role,
+                JoinedAt = jp.JoinedAt
+            }).ToList();
+
+            return ServiceResult<List<JourneyParticipantDto>>.Succes(participants);
         }
 
         /// <summary>
@@ -74,25 +99,30 @@ namespace Server.Services
 
             List<Journey> journeys = await db.Journeys
                 .Include(j => j.Participants)
+                    .ThenInclude(p => p.User)
                 .Where(j =>
-                    buddyIds.Contains(j.OwnedBy) &&
+                    j.Participants.Any(p => p.Role == JourneyRole.Owner && buddyIds.Contains(p.UserId)) &&
                     j.FinishedAt == null &&
                     !j.Participants.Any(p => p.UserId == userId))
                 .ToListAsync();
 
-            List<JourneyDto> dtos = journeys.Select(j => new JourneyDto
+            List<JourneyDto> dtos = journeys.Select(j =>
             {
-                Id = j.Id,
-                OwnedBy = j.OwnedBy,
-                StartGPS = j.StartGPS,
-                EndGPS = j.EndGPS,
-                CreatedAt = j.CreatedAt,
-                FinishedAt = j.FinishedAt,
-                IsOwner = false,
-                IsParticipant = false,
-                CanJoin = true
+                JourneyParticipants? owner = j.Participants.FirstOrDefault(p => p.Role == JourneyRole.Owner);
+                return new JourneyDto
+                {
+                    Id = j.Id,
+                    OwnerId = owner?.UserId ?? 0,
+                    OwnerName = owner?.User.Username ?? "Unknown",
+                    StartGPS = j.StartGPS,
+                    EndGPS = j.EndGPS,
+                    CreatedAt = j.CreatedAt,
+                    FinishedAt = j.FinishedAt,
+                    IsOwner = false,
+                    IsParticipant = false,
+                    CanJoin = true
+                };
             }).ToList();
-
             return ServiceResult<List<JourneyDto>>.Succes(dtos);
         }
 
@@ -109,13 +139,18 @@ namespace Server.Services
 
             Journey journey = new Journey
             {
-                Owner = user,
-                OwnedBy = user.Id,
                 StartGPS = startGPS,
                 EndGPS = endGPS,
                 CreatedAt = DateTime.UtcNow,
                 FinishedAt = null
             };
+
+            journey.Participants.Add(new JourneyParticipants
+            {
+                UserId = user.Id,
+                Role = JourneyRole.Owner,
+                JoinedAt = DateTime.UtcNow
+            });
 
             await db.Journeys.AddAsync(journey);
             await db.SaveChangesAsync();
@@ -133,7 +168,6 @@ namespace Server.Services
 
             Journey? journey = await db.Journeys
                 .Include(j => j.Participants)
-                .Include(j => j.Owner)
                 .FirstOrDefaultAsync(j => j.Id == journeyId);
 
             if (journey == null)
@@ -142,8 +176,14 @@ namespace Server.Services
             if (journey.FinishedAt != null && journey.FinishedAt != DateTime.MinValue)
                 return ServiceResult.Fail(ServiceResultStatus.InvalidOperation, "Cannot join a finished journey");
 
-            if (journey.OwnedBy == userId || journey.Participants.Any(p => p.UserId == userId))
+            if (journey.Participants.Any(p => p.UserId == userId))
                 return ServiceResult.Fail(ServiceResultStatus.InvalidOperation, "Already part of this journey");
+
+            // Find owner
+            JourneyParticipants? owner = journey.Participants.FirstOrDefault(p => p.Role == JourneyRole.Owner);
+            if (owner == null)
+                return ServiceResult.Fail(ServiceResultStatus.InvalidOperation, "Journey has no owner");
+
 
             ServiceResult<List<BuddyDto>> buddiesResult = await buddyService.GetBuddies(userId);
             if (buddiesResult.Status != ServiceResultStatus.Success || buddiesResult.Data == null)
@@ -153,13 +193,14 @@ namespace Server.Services
                 .Select(b => b.RequesterId == userId ? b.AddresseeId : b.RequesterId)
                 .ToList();
 
-            if (!buddyIds.Contains(journey.OwnedBy))
+            if (!buddyIds.Contains(owner.UserId))
                 return ServiceResult.Fail(ServiceResultStatus.Unauthorized, "You can only join journeys of your buddies");
 
             JourneyParticipants participant = new JourneyParticipants
             {
-                JourneyId = journeyId,
                 UserId = userId,
+                JourneyId = journey.Id,
+                Role = JourneyRole.Participant,
                 JoinedAt = DateTime.UtcNow
             };
 
@@ -178,20 +219,23 @@ namespace Server.Services
             if (!await db.Users.AnyAsync(u => u.Id == userId))
                 return ServiceResult.Fail(ServiceResultStatus.UserNotFound, "User not found");
 
-            Journey? journey = await db.Journeys.FindAsync(journeyId);
+            Journey? journey = await db.Journeys
+                .Include(j => j.Participants)
+                .FirstOrDefaultAsync(j => j.Id == journeyId);
             if (journey == null)
                 return ServiceResult.Fail(ServiceResultStatus.ResourceNotFound, "Journey not found");
 
-            if (journey .FinishedAt != DateTime.MinValue)
+            JourneyParticipants? participant = journey.Participants.FirstOrDefault(p => p.UserId == userId);
+            if (participant == null || participant.Role != JourneyRole.Owner)
+                return ServiceResult.Fail(ServiceResultStatus.Unauthorized, "Access denied");
+
+            if (journey.FinishedAt != DateTime.MinValue && journey.FinishedAt != null)
                 return ServiceResult.Fail(ServiceResultStatus.ValidationError, "Cannot update a finished journey");
 
-            if (journey.OwnedBy != userId)
-                return ServiceResult.Fail(ServiceResultStatus.Unauthorized, "Access denied");
-            
-            
-
-            if (!string.IsNullOrWhiteSpace(startGps)) journey.StartGPS = startGps;
-            if (!string.IsNullOrWhiteSpace(endGps)) journey.EndGPS = endGps;
+            if (!string.IsNullOrWhiteSpace(startGps)) 
+                journey.StartGPS = startGps;
+            if (!string.IsNullOrWhiteSpace(endGps)) 
+                journey.EndGPS = endGps;
 
             await db.SaveChangesAsync();
 
@@ -206,12 +250,15 @@ namespace Server.Services
             if (!await db.Users.AnyAsync(u => u.Id == userId))
                 return ServiceResult.Fail(ServiceResultStatus.UserNotFound, "User not found");
 
-            Journey? journey = await db.Journeys.FindAsync(journeyId);
+            Journey? journey = await db.Journeys
+                .Include(j => j.Participants)
+                .FirstOrDefaultAsync(j => j.Id == journeyId);
             if (journey == null)
                 return ServiceResult.Fail(ServiceResultStatus.ResourceNotFound, "Journey not found");
 
-            if (journey.OwnedBy != userId)
-                return ServiceResult.Fail(ServiceResultStatus.Unauthorized, "Access denied");
+            JourneyParticipants? participant = journey.Participants.FirstOrDefault(p => p.UserId == userId);
+            if (participant == null || participant.Role != JourneyRole.Owner)
+                return ServiceResult.Fail(ServiceResultStatus.Unauthorized, "Only the owner can finish the journey");
 
             if (journey.FinishedAt != null)
                 return ServiceResult.Fail(ServiceResultStatus.ValidationError, "Journey is already finished");
@@ -237,35 +284,30 @@ namespace Server.Services
             if (journey == null)
                 return ServiceResult.Fail(ServiceResultStatus.ResourceNotFound, "Journey not found");
 
+            JourneyParticipants? participant = journey.Participants.FirstOrDefault(p => p.UserId == userId);
+            if (participant == null)
+                return ServiceResult.Fail(ServiceResultStatus.InvalidOperation, "You are not a participant of this journey");
+
             // logic for owner leaving the journey
-            if (journey.OwnedBy == userId)
+            if (participant.Role == JourneyRole.Owner)
             {
-                if (journey.Participants.Any())
+                if (journey.Participants.Count == 0)
                 {
-                    // Transfer ownership to first participant
-                    JourneyParticipants newOwner = journey.Participants.First();
-                    journey.OwnedBy = newOwner.UserId;
-                    journey.Owner = await db.Users.FindAsync(newOwner.UserId);
-
-                    // Remove the new owner from participants since they are now the owner
-                    db.JourneyParticipants.Remove(newOwner);
-
-                    await db.SaveChangesAsync();
-                    return ServiceResult.Succes($"Ownership transferred to User {newOwner.UserId}. You have left the journey.");
-                }
-                else
-                {
-                    // No participants left, delete the journey
                     db.Journeys.Remove(journey);
                     await db.SaveChangesAsync();
                     return ServiceResult.Succes("Journey deleted as there were no participants.");
                 }
-            }
+                else
+                {
+                    JourneyParticipants? newOwner = journey.Participants.First(p => p.UserId != userId);
+                    newOwner.Role = JourneyRole.Owner;
 
-            // logic for participant leaving the journey
-            JourneyParticipants? participant = journey.Participants.FirstOrDefault(p => p.UserId == userId);
-            if (participant == null)
-                return ServiceResult.Fail(ServiceResultStatus.InvalidOperation, "You are not a participant of this journey");
+                    db.JourneyParticipants.Remove(participant);
+                    await db.SaveChangesAsync();
+
+                    return ServiceResult.Succes($"Ownership transferred to User {newOwner.UserId}. You have left the journey.");
+                }
+            }
 
             db.JourneyParticipants.Remove(participant);
             await db.SaveChangesAsync();
