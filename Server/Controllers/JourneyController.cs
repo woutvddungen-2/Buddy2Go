@@ -40,7 +40,7 @@ namespace Server.Controllers
                     return NotFound($"No journeys found: {result.Message}");
                 default:
                     logger.LogError("Unknown registration error: {Message}", result.Message);
-                    return StatusCode(500, new { message = "Unknown registration error" });
+                    return StatusCode(500, "Unknown registration error");
             }
         }
 
@@ -63,7 +63,7 @@ namespace Server.Controllers
                     return NotFound($"No journeys found: {result.Message}");
                 default:
                     logger.LogError("Error in GetBuddyJourneys for User:{user}, Message:{message}", userId, result.Message);
-                    return StatusCode(500, new { message = "Error retrieving buddy journeys" });
+                    return StatusCode(500, "Error retrieving buddy journeys");
             }
         }
 
@@ -83,10 +83,10 @@ namespace Server.Controllers
                     return NotFound($"GetJourneyParticipants, {result.Message}, JourneyId:{journeyId}");
                 case ServiceResultStatus.Unauthorized:
                     logger.LogWarning("GetBuddyJourneys, unauthorized access attempt by User:{user}, in Journey:{Journey}", userId, journeyId);
-                    return Unauthorized("Access denied.");
+                    return Forbid("Access denied.");
                 default:
                     logger.LogError("Error in GetBuddyJourneys for User:{User}, Journey:{journey}, Message:{message}",userId, journeyId, result.Message);
-                    return StatusCode(500, new { message = "Error retrieving Journeys participants" });
+                    return StatusCode(500, "Error retrieving Journeys participants");
             }
         }
 
@@ -101,21 +101,21 @@ namespace Server.Controllers
             {
                 case ServiceResultStatus.Success:
                     logger.LogInformation("User:{userId} joined Journey:{journeyId}", userId, journeyId);
-                    return Ok(new { message = result.Message });
+                    return Ok(result.Message);
 
                 case ServiceResultStatus.UserNotFound:
                 case ServiceResultStatus.ResourceNotFound:
                     logger.LogWarning("JoinJourney failed for User:{userId}, Reason:{message}", userId, result.Message);
-                    return NotFound(new { message = result.Message });
+                    return NotFound(result.Message);
 
                 case ServiceResultStatus.Unauthorized:
                 case ServiceResultStatus.InvalidOperation:
                     logger.LogWarning("JoinJourney invalid for User:{userId}, Reason:{message}", userId, result.Message);
-                    return BadRequest(new { message = result.Message });
+                    return BadRequest(result.Message);
 
                 default:
                     logger.LogError("JoinJourney unknown error for User:{userId}, Message:{message}", userId, result.Message);
-                    return StatusCode(500, new { message = "Unexpected error occurred" });
+                    return StatusCode(500, "Unexpected error occurred");
             }
         }
 
@@ -145,7 +145,7 @@ namespace Server.Controllers
                     return BadRequest($"AddJourney Parameter Error: {result.Message}");
                 default:
                     logger.LogError("Unknown registration error: {Message}", result.Message);
-                    return StatusCode(500, new { message = "Unknown registration error" });
+                    return StatusCode(500, "Unknown registration error");
             }
         }
 
@@ -177,7 +177,7 @@ namespace Server.Controllers
                         return BadRequest($"UpdateJourney Parameter Error: {result.Message}");
                     case ServiceResultStatus.Unauthorized:
                         logger.LogWarning("UpdateJourney, unauthorized attempt, User:{user}, Journey:{journey}", userId, JourneyId);
-                        return Unauthorized("Access denied.");
+                        return Forbid("Access denied.");
                 default:
                     logger.LogError("UpdateJourney, error for User:{user}, Journey:{journey}, Message:{message}", userId, JourneyId, result.Message);
                     return StatusCode(500, $"Error updating journey: {result.Message}");
@@ -201,7 +201,7 @@ namespace Server.Controllers
                     return BadRequest($"FinishJourney Parameter Error: {result.Message}");
                 case ServiceResultStatus.Unauthorized:
                     logger.LogWarning("FinishJourney, unauthorized attempt, User:{user}, Journey:{journey}", userId, JourneyId);
-                    return Unauthorized("Access denied.");
+                    return Forbid("Access denied.");
                 case ServiceResultStatus.ResourceNotFound:
                     logger.LogWarning("FinishJourney, journey not found, User:{user}, Journey:{journey}, Message:{message}", userId, JourneyId, result.Message);
                     return NotFound($"Journey not found: {result.Message}");

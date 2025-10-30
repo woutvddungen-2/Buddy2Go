@@ -32,16 +32,16 @@ namespace Server.Controllers
             {
                 case ServiceResultStatus.Success:
                     logger.LogInformation("SendBuddyRequest, successfully sent buddy request from User:{requester} to User:{addressee}", requesterId, addresseeId);
-                    return Ok(new { message = result.Message });
+                    return Ok(result.Message);
                 case ServiceResultStatus.ValidationError:
                     logger.LogWarning("SendBuddyRequest, validation error for User:{requester} to User:{addressee}, Message:{message}", requesterId, addresseeId, result.Message);
-                    return BadRequest(new { message = result.Message });
+                    return BadRequest(result.Message);
                 case ServiceResultStatus.UserNotFound:
                     logger.LogWarning("SendBuddyRequest, user not found for User:{requester} to User:{addressee}, Message:{message}", requesterId, addresseeId, result.Message);
-                    return NotFound(new { message = result.Message });
+                    return NotFound(result.Message);
                 default:
                     logger.LogError("Unknown error in SendBuddyRequest from User:{requester} to User:{addressee}, Message:{message}", requesterId, addresseeId, result.Message);
-                    return StatusCode(500, new { message = "Unknown error occurred" });
+                    return StatusCode(500, "Unknown error occurred");
             }
         }
 
@@ -54,16 +54,16 @@ namespace Server.Controllers
             {
                 case ServiceResultStatus.Success:
                     logger.LogInformation("RespondToBuddyRequest, User:{addressee} responded to buddy request from User:{requester} with Accept:{accept}", addresseeId, request.RequesterId, request.Accept);
-                    return Ok(new { message = result.Message });
+                    return Ok(result.Message);
                 case ServiceResultStatus.ResourceNotFound:
                     logger.LogWarning("RespondToBuddyRequest, buddy request not found for User:{addressee} from User:{requester}, Message:{message}", addresseeId, request.RequesterId, result.Message);
-                    return NotFound(new { message = result.Message });
+                    return NotFound(result.Message);
                 case ServiceResultStatus.ValidationError:
                     logger.LogWarning("RespondToBuddyRequest, validation error for User:{addressee} from User:{requester}, Message:{message}", addresseeId, request.RequesterId, result.Message);
-                    return BadRequest(new { message = result.Message });
+                    return BadRequest(result.Message);
                 default:
                     logger.LogError("Unknown error in RespondToBuddyRequest for User:{addressee} from User:{requester}, Message:{message}", addresseeId, request.RequesterId, result.Message);
-                    return StatusCode(500, new { message = "Unknown error occurred" });
+                    return StatusCode(500, "Unknown error occurred");
             }
         }
 
@@ -75,7 +75,7 @@ namespace Server.Controllers
             if (result.Status == ServiceResultStatus.UserNotFound)
             {
                 logger.LogWarning("GetBuddyList, failed to retrieve buddies for User:{user}, Message:{message}", userId, result.Message);
-                return StatusCode(500, new { message = "Failed to retrieve buddy list" });
+                return StatusCode(500, "Failed to retrieve buddy list");
             }
             return Ok(result.Data);
         }
@@ -88,7 +88,7 @@ namespace Server.Controllers
             if (result.Status == ServiceResultStatus.UserNotFound)
             {
                 logger.LogWarning("GetBuddyList, failed to retrieve buddies for User:{user}, Message:{message}", userId, result.Message);
-                return StatusCode(500, new { message = "Failed to retrieve buddy list" });
+                return StatusCode(500, "Failed to retrieve buddy list");
             }
             return Ok(result.Data);
         }

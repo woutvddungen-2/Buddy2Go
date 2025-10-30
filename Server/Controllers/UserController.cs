@@ -26,7 +26,7 @@ namespace Server.Controllers
             if (register == null)
             {
                 logger.LogWarning("Register request body is null");
-                return BadRequest(new { message = "Required data missing" });
+                return BadRequest("Required data missing");
             }
 
             ServiceResult result = await service.Register(register.Username, register.Password, register.Email, register.PhoneNumber);
@@ -35,15 +35,15 @@ namespace Server.Controllers
             {
                 case ServiceResultStatus.Success:
                     logger.LogInformation("User {Username} registered successfully", register.Username);
-                    return Ok(new { message = $"User {register.Username} registered successfully" });
+                    return Ok($"User {register.Username} registered successfully");
 
                 case ServiceResultStatus.ValidationError:
                     logger.LogWarning("Registration failed: {Message}", result.Message);
-                    return BadRequest(new { message = result.Message });
+                    return BadRequest(result.Message);
 
                 default:
                     logger.LogError("Unknown registration error: {Message}", result.Message);
-                    return StatusCode(500, new { message = "Unknown registration error" });
+                    return StatusCode(500, "Unknown registration error");
             }
         }
 
@@ -62,15 +62,15 @@ namespace Server.Controllers
 
                 case ServiceResultStatus.Unauthorized:
                     logger.LogWarning("Login failed for user {Username}: {Message}", login.Username, result.Message);
-                    return Unauthorized(new { message = result.Message });
+                    return Unauthorized(result.Message);
 
                 case ServiceResultStatus.ValidationError:
                     logger.LogWarning("Login validation failed for user {Username}: {Message}", login.Username, result.Message);
-                    return BadRequest(new { message = result.Message });
+                    return BadRequest(result.Message);
 
                 default:
                     logger.LogError("Unexpected login error for user {Username}: {Message}", login.Username, result.Message);
-                    return StatusCode(500, new { message = "Unexpected login error" });
+                    return StatusCode(500, "Unexpected login error");
             }
         }
 
@@ -104,11 +104,11 @@ namespace Server.Controllers
 
                 case ServiceResultStatus.UserNotFound:
                     logger.LogWarning("User not found: UserID {UserId}", userId);
-                    return NotFound(new { message = result.Message });
+                    return NotFound(result.Message);
 
                 default:
                     logger.LogError("Unexpected error retrieving user info for UserID {UserId}: {Message}", userId, result.Message);
-                    return StatusCode(500, new { message = "Unexpected error retrieving user info" });
+                    return StatusCode(500, "Unexpected error retrieving user info");
             }
         }
 
@@ -120,7 +120,7 @@ namespace Server.Controllers
             int userId = GetUserIdFromJwt();
             Response.Cookies.Delete("jwt");
             logger.LogInformation("User with User ID: {userId} logged out successfully", userId);
-            return Ok(new { message = "Logged out" });
+            return Ok("Logged out");
         }
 
         // Helper method to extract user ID from JWT
