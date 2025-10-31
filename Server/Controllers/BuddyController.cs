@@ -23,7 +23,7 @@ namespace Server.Controllers
         }
 
 
-        [HttpPost("send/{addresseeId}")]
+        [HttpPost("Send/{addresseeId}")]
         public async Task<IActionResult> SendBuddyRequest(int addresseeId)
         {
             int requesterId = GetUserIdFromJwt();
@@ -45,7 +45,7 @@ namespace Server.Controllers
             }
         }
 
-        [HttpPost("respond")]
+        [HttpPost("Respond")]
         public async Task<IActionResult> RespondToBuddyRequest([FromBody] BuddyRequestResponse request)
         {
             int addresseeId = GetUserIdFromJwt();
@@ -67,7 +67,7 @@ namespace Server.Controllers
             }
         }
 
-        [HttpGet("list")]
+        [HttpGet("List")]
         public async Task<IActionResult> GetBuddyList()
         {
             int userId = GetUserIdFromJwt();

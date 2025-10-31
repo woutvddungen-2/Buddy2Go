@@ -20,7 +20,7 @@ namespace Server.Controllers
             logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<UserController>();
         }
 
-        [HttpPost("register")]
+        [HttpPost("Register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto register)
         {
             if (register == null)
@@ -48,7 +48,7 @@ namespace Server.Controllers
         }
 
 
-        [HttpPost("login")]
+        [HttpPost("Login")]
         public async Task<IActionResult> Login([FromBody] LoginDto login)
         {
             ServiceResult<string> result = await service.Login(login.Username, login.Password);
@@ -75,7 +75,7 @@ namespace Server.Controllers
         }
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        [HttpGet("verify")]
+        [HttpGet("Verify")]
         public IActionResult Verify()
         {
             string username = User.Identity?.Name ?? "Unknown";
@@ -114,7 +114,7 @@ namespace Server.Controllers
 
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        [HttpPost("logout")]
+        [HttpPost("Logout")]
         public IActionResult Logout()
         {
             int userId = GetUserIdFromJwt();
