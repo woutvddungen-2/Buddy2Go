@@ -1,0 +1,37 @@
+﻿@namespace Client.Layout
+@inject Client.Services.UserService LoginService
+
+
+<div class="bottom-nav">
+    <button class="nav-button" @onclick="@(() => NavigateTo("/journeys"))">Journeys</button>
+    <button class="nav-button" @onclick="@(() => NavigateTo("/buddys"))">Buddys</button>
+    <button class="nav-button" @onclick="@(() => NavigateTo("/dangerous-places"))">Dangerous <br /> Places</button>
+    <button class="nav-button" @onclick="@(() => NavigateTo("/settings"))">Settings</button>
+    <button class="nav-button logout-button" @onclick="Logout">Logout</button>
+</div>
+
+@code {
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ServiceResult? result = await LoginService.IsLoggedInAsync();
+        if (!result.IsSuccess)
+        {
+            Navigation.NavigateTo("/");
+        }
+    }
+
+    private void NavigateTo(string url)
+    {
+        Navigation.NavigateTo(url);
+    }
+
+    private async Task Logout()
+    {
+        ServiceResult? result = await LoginService.LogoutAsync();
+
+        if (result.IsSuccess)
+            Navigation.NavigateTo("/");
+    }
+}

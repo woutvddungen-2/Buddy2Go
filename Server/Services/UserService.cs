@@ -8,6 +8,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Server.Services
 {
@@ -88,6 +89,36 @@ namespace Server.Services
             User? user = await db.Users.FindAsync(id);
             if (user == null)
                 return ServiceResult<UserDto>.Fail(ServiceResultStatus.UserNotFound, "User not found");
+
+            return ServiceResult<UserDto>.Succes(new UserDto
+            {
+                Id = user.Id,
+                Username = user.Username,
+                Email = user.Email,
+                PhoneNumber = user.Phonenumber,
+                CreatedAt = user.CreatedAt
+            });
+        }
+
+        public async Task<ServiceResult<UserDto>> FindUserbyPhone(string number)
+        {
+            //todo: add more robust check for correct number
+            if (string.IsNullOrWhiteSpace(number))
+                return ServiceResult<UserDto>.Fail(ServiceResultStatus.ValidationError, "phonenumber is required");
+
+            string digitsOnly = new string (number.Where(char.IsDigit).ToArray());
+            if (digitsOnly.Length < 8)
+                return ServiceResult<UserDto>.Fail(ServiceResultStatus.ValidationError, "phonenumber is not correct");
+
+            string last8 = digitsOnly.Substring(digitsOnly.Length - 8);
+
+            User? user = await db.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u =>
+                    EF.Functions.Like(u.Phonenumber, "%" + last8));
+
+            if (user == null)
+                return ServiceResult<UserDto>.Fail(ServiceResultStatus.UserNotFound, "Find not succesful");
 
             return ServiceResult<UserDto>.Succes(new UserDto
             {

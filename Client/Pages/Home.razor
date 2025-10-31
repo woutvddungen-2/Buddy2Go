@@ -1,8 +1,7 @@
 ﻿@page "/"
-@inject Client.Services.LoginService LoginService
+@inject Client.Services.UserService LoginService
 @inject NavigationManager Navigation
 @using System.Net
-
 
 <h3 class="text-xl font-semibold mb-4">Login</h3>
 
@@ -25,7 +24,10 @@ else
         </div>
 
         <button type="submit">Login</button>
-
+        <button type="button" @onclick="LoginAlice">Fast Login User: Alice</button>
+        <button type="button" @onclick="LoginBob">Fast Login User: Bob</button>
+        <button type="button" @onclick="LoginDiana">Fast Login User: Diana</button>
+        <button type="button" @onclick="LoginJoseph">Fast Login User: Joseph</button>
         <p class="mt-3 text-sm">
             Don't have an account? <NavLink class="text-blue-600 underline" href="/register">Register here</NavLink>
         </p>
@@ -49,9 +51,35 @@ else
         ServiceResult? result = await LoginService.IsLoggedInAsync();
         if (result.IsSuccess)
         {
-            Navigation.NavigateTo("/Main");
+            Navigation.NavigateTo("/Journeys");
         }
     }
+    private async Task LoginAlice()
+    {
+        loginModel.Username = "Alice";
+        loginModel.Password = "Password123!";
+        await HandleLogin();
+    }
+    private async Task LoginBob()
+    {
+        loginModel.Username = "bob";
+        loginModel.Password = "Password123!";
+        await HandleLogin();
+    }
+    private async Task LoginDiana()
+    {
+        loginModel.Username = "Diana";
+        loginModel.Password = "Password123!";
+        await HandleLogin();
+    }
+    private async Task LoginJoseph()
+    {
+        loginModel.Username = "Joseph";
+        loginModel.Password = "Password123!";
+        await HandleLogin();
+    }
+
+
 
     private async Task HandleLogin()
     {
@@ -61,7 +89,7 @@ else
         ServiceResult? result = await LoginService.LoginAsync(loginModel.Username, loginModel.Password);
 
         if (result.IsSuccess)
-            Navigation.NavigateTo("/Main");
+            Navigation.NavigateTo("/Journeys");
         else
             errorMessage = result.Message ?? "Login failed. Please try again.";
 

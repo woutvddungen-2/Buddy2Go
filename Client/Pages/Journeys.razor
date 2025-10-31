@@ -1,0 +1,260 @@
+﻿@page "/journeys"
+@inject JourneyService JourneyService
+@inject UserService LoginService
+
+<h3 class="mb-3">My Journeys</h3>
+
+@if (isLoading)
+{
+    <p>Loading...</p>
+}
+else if (isCreateJourney)
+{
+    @if (errorMessage != null)
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+    <h5>New Journey:</h5>
+    <EditForm Model="@journeyCreateDto" OnValidSubmit="HandleCreate">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label class="block mb-1">Start GPS</label>
+            <InputText @bind-Value="journeyCreateDto.StartGPS" class="border rounded px-2 py-1 w-full" />
+        </div>
+
+        <div class="mb-3">
+            <label class="block mb-1">End GPS</label>
+            <InputText @bind-Value="journeyCreateDto.EndGPS" class="border rounded px-2 py-1 w-full" />
+        </div>
+
+        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Register</button>
+        <button class="btn btn-sm btn-secondary" @onclick="Cancel">Cancel</button>
+    </EditForm>
+}
+else 
+{
+    <div class="mb-4">
+        <button class="btn btn-primary me-2" @onclick="LoadJourneys">Refresh</button>
+        <button class="btn btn-success" @onclick="StartCreate">Add Journey</button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <p class="text-green-600 mt-3">@successMessage</p>
+    }
+    @if (currentUserId > 0)
+    {
+        <h5>Your Owned / Joined Journeys</h5>
+        @if (myJourneys.Count == 0)
+        {
+            <p>No journeys found.</p>
+        }
+        else
+        {
+            <ul class="list-group mb-4">
+                @foreach (JourneyDto j in myJourneys)
+                {
+                    JourneyParticipantDto? currentUser = j.Participants.FirstOrDefault(p => p.UserId == currentUserId);
+                    bool isOwner = currentUser?.Role == JourneyRole.Owner;
+                    bool isFinished = j.FinishedAt != null;
+
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>@j.StartGPS → @j.EndGPS</strong><br />
+                            <small>Created: @j.CreatedAt.ToShortDateString()</small>
+                            <small>Owner: @j.OwnerName</small><br />
+                            <small>Participants: @string.Join(", ", j.Participants.Where(p => p.UserId != currentUserId && p.Role != JourneyRole.Owner).Select(p => p.UserName))</small><br />
+                            @if (isFinished)
+                            {
+                                <small>Journey is Finished!</small><br />
+                            }
+                        </div>
+                        <div>
+                            <button class="btn btn-warning me-1" @onclick="() => LeaveJourney(j.Id)">Leave</button>
+                            @if (editingJourneyId == j.Id)
+                            {
+                                <br />
+                                <text>Start Gps: </text><input type="text" class="form-control form-control-sm mb-1" style="width:120px; display:inline-block" @bind="editStartGPS" /> <br />
+                                <text>End Gps:   </text><input type="text" class="form-control form-control-sm mb-1" style="width:120px; display:inline-block" @bind="editEndGPS" />
+
+                                <br />
+
+                                <button class="btn btn-sm btn-primary me-1" @onclick="SaveEdit">Save</button>
+                                <button class="btn btn-sm btn-secondary" @onclick="Cancel">Cancel</button>
+                            }
+                            else if (isOwner)
+                            {                                
+                                if (!isFinished)
+                                {
+                                    <button class="btn btn-warning" @onclick="() => StartEditingJourney(j)">Edit</button>
+                                    <button class="btn btn-warning" @onclick="() => FinishJourney(j.Id)">Finish Journey</button>
+                                }                       
+                            }
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+    }
+    <h5>Buddies’ Journeys You Can Join</h5>
+    @if (buddyJourneys.Count == 0)
+    {
+        <p>No open buddy journeys available.</p>
+    }
+    else
+    {
+        <ul class="list-group">
+            @foreach (var j in buddyJourneys)
+            {
+                JourneyParticipantDto? currentUser = j.Participants.FirstOrDefault(p => p.UserId == currentUserId);
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>@j.StartGPS → @j.EndGPS</strong><br />
+                        <small>Created: @j.CreatedAt.ToShortDateString()</small>
+                        <small>Owner: @j.OwnerName</small><br />
+                        <small>Participants: @string.Join(", ", j.Participants.Where(p => p.UserId != currentUserId && p.Role != JourneyRole.Owner).Select(p => p.UserName))</small>
+                    </div>
+                    <button class="btn btn-sm btn-outline-success" @onclick="() => JoinBuddyJourney(j.Id)">Join</button>
+                </li>
+            }
+        </ul>
+    }    
+}
+<BottomNav />
+
+
+@code {
+    //for new Journey:
+    private bool isCreateJourney = false;
+    private JourneyCreateDto journeyCreateDto = new();
+
+    //for displaying Journeys
+    private int currentUserId = -1;
+    private List<JourneyDto> myJourneys = new();
+    private List<JourneyDto> buddyJourneys = new();
+    private bool isLoading = true;
+    private string? errorMessage;
+    private string? successMessage;
+
+    //variables for editingdata
+    private int editingJourneyId = -1;
+    private string editStartGPS = string.Empty;
+    private string editEndGPS = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentUserId = await getUserId();
+        await LoadJourneys();
+    }
+
+    private async Task LoadJourneys()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        var myResult = await JourneyService.GetMyJourneysAsync();
+        var buddyResult = await JourneyService.GetBuddyJourneysAsync();
+
+        if (myResult.Data != null)
+            myJourneys = myResult.Data;
+        if (buddyResult.Data != null)
+            buddyJourneys = buddyResult.Data;
+
+        if (myResult.Message != null && myJourneys.Count == 0)
+            errorMessage = myResult.Message;
+        else if (buddyResult.Message != null && buddyJourneys.Count == 0)
+            errorMessage = buddyResult.Message;
+
+        isLoading = false;
+    }
+
+    private async Task<int> getUserId()
+    {
+        ServiceResult<int> result = await LoginService.GetUserId();
+        if (result.IsSuccess)
+            return result.Data;
+        errorMessage = "Something went wrong, user not found";
+        return -1;
+    }
+
+    private async Task JoinBuddyJourney(int journeyId)
+    {
+        var result = await JourneyService.JoinJourneyAsync(journeyId);
+        if (result.Message != null)
+            Console.WriteLine(result.Message);
+
+        await LoadJourneys(); // Refresh lists
+    }
+    private async Task LeaveJourney(int journeyId)
+    {
+        var result = await JourneyService.LeaveJourneyAsync(journeyId);
+        if (result.Message != null)
+            Console.WriteLine(result.Message);
+
+        await OnInitializedAsync(); // reload
+    }
+
+    private async Task FinishJourney(int journeyId)
+    {
+        var result = await JourneyService.FinishJourney(journeyId);
+        if (result.Message != null)
+            Console.WriteLine(result.Message);
+
+        await OnInitializedAsync(); // reload
+
+    }
+
+    private void StartEditingJourney(JourneyDto journey)
+    {
+        editingJourneyId = journey.Id;
+        editStartGPS = journey.StartGPS;
+        editEndGPS = journey.EndGPS;
+    }
+
+    private void Cancel()
+    {
+        editingJourneyId = -1;
+        isCreateJourney = false;
+    }
+
+    private async Task SaveEdit()
+    {
+        if (editingJourneyId > 0)
+        {
+            var result = await JourneyService.UpdateJourneyAsync(editingJourneyId, editStartGPS, editEndGPS);
+            Console.WriteLine(result.Message ?? "Updated");
+            editingJourneyId = -1;
+            await OnInitializedAsync(); // reload list
+        }
+    }
+
+    private void StartCreate()
+    {
+        isCreateJourney = true;
+    }
+
+    private async Task HandleCreate()
+    {
+        var result = await JourneyService.AddJourneyAsync(journeyCreateDto);
+        if (result.IsSuccess)
+        {
+            errorMessage = "";
+            successMessage = "Journey Succesfully Added!";
+            isCreateJourney = false;
+        }
+
+        else
+        {
+            successMessage = "";
+            errorMessage = "Error adding Journey";
+            isCreateJourney = false;
+        }
+        await OnInitializedAsync();
+    }
+}

@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Server.Common;
+using Server.Models;
 using Server.Services;
 using Shared.Models.Dtos;
 using System.Security.Claims;
@@ -121,6 +123,26 @@ namespace Server.Controllers
             Response.Cookies.Delete("jwt");
             logger.LogInformation("User with User ID: {userId} logged out successfully", userId);
             return Ok("Logged out");
+        }
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpGet("FindbyPhonenumber/{number}")]
+        public async Task<IActionResult> FindbyPhoneNumber(string number)
+        {
+            ServiceResult<UserDto> result = await service.FindUserbyPhone(number);
+
+            switch (result.Status)
+            {
+                case ServiceResultStatus.Success:
+                    logger.LogInformation("user found the following User: {FoundUserId}", result.Data?.Id);
+                    return Ok(result.Data);
+                case ServiceResultStatus.UserNotFound:
+                    logger.LogInformation("No user found with the following phonenumber: {Phonenumber}", number);
+                    return NotFound(result.Message);
+                default:
+                    logger.LogError("FindbyPhoneNumber, error: {message}, Number: {PhoneNumber}", result.Message, number);
+                    return StatusCode(500, "Unexpected error retrieving user info");
+            }
         }
 
         // Helper method to extract user ID from JWT

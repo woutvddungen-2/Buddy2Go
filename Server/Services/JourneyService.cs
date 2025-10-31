@@ -153,7 +153,9 @@ namespace Server.Services
             {
                 StartGPS = startGPS,
                 EndGPS = endGPS,
-                FinishedAt = null
+                FinishedAt = null,
+                Participants = [],
+                Messages = []
             };
 
             journey.Participants.Add(new JourneyParticipants
@@ -305,7 +307,7 @@ namespace Server.Services
                 {
                     db.Journeys.Remove(journey);
                     await db.SaveChangesAsync();
-                    return ServiceResult.Succes("Journey deleted as there were no participants.");
+                    return ServiceResult.Succes($"Journey {journeyId} deleted as there were no participants.");
                 }
                 else
                 {
@@ -315,14 +317,14 @@ namespace Server.Services
                     db.JourneyParticipants.Remove(participant);
                     await db.SaveChangesAsync();
 
-                    return ServiceResult.Succes($"Ownership transferred to User {newOwner.UserId}. You have left the journey.");
+                    return ServiceResult.Succes($"Ownership transferred from User {userId} to User {newOwner.UserId}. {userId} has left the journey: {journeyId}.");
                 }
             }
 
             db.JourneyParticipants.Remove(participant);
             await db.SaveChangesAsync();
 
-            return ServiceResult.Succes("Successfully left the journey");
+            return ServiceResult.Succes($"User:{userId} left Journey:{journeyId}");
         }
     }
 }

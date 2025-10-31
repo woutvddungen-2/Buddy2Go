@@ -223,7 +223,7 @@ namespace Server.Controllers
             switch (result.Status)
             {
                 case ServiceResultStatus.Success:
-                    logger.LogInformation("LeaveJourney, User:{userId} left Journey:{journeyId}", userId, JourneyId);
+                    logger.LogInformation("LeaveJourney, {message}", result.Message);
                     return Ok(result.Message);
                 case ServiceResultStatus.UserNotFound:
                     logger.LogWarning("LeaveJourney failed, User:{userId} not found, Message:{message}", userId, result.Message);

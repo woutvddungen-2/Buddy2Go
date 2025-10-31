@@ -5,11 +5,11 @@ using System.Net.Http.Json;
 
 namespace Client.Services
 {
-    public class LoginService
+    public class UserService
     {
         private readonly HttpClient httpClient;
 
-        public LoginService(HttpClient httpClient)
+        public UserService(HttpClient httpClient)
         {
             this.httpClient = httpClient;
         }
@@ -41,11 +41,37 @@ namespace Client.Services
             return ServiceResult.Fail(await response.Content.ReadAsStringAsync());
         }
 
+        public async Task<ServiceResult<int>> GetUserId()
+        {
+            try
+            {
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, "api/User/Verify");
+                request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
+                HttpResponseMessage? response = await httpClient.SendAsync(request);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return ServiceResult<int>.Fail("Failed to parse user data.");
+                }
+                UserDto? data = await response.Content.ReadFromJsonAsync<UserDto>();
+                if (data == null)
+                {
+                    return ServiceResult<int>.Fail("Failed to parse user data.");
+                }
+
+                return ServiceResult<int>.Succes(data.Id);
+            }
+            catch
+            {
+                return ServiceResult<int>.Fail("Failed to parse user data.");
+            }
+        }
+
         public async Task<ServiceResult> IsLoggedInAsync()
         {
             try
             {
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, "api/User/verify");
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, "api/User/Verify");
                 request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
 
                 HttpResponseMessage? response = await httpClient.SendAsync(request);
@@ -63,7 +89,7 @@ namespace Client.Services
         {
             try
             {
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, "api/User/verify");
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, "api/User/GetUserInfo");
                 request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
                 HttpResponseMessage? response = await httpClient.SendAsync(request);
 
@@ -93,5 +119,44 @@ namespace Client.Services
                 return ServiceResult.Succes();
             return ServiceResult.Fail(await response.Content.ReadAsStringAsync());
         }
+
+        public async Task<ServiceResult<List<BuddyDto>>> FindUserbyPhone(string Phonenumber)
+        {
+            try
+            {
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, "api/User/FindbyPhonenumber");
+                request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
+                HttpResponseMessage? response = await httpClient.SendAsync(request);
+
+                if (!response.IsSuccessStatusCode)
+                    return ServiceResult<List<BuddyDto>>.Fail(await response.Content.ReadAsStringAsync());
+
+                List<BuddyDto>? data = await response.Content.ReadFromJsonAsync<List<BuddyDto>>();
+                return ServiceResult<List<BuddyDto>>.Succes(data ?? new());
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<List<BuddyDto>>.Fail(ex.Message);
+            }
+        }
+        //public async Task<ServiceResult<List<BuddyDto>>> FindUserbyEmail(string Email)
+        //{
+        //    try
+        //    {
+        //        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, $"api/Buddy/Pending");
+        //        request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
+        //        HttpResponseMessage? response = await httpClient.SendAsync(request);
+
+        //        if (!response.IsSuccessStatusCode)
+        //            return ServiceResult<List<BuddyDto>>.Fail(await response.Content.ReadAsStringAsync());
+
+        //        List<BuddyDto>? data = await response.Content.ReadFromJsonAsync<List<BuddyDto>>();
+        //        return ServiceResult<List<BuddyDto>>.Succes(data ?? new());
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return ServiceResult<List<BuddyDto>>.Fail(ex.Message);
+        //    }
+        //}
     }
 }
