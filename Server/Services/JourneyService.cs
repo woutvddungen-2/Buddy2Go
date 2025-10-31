@@ -34,8 +34,53 @@ namespace Server.Services
                 .Where(j => j.Participants.Any(p => p.UserId == userId))
                 .ToListAsync();
 
-            if (!journeys.Any())
-                return ServiceResult<List<JourneyDto>>.Fail(ServiceResultStatus.ResourceNotFound, "No journeys found for this user");
+            List<JourneyDto> dtos = journeys.Select(j => new JourneyDto
+            {
+                Id = j.Id,
+                OwnerId = j.Participants.First(p => p.Role == JourneyRole.Owner).UserId,
+                OwnerName = j.Participants.First(p => p.Role == JourneyRole.Owner).User.Username,
+                StartGPS = j.StartGPS,
+                EndGPS = j.EndGPS,
+                CreatedAt = j.CreatedAt,
+                FinishedAt = j.FinishedAt,
+                //IsOwner = j.Participants.First(p => p.UserId == userId).Role == JourneyRole.Owner,
+                //IsParticipant = j.Participants.Any(p => p.UserId == userId),
+                //CanJoin = false,
+                Participants = j.Participants
+                .Select(p => new JourneyParticipantDto
+                {
+                    UserId = p.UserId,
+                    UserName = p.User?.Username ?? "Unknown",
+                    Role = p.Role,
+                    JoinedAt = p.JoinedAt
+                })
+                .ToList()
+            }).ToList();
+
+            return ServiceResult<List<JourneyDto>>.Succes(dtos);
+        }
+
+        /// <summary>
+        /// Retrieves all open journeys created by the user's buddies that the user is not already part of.
+        /// </summary>
+        public async Task<ServiceResult<List<JourneyDto>>> GetBuddyJourneysAsync(int userId)
+        {
+            if (!await db.Users.AnyAsync(u => u.Id == userId))
+                return ServiceResult<List<JourneyDto>>.Fail(ServiceResultStatus.UserNotFound, "User not found");
+
+            List<int> buddyIds = await db.Buddys
+                .Where(b => (b.RequesterId == userId || b.AddresseeId == userId) && b.Status == RequestStatus.Accepted)
+                .Select(b => b.RequesterId == userId ? b.AddresseeId : b.RequesterId)
+                .ToListAsync();
+
+            List<Journey> journeys = await db.Journeys
+                .Include(j => j.Participants)
+                    .ThenInclude(p => p.User)
+                .Where(j =>
+                    j.Participants.Any(p => p.Role == JourneyRole.Owner && buddyIds.Contains(p.UserId)) &&
+                    j.FinishedAt == null &&
+                    !j.Participants.Any(p => p.UserId == userId))
+                .ToListAsync();
 
             List<JourneyDto> dtos = journeys.Select(j => new JourneyDto
             {
@@ -46,9 +91,18 @@ namespace Server.Services
                 EndGPS = j.EndGPS,
                 CreatedAt = j.CreatedAt,
                 FinishedAt = j.FinishedAt,
-                IsOwner = (j.Participants.First(p => p.UserId == userId).Role == JourneyRole.Owner),
-                IsParticipant = (j.Participants.Any(p => p.UserId == userId)),
-                CanJoin = false
+                //IsOwner = j.Participants.First(p => p.UserId == userId).Role == JourneyRole.Owner,
+                //IsParticipant = j.Participants.Any(p => p.UserId == userId),
+                //CanJoin = false,
+                Participants = j.Participants
+                .Select(p => new JourneyParticipantDto
+                {
+                    UserId = p.UserId,
+                    UserName = p.User?.Username ?? "Unknown",
+                    Role = p.Role,
+                    JoinedAt = p.JoinedAt
+                })
+                .ToList()
             }).ToList();
             return ServiceResult<List<JourneyDto>>.Succes(dtos);
         }
@@ -85,48 +139,6 @@ namespace Server.Services
         }
 
         /// <summary>
-        /// Retrieves all open journeys created by the user's buddies that the user is not already part of.
-        /// </summary>
-        public async Task<ServiceResult<List<JourneyDto>>> GetBuddyJourneysAsync(int userId)
-        {
-            if (!await db.Users.AnyAsync(u => u.Id == userId))
-                return ServiceResult<List<JourneyDto>>.Fail(ServiceResultStatus.UserNotFound, "User not found");
-
-            List<int> buddyIds = await db.Buddys
-                .Where(b => (b.RequesterId == userId || b.AddresseeId == userId) && b.Status == RequestStatus.Accepted)
-                .Select(b => b.RequesterId == userId ? b.AddresseeId : b.RequesterId)
-                .ToListAsync();
-
-            List<Journey> journeys = await db.Journeys
-                .Include(j => j.Participants)
-                    .ThenInclude(p => p.User)
-                .Where(j =>
-                    j.Participants.Any(p => p.Role == JourneyRole.Owner && buddyIds.Contains(p.UserId)) &&
-                    j.FinishedAt == null &&
-                    !j.Participants.Any(p => p.UserId == userId))
-                .ToListAsync();
-
-            List<JourneyDto> dtos = journeys.Select(j =>
-            {
-                JourneyParticipants? owner = j.Participants.FirstOrDefault(p => p.Role == JourneyRole.Owner);
-                return new JourneyDto
-                {
-                    Id = j.Id,
-                    OwnerId = owner?.UserId ?? 0,
-                    OwnerName = owner?.User.Username ?? "Unknown",
-                    StartGPS = j.StartGPS,
-                    EndGPS = j.EndGPS,
-                    CreatedAt = j.CreatedAt,
-                    FinishedAt = j.FinishedAt,
-                    IsOwner = false,
-                    IsParticipant = false,
-                    CanJoin = true
-                };
-            }).ToList();
-            return ServiceResult<List<JourneyDto>>.Succes(dtos);
-        }
-
-        /// <summary>
         /// Creates a new journey for a user.
         /// </summary>
         public async Task<ServiceResult> AddJourneyAsync(int userId, string startGPS, string endGPS)
@@ -141,7 +153,6 @@ namespace Server.Services
             {
                 StartGPS = startGPS,
                 EndGPS = endGPS,
-                CreatedAt = DateTime.UtcNow,
                 FinishedAt = null
             };
 
@@ -200,8 +211,7 @@ namespace Server.Services
             {
                 UserId = userId,
                 JourneyId = journey.Id,
-                Role = JourneyRole.Participant,
-                JoinedAt = DateTime.UtcNow
+                Role = JourneyRole.Participant
             };
 
             db.JourneyParticipants.Add(participant);
@@ -291,7 +301,7 @@ namespace Server.Services
             // logic for owner leaving the journey
             if (participant.Role == JourneyRole.Owner)
             {
-                if (journey.Participants.Count == 0)
+                if (journey.Participants.Count <= 1)
                 {
                     db.Journeys.Remove(journey);
                     await db.SaveChangesAsync();

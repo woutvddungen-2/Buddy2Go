@@ -9,9 +9,7 @@
         public string EndGPS { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public DateTime? FinishedAt { get; set; } = null;
-        public bool IsOwner { get; set; }
-        public bool IsParticipant { get; set; }
-        public bool CanJoin { get; set; }
+        public List<JourneyParticipantDto> Participants { get; set; } = new List<JourneyParticipantDto>();
     }
 
 
