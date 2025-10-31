@@ -77,7 +77,7 @@ namespace Server.Services
                 .Include(j => j.Participants)
                     .ThenInclude(p => p.User)
                 .Where(j =>
-                    j.Participants.Any(p => p.Role == JourneyRole.Owner && buddyIds.Contains(p.UserId)) &&
+                    j.Participants.Any(p => /*p.Role == JourneyRole.Owner && */ buddyIds.Contains(p.UserId)) &&
                     j.FinishedAt == null &&
                     !j.Participants.Any(p => p.UserId == userId))
                 .ToListAsync();
