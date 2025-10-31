@@ -5,6 +5,7 @@ using Microsoft.OpenApi.Models;
 using Server.Helpers;
 using Server.Services;
 using System.Text;
+using Server.Data;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -139,6 +140,11 @@ DbConnectHelper.AddDatabase(builder.Services, builder.Configuration.GetSection("
 
 // -------------------- Build App --------------------
 WebApplication? app = builder.Build();
+
+// -------------------- Seed Database -----------------
+using IServiceScope scope = app.Services.CreateScope();
+AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+await DbInitializer.ResetDatabaseAsync(db);
 
 // -------------------- Logging --------------------
 ILogger logger = app.Services.GetRequiredService<ILogger<Program>>();

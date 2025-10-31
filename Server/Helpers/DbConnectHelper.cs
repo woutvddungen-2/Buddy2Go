@@ -5,6 +5,12 @@ namespace Server.Helpers
 {
     public static class DbConnectHelper
     {
+        /// <summary>
+        /// Adds the database context using MySQL configuration from appsettings.
+        /// </summary>
+        /// <param name="services"></param>
+        /// <param name="config"></param>
+        /// <exception cref="Exception"></exception>
         public static void AddDatabase(IServiceCollection services, IConfigurationSection config)
         {
             string server = config["Ip"] ?? "localhost";
@@ -25,6 +31,13 @@ namespace Server.Helpers
                 throw new Exception("Database configuration is missing or incomplete.");
             }
         }
+
+        /// <summary>
+        /// Tests the database connection synchronously.
+        /// </summary>
+        /// <param name="serviceProvider"></param>
+        /// <param name="exception"></param>
+        /// <returns></returns>
         public static bool TestDatabaseConnection(IServiceProvider serviceProvider, out Exception? exception)
         {
             using IServiceScope scope = serviceProvider.CreateScope();
