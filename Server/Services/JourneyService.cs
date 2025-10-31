@@ -206,8 +206,9 @@ namespace Server.Services
                 .Select(b => b.RequesterId == userId ? b.AddresseeId : b.RequesterId)
                 .ToList();
 
-            if (!buddyIds.Contains(owner.UserId))
-                return ServiceResult.Fail(ServiceResultStatus.Unauthorized, "You can only join journeys of your buddies");
+            // Check if at least one buddy is already in the journey
+            if (!journey.Participants.Any(p => buddyIds.Contains(p.UserId)))
+                return ServiceResult.Fail(ServiceResultStatus.Unauthorized, "You can only join journeys where a buddy is already participating");
 
             JourneyParticipants participant = new JourneyParticipants
             {
