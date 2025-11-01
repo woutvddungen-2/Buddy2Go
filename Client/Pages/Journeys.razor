@@ -76,6 +76,7 @@ else
                             }
                         </div>
                         <div>
+                            <button class="btn btn-warning" @onclick="() => ViewMessages(j.Id)">Messages, Coming Soon!!</button>
                             <button class="btn btn-warning me-1" @onclick="() => LeaveJourney(j.Id)">Leave</button>
                             @if (editingJourneyId == j.Id)
                             {
@@ -233,7 +234,10 @@ else
             await OnInitializedAsync(); // reload list
         }
     }
-
+    private void ViewMessages(int journeyId)
+    {
+        Console.WriteLine("View Messages Called for Journey {Journey}", journeyId);
+    }
     private void StartCreate()
     {
         isCreateJourney = true;
