@@ -30,7 +30,7 @@ namespace Server.Controllers
             switch (result.Status)
             {
                 case ServiceResultStatus.Success:
-                    logger.LogInformation("GetJourneys, successfully retrieved journeys for User:{user}", userId);
+                    logger.LogDebug("GetJourneys, successfully retrieved journeys for User:{user}", userId);
                     return Ok(result.Data);
                 case ServiceResultStatus.UserNotFound:
                     logger.LogWarning("GetJourneys, user not found, User:{user}, Message:{message}", userId, result.Message);
@@ -53,7 +53,7 @@ namespace Server.Controllers
             switch (result.Status)
             {
                 case ServiceResultStatus.Success:
-                    logger.LogInformation("GetBuddyJourneys, successfully retrieved for User:{user}", userId);
+                    logger.LogDebug("GetBuddyJourneys, successfully retrieved for User:{user}", userId);
                     return Ok(result.Data);
                 case ServiceResultStatus.UserNotFound:
                     logger.LogWarning("GetBuddyJourneys, user not found: {user}", userId);
@@ -76,7 +76,7 @@ namespace Server.Controllers
             switch (result.Status)
             {
                 case ServiceResultStatus.Success:
-                    logger.LogInformation("GetJourneyParticipants,successfully retrieved for User:{user}, journeyId:{journey}", userId, journeyId);
+                    logger.LogDebug("GetJourneyParticipants,successfully retrieved for User:{user}, journeyId:{journey}", userId, journeyId);
                     return Ok(result.Data);
                 case ServiceResultStatus.ResourceNotFound:
                     logger.LogWarning("GetJourneyParticipants, {message}, User:{User} JourneyId:{journey}", result.Message, userId, journeyId);

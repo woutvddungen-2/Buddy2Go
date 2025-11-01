@@ -2,8 +2,8 @@
 {
     public class BuddyDto
     {
-        public int RequesterId { get; set; }
-        public int AddresseeId { get; set; }
+        public UserDto Requester { get; set; } = new UserDto();
+        public UserDto Addressee { get; set; } = new UserDto();
         public RequestStatus Status { get; set; } = RequestStatus.Pending;
         public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
     }

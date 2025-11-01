@@ -27,9 +27,8 @@ namespace Server.Services
             if (!requesterExists || !addresseeExists)
                 return ServiceResult.Fail(ServiceResultStatus.UserNotFound, "User not found");
 
-            Buddy? existingBuddy = await db.Buddys.FirstOrDefaultAsync(b =>
-                (b.RequesterId == requesterId && b.AddresseeId == addresseeId) ||
-                (b.RequesterId == addresseeId && b.AddresseeId == requesterId));
+            Buddy? existingBuddy = await db.Buddys
+                .FirstOrDefaultAsync(b => (b.RequesterId == requesterId && b.AddresseeId == addresseeId) || (b.RequesterId == addresseeId && b.AddresseeId == requesterId));
 
             if (existingBuddy != null)
             {
@@ -66,9 +65,12 @@ namespace Server.Services
             return ServiceResult.Succes("Buddy request sent");
         }
 
-        public async Task<ServiceResult> RespondToBuddyRequest(int requesterId, int addresseeId, bool accept)
+        public async Task<ServiceResult> RespondToBuddyRequest(int requesterId, int addresseeId, RequestStatus status)
         {
-            Buddy? buddy = await db.Buddys.FirstOrDefaultAsync(b =>
+            if (status == RequestStatus.Pending)
+                return ServiceResult.Fail(ServiceResultStatus.ValidationError, "Status cannot be changed to pending");
+
+                Buddy? buddy = await db.Buddys.FirstOrDefaultAsync(b =>
                 b.RequesterId == requesterId && b.AddresseeId == addresseeId);
 
             if (buddy == null)
@@ -76,50 +78,131 @@ namespace Server.Services
             if (buddy.Status != RequestStatus.Pending)
                 return ServiceResult.Fail(ServiceResultStatus.ValidationError, "Buddy request already responded to");
 
-            buddy.Status = accept ? RequestStatus.Accepted : RequestStatus.Rejected;
+            buddy.Status = status;
             await db.SaveChangesAsync();
 
-            return ServiceResult.Succes($"Buddy request {(accept ? "accepted" : "rejected")}");
+            return ServiceResult.Succes($"Buddy request {status}");
         }
 
         public async Task<ServiceResult<List<BuddyDto>>> GetBuddies(int userId)
         {
-            bool userIdExists = await db.Users.AnyAsync(u => u.Id == userId);
-            if (!userIdExists)
-                return ServiceResult<List<BuddyDto>>.Fail(ServiceResultStatus.UserNotFound, "User not found");
-
-            List<BuddyDto> buddies = await db.Buddys
-                .Where(b => (b.RequesterId == userId || b.AddresseeId == userId) && b.Status == RequestStatus.Accepted)
-                .Select(b => new BuddyDto
-                {
-                    RequesterId = b.RequesterId,
-                    AddresseeId = b.AddresseeId,
-                    Status = b.Status,
-                    RequestedAt = b.RequestedAt
-                })
-                .ToListAsync();
-
-            return ServiceResult<List<BuddyDto>>.Succes(buddies);
-        }
-
-        public async Task<ServiceResult<List<BuddyDto>>> GetPendingRequests(int userId)
-        {
-            bool userIdExists = await db.Users.AnyAsync(u => u.Id == userId);
-            if (!userIdExists)
+            if (!await db.Users.AnyAsync(u => u.Id == userId))
                 return ServiceResult<List<BuddyDto>>.Fail(ServiceResultStatus.UserNotFound, "User not found");
 
             List<BuddyDto> requests = await db.Buddys
-                .Where(b => b.AddresseeId == userId && b.Status == RequestStatus.Pending)
+                .Where(b => (b.RequesterId == userId || b.AddresseeId == userId) && b.Status == RequestStatus.Accepted)
                 .Select(b => new BuddyDto
                 {
-                    RequesterId = b.RequesterId,
-                    AddresseeId = b.AddresseeId,
+                    Requester = new UserDto
+                    {
+                        Id = b.Requester.Id,
+                        Username = b.Requester.Username,
+                        Email = b.Requester.Email,
+                        PhoneNumber = b.Requester.Phonenumber,
+                        CreatedAt = b.Requester.CreatedAt
+                    },
+                    Addressee = new UserDto
+                    {
+                        Id = b.Addressee.Id,
+                        Username = b.Addressee.Username,
+                        Email = b.Addressee.Email,
+                        PhoneNumber = b.Addressee.Phonenumber,
+                        CreatedAt = b.Addressee.CreatedAt
+                    },
                     Status = b.Status,
                     RequestedAt = b.RequestedAt
                 })
                 .ToListAsync();
 
             return ServiceResult<List<BuddyDto>>.Succes(requests);
+        }
+
+        public async Task<ServiceResult<List<BuddyDto>>> GetPendingRequests(int userId)
+        {
+            if (!await db.Users.AnyAsync(u => u.Id == userId))
+                return ServiceResult<List<BuddyDto>>.Fail(ServiceResultStatus.UserNotFound, "User not found");
+
+            List<BuddyDto> requests = await db.Buddys
+                .Where(b => (b.AddresseeId == userId) && b.Status == RequestStatus.Pending)
+                .Select(b => new BuddyDto
+                {
+                    Requester = new UserDto
+                    {
+                        Id = b.Requester.Id,
+                        Username = b.Requester.Username,
+                        Email = b.Requester.Email,
+                        PhoneNumber = b.Requester.Phonenumber,
+                        CreatedAt = b.Requester.CreatedAt
+                    },
+                    Addressee = new UserDto
+                    {
+                        Id = b.Addressee.Id,
+                        Username = b.Addressee.Username,
+                        Email = b.Addressee.Email,
+                        PhoneNumber = b.Addressee.Phonenumber,
+                        CreatedAt = b.Addressee.CreatedAt
+                    },
+                    Status = b.Status,
+                    RequestedAt = b.RequestedAt
+                })
+                .ToListAsync();
+
+            return ServiceResult<List<BuddyDto>>.Succes(requests);
+        }
+
+        public async Task<ServiceResult<List<BuddyDto>>> GetSendRequests(int userId)
+        {
+            if (!await db.Users.AnyAsync(u => u.Id == userId))
+                return ServiceResult<List<BuddyDto>>.Fail(ServiceResultStatus.UserNotFound, "User not found");
+
+            List<BuddyDto> requests = await db.Buddys
+                .Where(b => (b.Requester.Id == userId) && (b.Status == RequestStatus.Pending || b.Status == RequestStatus.Rejected))
+                .Select(b => new BuddyDto
+                {
+                    Requester = new UserDto
+                    {
+                        Id = b.Requester.Id,
+                        Username = b.Requester.Username,
+                        Email = b.Requester.Email,
+                        PhoneNumber = b.Requester.Phonenumber,
+                        CreatedAt = b.Requester.CreatedAt
+                    },
+                    Addressee = new UserDto
+                    {
+                        Id = b.Addressee.Id,
+                        Username = b.Addressee.Username,
+                        Email = b.Addressee.Email,
+                        PhoneNumber = b.Addressee.Phonenumber,
+                        CreatedAt = b.Addressee.CreatedAt
+                    },
+                    Status = b.Status,
+                    RequestedAt = b.RequestedAt
+                })
+                .ToListAsync();
+
+            return ServiceResult<List<BuddyDto>>.Succes(requests);
+        }
+
+        public async Task<ServiceResult> RemoveBuddy(int userId, int buddyId, bool block)
+        {
+            if (!await db.Users.AnyAsync(u => u.Id == userId))
+                return ServiceResult.Fail(ServiceResultStatus.UserNotFound, $"User not found: {userId}");
+            if (!await db.Users.AnyAsync(u => u.Id == buddyId))
+                return ServiceResult.Fail(ServiceResultStatus.UserNotFound, $"User not found: {buddyId}");
+
+            Buddy ? buddy = await db.Buddys
+                .FirstOrDefaultAsync(b => (b.AddresseeId == userId && b.RequesterId == buddyId) || (b.RequesterId == userId && b.AddresseeId == buddyId));
+
+            if (buddy == null || buddy.Status != RequestStatus.Accepted)
+                return ServiceResult.Fail(ServiceResultStatus.ResourceNotFound, "Buddy Connection not found");
+
+            if (block)
+                buddy.Status = RequestStatus.Blocked;
+            else
+                db.Buddys.Remove(buddy);
+
+            await db.SaveChangesAsync();
+            return ServiceResult.Succes("Buddy Relation Succesfully Removed");
         }
     }
 }

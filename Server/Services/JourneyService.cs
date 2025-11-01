@@ -203,7 +203,7 @@ namespace Server.Services
                 return ServiceResult.Fail(ServiceResultStatus.Unauthorized, "Cannot retrieve buddies");
 
             List<int> buddyIds = buddiesResult.Data
-                .Select(b => b.RequesterId == userId ? b.AddresseeId : b.RequesterId)
+                .Select(b => b.Requester.Id == userId ? b.Addressee.Id : b.Requester.Id)
                 .ToList();
 
             // Check if at least one buddy is already in the journey

@@ -24,10 +24,12 @@ else
         </div>
 
         <button type="submit">Login</button>
-        <button type="button" @onclick="LoginAlice">Fast Login User: Alice</button>
-        <button type="button" @onclick="LoginBob">Fast Login User: Bob</button>
-        <button type="button" @onclick="LoginDiana">Fast Login User: Diana</button>
-        <button type="button" @onclick="LoginJoseph">Fast Login User: Joseph</button>
+        <button type="button" @onclick="LoginAlice">Fast Login User1: Alice</button>
+        <button type="button" @onclick="LoginBob">Fast Login User2: Bob</button>
+        <button type="button" @onclick="LoginCharlie">Fast Login User3: Charlie</button>
+        <button type="button" @onclick="LoginJoseph">Fast Login User4: Joseph</button>
+        <button type="button" @onclick="LoginDiana">Fast Login User5: Diana</button>
+
         <p class="mt-3 text-sm">
             Don't have an account? <NavLink class="text-blue-600 underline" href="/register">Register here</NavLink>
         </p>
@@ -66,15 +68,21 @@ else
         loginModel.Password = "Password123!";
         await HandleLogin();
     }
-    private async Task LoginDiana()
+    private async Task LoginCharlie()
     {
-        loginModel.Username = "Diana";
+        loginModel.Username = "Charlie";
         loginModel.Password = "Password123!";
         await HandleLogin();
     }
     private async Task LoginJoseph()
     {
         loginModel.Username = "Joseph";
+        loginModel.Password = "Password123!";
+        await HandleLogin();
+    }
+    private async Task LoginDiana()
+    {
+        loginModel.Username = "Diana";
         loginModel.Password = "Password123!";
         await HandleLogin();
     }

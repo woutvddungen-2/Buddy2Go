@@ -5,6 +5,7 @@ using Server.Common;
 using Server.Services;
 using Shared.Models.Dtos;
 using System.Security.Claims;
+using System.Text;
 
 namespace Server.Controllers
 {
@@ -40,20 +41,20 @@ namespace Server.Controllers
                     logger.LogWarning("SendBuddyRequest, user not found for User:{requester} to User:{addressee}, Message:{message}", requesterId, addresseeId, result.Message);
                     return NotFound(result.Message);
                 default:
-                    logger.LogError("Unknown error in SendBuddyRequest from User:{requester} to User:{addressee}, Message:{message}", requesterId, addresseeId, result.Message);
+                    logger.LogError("Unknown error in SendBuddyRequest from User:{requester} to User:{addressee}", requesterId, addresseeId);
                     return StatusCode(500, "Unknown error occurred");
             }
         }
 
-        [HttpPost("Respond")]
-        public async Task<IActionResult> RespondToBuddyRequest([FromBody] BuddyRequestResponse request)
+        [HttpPatch("Respond")]
+        public async Task<IActionResult> RespondToBuddyRequest([FromBody] BuddyRequestResponseDto request)
         {
             int addresseeId = GetUserIdFromJwt();
-            ServiceResult result = await service.RespondToBuddyRequest(request.RequesterId, addresseeId, request.Accept);
+            ServiceResult result = await service.RespondToBuddyRequest(request.RequesterId, addresseeId, request.Status);
             switch (result.Status)
             {
                 case ServiceResultStatus.Success:
-                    logger.LogInformation("RespondToBuddyRequest, User:{addressee} responded to buddy request from User:{requester} with Accept:{accept}", addresseeId, request.RequesterId, request.Accept);
+                    logger.LogInformation("RespondToBuddyRequest, User:{addressee} responded to buddy request from User:{requester} with Accept:{status}", addresseeId, request.RequesterId, request.Status);
                     return Ok(result.Message);
                 case ServiceResultStatus.ResourceNotFound:
                     logger.LogWarning("RespondToBuddyRequest, buddy request not found for User:{addressee} from User:{requester}, Message:{message}", addresseeId, request.RequesterId, result.Message);
@@ -62,7 +63,7 @@ namespace Server.Controllers
                     logger.LogWarning("RespondToBuddyRequest, validation error for User:{addressee} from User:{requester}, Message:{message}", addresseeId, request.RequesterId, result.Message);
                     return BadRequest(result.Message);
                 default:
-                    logger.LogError("Unknown error in RespondToBuddyRequest for User:{addressee} from User:{requester}, Message:{message}", addresseeId, request.RequesterId, result.Message);
+                    logger.LogError("Unknown error in RespondToBuddyRequest for User:{addressee} from User:{requester}", addresseeId, request.RequesterId);
                     return StatusCode(500, "Unknown error occurred");
             }
         }
@@ -71,7 +72,7 @@ namespace Server.Controllers
         public async Task<IActionResult> GetBuddyList()
         {
             int userId = GetUserIdFromJwt();
-            var result = await service.GetBuddies(userId);
+            ServiceResult<List<BuddyDto>> result = await service.GetBuddies(userId);
             if (result.Status == ServiceResultStatus.UserNotFound)
             {
                 logger.LogWarning("GetBuddyList, failed to retrieve buddies for User:{user}, Message:{message}", userId, result.Message);
@@ -80,11 +81,11 @@ namespace Server.Controllers
             return Ok(result.Data);
         }
 
-        [HttpGet("pending")]
+        [HttpGet("Pending")]
         public async Task<IActionResult> GetPendingRequests()
         {
             int userId = GetUserIdFromJwt();
-            var result = await service.GetPendingRequests(userId);
+            ServiceResult<List<BuddyDto>> result = await service.GetPendingRequests(userId);
             if (result.Status == ServiceResultStatus.UserNotFound)
             {
                 logger.LogWarning("GetBuddyList, failed to retrieve buddies for User:{user}, Message:{message}", userId, result.Message);
@@ -93,14 +94,72 @@ namespace Server.Controllers
             return Ok(result.Data);
         }
 
+        [HttpGet("GetSend")]
+        public async Task<IActionResult> GetSend()
+        {
+            int userId = GetUserIdFromJwt();
+            ServiceResult<List<BuddyDto>> result = await service.GetSendRequests(userId);
+            if (result.Status == ServiceResultStatus.UserNotFound)
+            {
+                logger.LogWarning("GetBuddyList, failed to retrieve buddies for User:{user}, Message:{message}", userId, result.Message);
+                return StatusCode(500, "Failed to retrieve buddy list");
+            }
+            return Ok(result.Data);
+        }
+
+        [HttpPatch("Block/{buddyId}")]
+        public async Task<IActionResult> BlockBuddy(int buddyId)
+        {
+            int userId = GetUserIdFromJwt();
+            ServiceResult result = await service.RemoveBuddy(userId, buddyId, true);
+            switch (result.Status) {
+                case ServiceResultStatus.Success:
+                    logger.LogInformation("Blocked Buddy between user: {userId} and user: {buddyId}", userId, buddyId);
+                    return Ok(result.Message);
+                case ServiceResultStatus.UserNotFound:
+                    logger.LogWarning("Blockbuddy failes, {Message}", result.Message);
+                    return NotFound(result.Message);
+                case ServiceResultStatus.ResourceNotFound:
+                    logger.LogWarning("Blockbuddy failes, {Message}", result.Message);
+                    return NotFound(result.Message);
+                default:
+                    logger.LogError("Unknown error in Blockbuddy for User:{addressee} and User:{requester}", userId, buddyId);
+                    return StatusCode(500, "Unknown error occurred");
+
+            }
+        }
+
+        [HttpDelete("Delete/{buddyId}")]
+        public async Task<IActionResult> DeleteBuddy(int buddyId)
+        {
+            int userId = GetUserIdFromJwt();
+            ServiceResult result = await service.RemoveBuddy(userId, buddyId, false);
+            switch (result.Status)
+            {
+                case ServiceResultStatus.Success:
+                    logger.LogInformation("Removed Buddy between user: {userId} and user: {buddyId}", userId, buddyId);
+                    return Ok(result.Message);
+                case ServiceResultStatus.UserNotFound:
+                    logger.LogWarning("Removed buddy failes, {Message}", result.Message);
+                    return NotFound(result.Message);
+                case ServiceResultStatus.ResourceNotFound:
+                    logger.LogWarning("Removed buddy failes, {Message}", result.Message);
+                    return NotFound(result.Message);
+                default:
+                    logger.LogError("Unknown error in Removed buddy for User:{addressee} and User:{requester}", userId, buddyId);
+                    return StatusCode(500, "Unknown error occurred");
+
+            }
+        }
+
+        //------------------------ Helpers ----------------------------
         // Helper method to extract user ID from JWT
         private int GetUserIdFromJwt()
         {
-            Claim? claim = User.FindFirst(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedAccessException();
+            Claim? claim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (claim == null)
+                throw new UnauthorizedAccessException("Invalid JWT String");
             return int.Parse(claim.Value);
         }
     }
-
-
-
 }

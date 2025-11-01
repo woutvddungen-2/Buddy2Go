@@ -101,7 +101,7 @@ namespace Server.Controllers
             switch (result.Status)
             {
                 case ServiceResultStatus.Success:
-                    logger.LogInformation("Retrieved user info for UserID {UserId}", userId);
+                    logger.LogDebug("Retrieved user info for UserID {UserId}", userId);
                     return Ok(result.Data);
 
                 case ServiceResultStatus.UserNotFound:
@@ -134,8 +134,9 @@ namespace Server.Controllers
             switch (result.Status)
             {
                 case ServiceResultStatus.Success:
-                    logger.LogInformation("user found the following User: {FoundUserId}", result.Data?.Id);
-                    return Ok(result.Data);
+                    UserDto? data = result.Data;
+                    logger.LogDebug("user found the following User: {FoundUserId}", data?.Id);
+                    return Ok(data);
                 case ServiceResultStatus.UserNotFound:
                     logger.LogInformation("No user found with the following phonenumber: {Phonenumber}", number);
                     return NotFound(result.Message);
