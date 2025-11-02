@@ -129,6 +129,62 @@ namespace Server.Services
                 CreatedAt = user.CreatedAt
             });
         }
+        public async Task<ServiceResult> DeleteUserAsync(int userId)
+        {
+            // Check user exists
+            User? user = await db.Users.FindAsync(userId);
+            if (user == null)
+                return ServiceResult.Fail(ServiceResultStatus.UserNotFound, "User not found");
+
+            using var transaction = await db.Database.BeginTransactionAsync();
+           
+            try
+            {
+                List<Buddy> buddies = await db.Buddys
+                    .Where(b => b.RequesterId == userId || b.AddresseeId == userId)
+                    .ToListAsync();
+
+                BuddyService buddyService = new(db);
+                foreach (var buddy in buddies)
+                {
+                    int buddyId = buddy.RequesterId == userId ? buddy.AddresseeId : buddy.RequesterId;                    
+                    ServiceResult result = await buddyService.RemoveBuddy(userId, buddyId);
+                    if (!result.IsSuccess)
+                        return ServiceResult.Fail(result.Status, result.Message!);
+                }
+
+                List<int> journeyIds = await db.JourneyParticipants
+                    .Where(p => p.UserId == userId)
+                    .Select(p => p.JourneyId)
+                    .Distinct()
+                    .ToListAsync();
+
+                if (journeyIds.Count > 0)
+                {
+                    JourneyService journeyService = new(db, buddyService);
+
+                    foreach (int journeyId in journeyIds)
+                    {
+                        ServiceResult result = await journeyService.LeaveJourneyAsync(userId, journeyId);
+                        if (!result.IsSuccess)
+                            return ServiceResult.Fail(result.Status, result.Message!);
+                    }
+                }
+
+                db.Users.Remove(user);
+
+                await db.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return ServiceResult.Succes($"User {userId} deleted. Buddies removed and journeys updated.");
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return ServiceResult.Fail(ServiceResultStatus.Error, $"Failed to delete user: {ex.Message}");
+            }
+        }
+
 
         //---------------------- Helpers ----------------------
         /// <summary>

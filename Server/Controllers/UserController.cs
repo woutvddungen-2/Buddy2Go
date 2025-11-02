@@ -134,14 +134,41 @@ namespace Server.Controllers
             switch (result.Status)
             {
                 case ServiceResultStatus.Success:
-                    UserDto? data = result.Data;
-                    logger.LogDebug("user found the following User: {FoundUserId}", data?.Id);
-                    return Ok(data);
+                    logger.LogDebug("user found the following User: {FoundUserId}", result.Data?.Id);
+                    return Ok(result.Data);
                 case ServiceResultStatus.UserNotFound:
                     logger.LogInformation("No user found with the following phonenumber: {Phonenumber}", number);
                     return NotFound(result.Message);
                 default:
                     logger.LogError("FindbyPhoneNumber, error: {message}, Number: {PhoneNumber}", result.Message, number);
+                    return StatusCode(500, "Unexpected error retrieving user info");
+            }
+        }
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpDelete("Delete")]
+        public async Task<IActionResult> DeleteUser()
+        {
+            int userId = GetUserIdFromJwt();
+            ServiceResult result = await service.DeleteUserAsync(userId);
+
+            switch (result.Status)
+            {
+                case ServiceResultStatus.Success:
+                    logger.LogInformation("Delete User Succesful, Message: {message}", result.Message);
+                    Logout();
+                    return Ok();
+                case ServiceResultStatus.UserNotFound:
+                    logger.LogInformation("Delete User Failed, : {message}", result.Message);
+                    return NotFound(result.Message);
+                case ServiceResultStatus.ResourceNotFound:
+                    logger.LogInformation("Delete User Failed, : {message}", result.Message);
+                    return NotFound(result.Message);
+                case ServiceResultStatus.InvalidOperation:
+                    logger.LogInformation("Delete User Failed, : {message}", result.Message);
+                    return BadRequest(result.Message);
+                default:
+                    logger.LogError("Delete User Failed, {message}", result.Message);
                     return StatusCode(500, "Unexpected error retrieving user info");
             }
         }
