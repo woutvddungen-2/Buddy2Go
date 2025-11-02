@@ -42,7 +42,7 @@ namespace Client.Services
             {
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Patch, $"api/Buddy/Respond")
                 {
-                    Content = JsonContent.Create(new BuddyRequestResponseDto { RequesterId = requesterId, Status = status })
+                    Content = JsonContent.Create(new RequestResponseDto { RequesterId = requesterId, Status = status })
                 };
                 request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
                 HttpResponseMessage? response = await httpClient.SendAsync(request);

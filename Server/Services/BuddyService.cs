@@ -183,7 +183,7 @@ namespace Server.Services
             return ServiceResult<List<BuddyDto>>.Succes(requests);
         }
 
-        public async Task<ServiceResult> RemoveBuddy(int userId, int buddyId, bool block)
+        public async Task<ServiceResult> RemoveBuddy(int userId, int buddyId, bool block = false)
         {
             if (!await db.Users.AnyAsync(u => u.Id == userId))
                 return ServiceResult.Fail(ServiceResultStatus.UserNotFound, $"User not found: {userId}");

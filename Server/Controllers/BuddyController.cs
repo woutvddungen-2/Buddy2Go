@@ -47,7 +47,7 @@ namespace Server.Controllers
         }
 
         [HttpPatch("Respond")]
-        public async Task<IActionResult> RespondToBuddyRequest([FromBody] BuddyRequestResponseDto request)
+        public async Task<IActionResult> RespondToRequest([FromBody] RequestResponseDto request)
         {
             int addresseeId = GetUserIdFromJwt();
             ServiceResult result = await service.RespondToBuddyRequest(request.RequesterId, addresseeId, request.Status);
@@ -133,7 +133,7 @@ namespace Server.Controllers
         public async Task<IActionResult> DeleteBuddy(int buddyId)
         {
             int userId = GetUserIdFromJwt();
-            ServiceResult result = await service.RemoveBuddy(userId, buddyId, false);
+            ServiceResult result = await service.RemoveBuddy(userId, buddyId);
             switch (result.Status)
             {
                 case ServiceResultStatus.Success:
