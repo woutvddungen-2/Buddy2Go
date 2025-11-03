@@ -2,7 +2,7 @@
 @inject JourneyService JourneyService
 @inject UserService LoginService
 
-<h3 class="mb-3">My Journeys</h3>
+<h3 class="mb-3">Mijn Reizen</h3>
 
 @if (isLoading)
 {
@@ -20,24 +20,24 @@ else if (isCreateJourney)
         <ValidationSummary />
 
         <div class="mb-3">
-            <label class="block mb-1">Start GPS</label>
+            <label class="block mb-1">Begin GPS</label>
             <InputText @bind-Value="journeyCreateDto.StartGPS" class="border rounded px-2 py-1 w-full" />
         </div>
 
         <div class="mb-3">
-            <label class="block mb-1">End GPS</label>
+            <label class="block mb-1">Einde GPS</label>
             <InputText @bind-Value="journeyCreateDto.EndGPS" class="border rounded px-2 py-1 w-full" />
         </div>
 
-        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Register</button>
-        <button class="btn btn-sm btn-secondary" @onclick="Cancel">Cancel</button>
+        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Registreer</button>
+        <button class="btn btn-sm btn-secondary" @onclick="Cancel">Annuleer</button>
     </EditForm>
 }
 else 
 {
     <div class="mb-4">
-        <button class="btn btn-primary me-2" @onclick="LoadJourneys">Refresh</button>
-        <button class="btn btn-success" @onclick="StartCreate">Add Journey</button>
+        <button class="btn btn-primary me-2" @onclick="LoadJourneys">Ververs</button>
+        <button class="btn btn-success" @onclick="StartCreate">Reis toevoegen</button>
     </div>
 
     @if (!string.IsNullOrEmpty(errorMessage))
@@ -50,10 +50,10 @@ else
     }
     @if (currentUserId > 0)
     {
-        <h5>Your Owned / Joined Journeys</h5>
+        <h5>Jouw reizen</h5>
         @if (myJourneys.Count == 0)
         {
-            <p>No journeys found.</p>
+            <p>Geen reizen gevonden</p>
         }
         else
         {
@@ -67,34 +67,34 @@ else
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <div>
                             <strong>@j.StartGPS → @j.EndGPS</strong><br />
-                            <small>Created: @j.CreatedAt.ToShortDateString()</small>
-                            <small>Owner: @j.OwnerName</small><br />
-                            <small>Participants: @string.Join(", ", j.Participants.Where(p => p.UserId != currentUserId && p.Role != JourneyRole.Owner).Select(p => p.UserName))</small><br />
+                            <small>Aangemaakt: @j.CreatedAt.ToShortDateString()</small>
+                            <small>Eigenaar: @j.OwnerName</small><br />
+                            <small>Mede-Reizigers: @string.Join(", ", j.Participants.Where(p => p.UserId != currentUserId && p.Role != JourneyRole.Owner).Select(p => p.UserName))</small><br />
                             @if (isFinished)
                             {
-                                <small>Journey is Finished!</small><br />
+                                <small>Reis is afgerond</small><br />
                             }
                         </div>
                         <div>
-                            <button class="btn btn-warning" @onclick="() => ViewMessages(j.Id)">Messages, Coming Soon!!</button>
-                            <button class="btn btn-warning me-1" @onclick="() => LeaveJourney(j.Id)">Leave</button>
+                            <button class="btn btn-warning" @onclick="() => ViewMessages(j.Id)">Chat, coming soon!</button>
+                            <button class="btn btn-warning me-1" @onclick="() => LeaveJourney(j.Id)">Verlaat reis</button>
                             @if (editingJourneyId == j.Id)
                             {
                                 <br />
-                                <text>Start Gps: </text><input type="text" class="form-control form-control-sm mb-1" style="width:120px; display:inline-block" @bind="editStartGPS" /> <br />
-                                <text>End Gps:   </text><input type="text" class="form-control form-control-sm mb-1" style="width:120px; display:inline-block" @bind="editEndGPS" />
+                                <text>Vertrek Gps: </text><input type="text" class="form-control form-control-sm mb-1" style="width:120px; display:inline-block" @bind="editStartGPS" /> <br />
+                                <text>Bestemming Gps:   </text><input type="text" class="form-control form-control-sm mb-1" style="width:120px; display:inline-block" @bind="editEndGPS" />
 
                                 <br />
 
-                                <button class="btn btn-sm btn-primary me-1" @onclick="SaveEdit">Save</button>
-                                <button class="btn btn-sm btn-secondary" @onclick="Cancel">Cancel</button>
+                                <button class="btn btn-sm btn-primary me-1" @onclick="SaveEdit">Opslaan</button>
+                                <button class="btn btn-sm btn-secondary" @onclick="Cancel">Annuleren</button>
                             }
                             else if (isOwner)
                             {                                
                                 if (!isFinished)
                                 {
-                                    <button class="btn btn-warning" @onclick="() => StartEditingJourney(j)">Edit</button>
-                                    <button class="btn btn-warning" @onclick="() => FinishJourney(j.Id)">Finish Journey</button>
+                                    <button class="btn btn-warning" @onclick="() => StartEditingJourney(j)">Aanpassen</button>
+                                    <button class="btn btn-warning" @onclick="() => FinishJourney(j.Id)">Reis Afronden</button>
                                 }                       
                             }
                         </div>
@@ -103,10 +103,10 @@ else
             </ul>
         }
     }
-    <h5>Buddies’ Journeys You Can Join</h5>
+    <h5>Reizen van je Buddy's: </h5>
     @if (buddyJourneys.Count == 0)
     {
-        <p>No open buddy journeys available.</p>
+        <p>Geen openstaande reizen.</p>
     }
     else
     {
@@ -117,11 +117,11 @@ else
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     <div>
                         <strong>@j.StartGPS → @j.EndGPS</strong><br />
-                        <small>Created: @j.CreatedAt.ToShortDateString()</small>
-                        <small>Owner: @j.OwnerName</small><br />
-                        <small>Participants: @string.Join(", ", j.Participants.Where(p => p.UserId != currentUserId && p.Role != JourneyRole.Owner).Select(p => p.UserName))</small>
+                        <small>Aangemaakt: @j.CreatedAt.ToShortDateString()</small>
+                        <small>Eigenaar: @j.OwnerName</small><br />
+                        <small>Mede-Reizigers: @string.Join(", ", j.Participants.Where(p => p.UserId != currentUserId && p.Role != JourneyRole.Owner).Select(p => p.UserName))</small>
                     </div>
-                    <button class="btn btn-sm btn-outline-success" @onclick="() => JoinBuddyJourney(j.Id)">Join</button>
+                    <button class="btn btn-sm btn-outline-success" @onclick="() => JoinBuddyJourney(j.Id)">Mee reizen</button>
                 </li>
             }
         </ul>
