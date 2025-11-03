@@ -19,7 +19,6 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    IWebHostEnvironment env = builder.Environment;
     ILoggerFactory loggerFactory = LoggerFactory.Create(logging =>
     {
         logging.AddConsole();
@@ -48,22 +47,25 @@ builder.Services.AddAuthentication(options =>
 
             // Assign token to the context so middleware can validate it
             context.Token = token;
-
-            if (!string.IsNullOrEmpty(token) && env.IsDevelopment())
+#if DEBUG
+            if (!string.IsNullOrEmpty(token))
             {
                 log.LogDebug("JWT cookie received: {Snippet}...", token[..Math.Min(token.Length, 20)]);
             }
+#endif
             return Task.CompletedTask;
         },
         OnAuthenticationFailed = context =>
         {
-            if (env.IsDevelopment())
-                log.LogWarning(context.Exception, "JWT Authentication failed");
+#if DEBUG
+            log.LogWarning(context.Exception, "JWT Authentication failed");
+#endif
             return Task.CompletedTask;
         },
         OnTokenValidated = context =>
         {
-            if (env.IsDevelopment() && context.Principal != null)
+#if DEBUG
+            if (context.Principal != null)
             {
                 string idClaim = context.Principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "unknown";
                 string nameClaim = context.Principal.Identity?.Name ?? "unknown";
@@ -79,6 +81,7 @@ builder.Services.AddAuthentication(options =>
                 log.LogDebug("JWT Validated: UserId={UserId}, Username={Username}, ExpiresAt={Expiration}",
                     idClaim, nameClaim, expText);
             }
+#endif
             return Task.CompletedTask;
         }
     };
@@ -96,32 +99,34 @@ builder.Services.AddScoped<JourneyService>();
 builder.Services.AddScoped<BuddyService>();
 
 // -------------------- Swagger --------------------
+#if DEBUG
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Buddy2Go", Version = "v0.1" });
-
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.Http,
-        Scheme = "bearer",
-        BearerFormat = "JWT",
-        Description = "JWT Authorization header using the Bearer scheme. Example: \"Bearer {token}\""
-    });
+        c.SwaggerDoc("v1", new OpenApiInfo { Title = "Buddy2Go", Version = "v0.1" });
 
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
+        c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
         {
-            new OpenApiSecurityScheme
+            Name = "Authorization",
+            In = ParameterLocation.Header,
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT",
+            Description = "JWT Authorization header using the Bearer scheme. Example: \"Bearer {token}\""
+        });
+
+        c.AddSecurityRequirement(new OpenApiSecurityRequirement
+        {
             {
-                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
-            },
-            Array.Empty<string>()
-        }
+                new OpenApiSecurityScheme
+                {
+                    Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+                },
+                Array.Empty<string>()
+            }
+        });
     });
-});
+#endif
 
 // -------------------- CORS --------------------
 builder.Services.AddCors(options =>
@@ -144,7 +149,10 @@ WebApplication? app = builder.Build();
 // -------------------- Seed Database -----------------
 using IServiceScope scope = app.Services.CreateScope();
 AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+#if DEBUG
 await DbInitializer.ResetDatabaseAsync(db);
+#endif
 
 // -------------------- Logging --------------------
 ILogger logger = app.Services.GetRequiredService<ILogger<Program>>();
@@ -164,7 +172,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-if (app.Environment.IsDevelopment())
+#if DEBUG
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
@@ -174,6 +182,7 @@ if (app.Environment.IsDevelopment())
     });
     Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
 }
+#endif
 
 app.MapControllers();
 app.Run();

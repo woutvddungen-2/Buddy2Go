@@ -1,7 +1,10 @@
 ﻿@page "/"
+@using System.Net
+
 @inject Client.Services.UserService LoginService
 @inject NavigationManager Navigation
-@using System.Net
+
+
 
 <h3 class="text-xl font-semibold mb-4">Login</h3>
 
@@ -25,11 +28,11 @@ else
         <button type="submit">Login</button>
 
 
-        <button type="button" @onclick="LoginAlice">Login User1: Alice</button>
-        <button type="button" @onclick="LoginBob">Login User2: Bob</button>
-        <button type="button" @onclick="LoginCharlie">Login User3: Charlie</button>
-        <button type="button" @onclick="LoginJoseph">Login User4: Joseph</button>
-        <button type="button" @onclick="LoginDiana">Login User5: Diana</button>
+            <button type="button" @onclick="LoginAlice">Login User1: Alice</button>
+            <button type="button" @onclick="LoginBob">Login User2: Bob</button>
+            <button type="button" @onclick="LoginCharlie">Login User3: Charlie</button>
+            <button type="button" @onclick="LoginJoseph">Login User4: Joseph</button>
+            <button type="button" @onclick="LoginDiana">Login User5: Diana</button>
         
 
         <p class="mt-3 text-sm">
@@ -49,6 +52,7 @@ else
     private string? errorMessage;
     private bool isLoading = false;
 
+
     protected override async Task OnInitializedAsync()
     {
         ServiceResult? result = await LoginService.IsLoggedInAsync();
@@ -57,39 +61,36 @@ else
             Navigation.NavigateTo("/Journeys");
         }
     }
-
- #if DEBUG
     private async Task LoginAlice()
     {
-        loginModel.Username = "Alice";
-        loginModel.Password = "Password123!";
-        await HandleLogin();
+    loginModel.Username = "Alice";
+    loginModel.Password = "Password123!";
+    await HandleLogin();
     }
     private async Task LoginBob()
     {
-        loginModel.Username = "bob";
-        loginModel.Password = "Password123!";
-        await HandleLogin();
+    loginModel.Username = "bob";
+    loginModel.Password = "Password123!";
+    await HandleLogin();
     }
     private async Task LoginCharlie()
     {
-        loginModel.Username = "Charlie";
-        loginModel.Password = "Password123!";
-        await HandleLogin();
+    loginModel.Username = "Charlie";
+    loginModel.Password = "Password123!";
+    await HandleLogin();
     }
     private async Task LoginJoseph()
     {
-        loginModel.Username = "Joseph";
-        loginModel.Password = "Password123!";
-        await HandleLogin();
+    loginModel.Username = "Joseph";
+    loginModel.Password = "Password123!";
+    await HandleLogin();
     }
     private async Task LoginDiana()
     {
-        loginModel.Username = "Diana";
-        loginModel.Password = "Password123!";
-        await HandleLogin();
+    loginModel.Username = "Diana";
+    loginModel.Password = "Password123!";
+    await HandleLogin();
     }
-#endif
 
 
     private async Task HandleLogin()

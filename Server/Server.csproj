@@ -19,9 +19,24 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
   </ItemGroup>
-
+  
   <ItemGroup>
     <ProjectReference Include="..\Shared\Shared.csproj" />
   </ItemGroup>
+
+  <!-- Automatically set ASPNETCORE_ENVIRONMENT based on build configuration -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <EnvironmentName>Development</EnvironmentName>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <EnvironmentName>Production</EnvironmentName>
+  </PropertyGroup>
+
+  <!-- Make Visual Studio and dotnet run use that environment -->
+  <Target Name="SetLaunchEnvironment" BeforeTargets="GenerateLaunchSettings">
+    <SetEnv Name="ASPNETCORE_ENVIRONMENT" Value="$(EnvironmentName)" />
+  </Target>
+
 
 </Project>
