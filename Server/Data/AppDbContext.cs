@@ -37,10 +37,10 @@ namespace Server.Data
             // Seed Journey
             // --------------------
             modelBuilder.Entity<Journey>().HasData(
-                new Journey { Id = 1, StartGPS = "52.370216,4.895168", EndGPS = "51.924420,4.477733", CreatedAt = DateTime.UtcNow, FinishedAt = null },
-                new Journey { Id = 2, StartGPS = "52.090737,5.121420", EndGPS = "51.441642,5.469722", CreatedAt = DateTime.UtcNow, FinishedAt = null },
-                new Journey { Id = 3, StartGPS = "111222333", EndGPS = "444556677", CreatedAt = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1)), FinishedAt = null },
-                new Journey { Id = 4, StartGPS = "444556677", EndGPS = "111222333", CreatedAt = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1)), FinishedAt = DateTime.UtcNow}
+                new Journey { Id = 1, StartGPS = "52.370216,4.895168", EndGPS = "51.924420,4.477733", CreatedAt = DateTime.UtcNow, StartAt = DateTime.UtcNow.Add(TimeSpan.FromHours(1222)), FinishedAt = null },
+                new Journey { Id = 2, StartGPS = "52.090737,5.121420", EndGPS = "51.441642,5.469722", CreatedAt = DateTime.UtcNow, StartAt = DateTime.UtcNow.Add(TimeSpan.FromHours(34)), FinishedAt = null },
+                new Journey { Id = 3, StartGPS = "111222333", EndGPS = "444556677", CreatedAt = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1)), StartAt = DateTime.UtcNow.Add(TimeSpan.FromHours(1)), FinishedAt = null },
+                new Journey { Id = 4, StartGPS = "444556677", EndGPS = "111222333", CreatedAt = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1)), StartAt = DateTime.UtcNow.Add(TimeSpan.FromHours(0)), FinishedAt = DateTime.UtcNow}
             );
 
             // --------------------

@@ -113,12 +113,13 @@ namespace Client.Services
         }
         
 
-        public async Task<ServiceResult> UpdateJourneyAsync(int journeyId, string? startGps, string? endGps)
+        public async Task<ServiceResult> UpdateJourneyAsync(int journeyId, string? startGps, string? endGps, DateTime startAt)
         {
             try
             {
                 JourneyCreateDto dto = new JourneyCreateDto
                 {
+                    StartAt = startAt,
                     StartGPS = startGps,
                     EndGPS = endGps
                 };

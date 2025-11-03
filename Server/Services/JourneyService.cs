@@ -42,10 +42,8 @@ namespace Server.Services
                 StartGPS = j.StartGPS,
                 EndGPS = j.EndGPS,
                 CreatedAt = j.CreatedAt,
+                StartAt = j.StartAt,
                 FinishedAt = j.FinishedAt,
-                //IsOwner = j.Participants.First(p => p.UserId == userId).Role == JourneyRole.Owner,
-                //IsParticipant = j.Participants.Any(p => p.UserId == userId),
-                //CanJoin = false,
                 Participants = j.Participants
                 .Select(p => new JourneyParticipantDto
                 {
@@ -90,10 +88,8 @@ namespace Server.Services
                 StartGPS = j.StartGPS,
                 EndGPS = j.EndGPS,
                 CreatedAt = j.CreatedAt,
+                StartAt = j.StartAt,
                 FinishedAt = j.FinishedAt,
-                //IsOwner = j.Participants.First(p => p.UserId == userId).Role == JourneyRole.Owner,
-                //IsParticipant = j.Participants.Any(p => p.UserId == userId),
-                //CanJoin = false,
                 Participants = j.Participants
                 .Select(p => new JourneyParticipantDto
                 {
@@ -141,7 +137,7 @@ namespace Server.Services
         /// <summary>
         /// Creates a new journey for a user.
         /// </summary>
-        public async Task<ServiceResult> AddJourneyAsync(int userId, string startGPS, string endGPS)
+        public async Task<ServiceResult> AddJourneyAsync(int userId, string startGPS, string endGPS, DateTime startAt)
         {
             User? user = await db.Users.FindAsync(userId);
             if (user == null)
@@ -153,6 +149,7 @@ namespace Server.Services
             {
                 StartGPS = startGPS,
                 EndGPS = endGPS,
+                StartAt = startAt,
                 FinishedAt = null,
                 Participants = [],
                 Messages = []

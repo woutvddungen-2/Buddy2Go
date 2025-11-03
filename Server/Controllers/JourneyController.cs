@@ -130,7 +130,7 @@ namespace Server.Controllers
             }
 
             int userId = GetUserIdFromJwt();
-            ServiceResult result = await service.AddJourneyAsync(userId, dto.StartGPS, dto.EndGPS);
+            ServiceResult result = await service.AddJourneyAsync(userId, dto.StartGPS, dto.EndGPS, dto.StartAt);
 
             switch (result.Status)
             {

@@ -6,6 +6,7 @@
         public string StartGPS { get; set; } = string.Empty;
         public string EndGPS { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime StartAt { get; set; } = DateTime.UtcNow;
         public DateTime? FinishedAt { get; set; } = null;
 
         // Navigation

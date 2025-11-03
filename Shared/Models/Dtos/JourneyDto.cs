@@ -8,6 +8,7 @@
         public string StartGPS { get; set; } = string.Empty;
         public string EndGPS { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
+        public DateTime StartAt { get; set; } 
         public DateTime? FinishedAt { get; set; } = null;
         public List<JourneyParticipantDto> Participants { get; set; } = new List<JourneyParticipantDto>();
     }

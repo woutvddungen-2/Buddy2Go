@@ -4,5 +4,6 @@
     {
         public string? StartGPS { get; set; } = string.Empty;
         public string? EndGPS { get; set; } = string.Empty;
+        public DateTime StartAt { get; set; }
     }
 }
