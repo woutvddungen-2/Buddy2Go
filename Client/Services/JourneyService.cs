@@ -108,7 +108,7 @@ namespace Client.Services
         {
             try
             {
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, $"api/Journey/RespondToJoinRequest/{journeyId}")
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Patch, $"api/Journey/RespondToJoinRequest/{journeyId}")
                 {
                     Content = JsonContent.Create(new RequestResponseDto { RequesterId = requesterId, Status = status})
                 };

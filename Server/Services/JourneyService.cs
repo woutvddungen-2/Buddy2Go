@@ -1,7 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Server.Common;
-using Server.Controllers;
 using Server.Data;
 using Server.Models;
 using Shared.Models;

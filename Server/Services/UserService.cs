@@ -8,7 +8,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Server.Services
 {
@@ -161,7 +160,7 @@ namespace Server.Services
 
                 if (journeyIds.Count > 0)
                 {
-                    JourneyService journeyService = new(db, buddyService);
+                    JourneyService journeyService = new(db, buddyService, LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<JourneyService>());
 
                     foreach (int journeyId in journeyIds)
                     {

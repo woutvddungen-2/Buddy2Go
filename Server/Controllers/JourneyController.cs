@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Server.Common;
-using Server.Models;
 using Server.Services;
 using Shared.Models.Dtos;
 using System.Security.Claims;
@@ -103,7 +102,7 @@ namespace Server.Controllers
         }
 
 
-        [HttpPost("RespondToJoinRequest/{journeyId}")]
+        [HttpPatch("RespondToJoinRequest/{journeyId}")]
         public async Task<IActionResult> RespondToJoinRequest( [FromBody] RequestResponseDto response, int journeyId)
         {
             int userId = GetUserIdFromJwt();
