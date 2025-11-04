@@ -90,12 +90,42 @@ namespace Server.Controllers
             }
         }
 
-        [HttpPost("JoinJourney/{journeyId}")]
-        public async Task<IActionResult> JoinJourney(int journeyId)
+        [HttpPost("SendJoinRequest/{journeyId}")]
+        public async Task<IActionResult> SendJoinRequest(int journeyId)
         {
             int userId = GetUserIdFromJwt();
 
-            ServiceResult result = await service.JoinJourneyAsync(userId, journeyId);
+            ServiceResult result = await service.SendJoinJourneyRequest(userId, journeyId);
+
+            switch (result.Status)
+            {
+                case ServiceResultStatus.Success:
+                    logger.LogInformation("User:{userId} sent join request to Journey:{journeyId}", userId, journeyId);
+                    return Ok(result.Message);
+
+                case ServiceResultStatus.UserNotFound:
+                case ServiceResultStatus.ResourceNotFound:
+                    logger.LogWarning("SendJoinRequest failed for User:{userId}, Reason:{message}", userId, result.Message);
+                    return NotFound(result.Message);
+
+                case ServiceResultStatus.Unauthorized:
+                case ServiceResultStatus.InvalidOperation:
+                    logger.LogWarning("SendJoinRequest invalid for User:{userId}, Reason:{message}", userId, result.Message);
+                    return BadRequest(result.Message);
+
+                default:
+                    logger.LogError("SendJoinRequest unknown error for User:{userId}, Message:{message}", userId, result.Message);
+                    return StatusCode(500, "Unexpected error occurred");
+            }
+        }
+
+
+        [HttpPost("RespondToJoinRequest/{journeyId}")]
+        public async Task<IActionResult> RespondToJoinRequest( [FromBody] RequestResponseDto response, int journeyId)
+        {
+            int userId = GetUserIdFromJwt();
+
+            ServiceResult result = await service.RespondToJourneyRequest(userId, journeyId, response.RequesterId, response.Status);
 
             switch (result.Status)
             {

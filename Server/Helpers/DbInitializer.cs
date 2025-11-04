@@ -54,18 +54,18 @@ namespace Server.Helpers
             // ----------- JourneyParticipants -----------
             var participants = new List<JourneyParticipants>
             {
-                new JourneyParticipants { UserId = 1, JourneyId = 1, Role = JourneyRole.Owner, JoinedAt = DateTime.UtcNow },
-                new JourneyParticipants { UserId = 2, JourneyId = 1, Role = JourneyRole.Participant, JoinedAt = DateTime.UtcNow },
-                new JourneyParticipants { UserId = 3, JourneyId = 1, Role = JourneyRole.Participant, JoinedAt = DateTime.UtcNow },
-                new JourneyParticipants { UserId = 4, JourneyId = 1, Role = JourneyRole.Participant, JoinedAt = DateTime.UtcNow },
+                new JourneyParticipants { UserId = 1, JourneyId = 1, Role = JourneyRole.Owner, Status = RequestStatus.Accepted, JoinedAt = DateTime.UtcNow },
+                new JourneyParticipants { UserId = 2, JourneyId = 1, Role = JourneyRole.Participant, Status = RequestStatus.Accepted, JoinedAt = DateTime.UtcNow },
+                new JourneyParticipants { UserId = 3, JourneyId = 1, Role = JourneyRole.Participant, Status = RequestStatus.Pending, JoinedAt = DateTime.UtcNow },
+                new JourneyParticipants { UserId = 4, JourneyId = 1, Role = JourneyRole.Participant, Status = RequestStatus.Accepted, JoinedAt = DateTime.UtcNow },
 
-                new JourneyParticipants { UserId = 2, JourneyId = 2, Role = JourneyRole.Owner, JoinedAt = DateTime.UtcNow },
-                new JourneyParticipants { UserId = 1, JourneyId = 2, Role = JourneyRole.Participant, JoinedAt = DateTime.UtcNow },
-                new JourneyParticipants { UserId = 4, JourneyId = 2, Role = JourneyRole.Participant, JoinedAt = DateTime.UtcNow },
-                new JourneyParticipants { UserId = 5, JourneyId = 2, Role = JourneyRole.Participant, JoinedAt = DateTime.UtcNow },
+                new JourneyParticipants { UserId = 2, JourneyId = 2, Role = JourneyRole.Owner, Status = RequestStatus.Accepted, JoinedAt = DateTime.UtcNow },
+                new JourneyParticipants { UserId = 1, JourneyId = 2, Role = JourneyRole.Participant, Status = RequestStatus.Accepted, JoinedAt = DateTime.UtcNow },
+                new JourneyParticipants { UserId = 4, JourneyId = 2, Role = JourneyRole.Participant, Status = RequestStatus.Pending, JoinedAt = DateTime.UtcNow },
+                new JourneyParticipants { UserId = 5, JourneyId = 2, Role = JourneyRole.Participant, Status = RequestStatus.Rejected, JoinedAt = DateTime.UtcNow },
 
-                new JourneyParticipants { UserId = 4, JourneyId = 3, Role = JourneyRole.Owner, JoinedAt = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1)) },
-                new JourneyParticipants { UserId = 4, JourneyId = 4, Role = JourneyRole.Owner, JoinedAt = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1)) }
+                new JourneyParticipants { UserId = 4, JourneyId = 3, Role = JourneyRole.Owner, Status = RequestStatus.Accepted, JoinedAt = DateTime.UtcNow.Subtract(TimeSpan.FromDays(12)) },
+                new JourneyParticipants { UserId = 4, JourneyId = 4, Role = JourneyRole.Owner, Status = RequestStatus.Accepted, JoinedAt = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1)) }
             };
             await context.JourneyParticipants.AddRangeAsync(participants);
             await context.SaveChangesAsync();
@@ -88,7 +88,7 @@ namespace Server.Helpers
             var dangerousPlaces = new List<DangerousPlace>
             {
                 new DangerousPlace { Id = 1, ReportedById = 1, GPS = "52.370216,4.895168", PlaceType = DangerousPlaceType.PoorLighting, Description = "Very dark street, watch out!" },
-                new DangerousPlace { Id = 2, ReportedById = 2, GPS = "51.924420,4.477733", PlaceType = DangerousPlaceType.HazardousRoad, Description = "Lots of garbage here" }
+                new DangerousPlace { Id = 2, ReportedById = 2, GPS = "51.924420,4.477733", PlaceType = DangerousPlaceType.CrimeSpot, Description = "Lots of garbage here" }
             };
             await context.DangerousPlace.AddRangeAsync(dangerousPlaces);
             await context.SaveChangesAsync();

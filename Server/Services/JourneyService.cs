@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Server.Common;
 using Server.Data;
 using Server.Models;
@@ -49,6 +50,7 @@ namespace Server.Services
                 {
                     UserId = p.UserId,
                     UserName = p.User?.Username ?? "Unknown",
+                    Status = p.Status,
                     Role = p.Role,
                     JoinedAt = p.JoinedAt
                 })
@@ -75,7 +77,7 @@ namespace Server.Services
                 .Include(j => j.Participants)
                     .ThenInclude(p => p.User)
                 .Where(j =>
-                    j.Participants.Any(p => /*p.Role == JourneyRole.Owner && */ buddyIds.Contains(p.UserId)) &&
+                    j.Participants.Any(p => p.Role == JourneyRole.Owner && buddyIds.Contains(p.UserId)) &&
                     j.FinishedAt == null &&
                     !j.Participants.Any(p => p.UserId == userId))
                 .ToListAsync();
@@ -95,6 +97,7 @@ namespace Server.Services
                 {
                     UserId = p.UserId,
                     UserName = p.User?.Username ?? "Unknown",
+                    Status = p.Status,
                     Role = p.Role,
                     JoinedAt = p.JoinedAt
                 })
@@ -159,6 +162,7 @@ namespace Server.Services
             {
                 UserId = user.Id,
                 Role = JourneyRole.Owner,
+                Status = RequestStatus.Accepted,
                 JoinedAt = DateTime.UtcNow
             });
 
@@ -171,7 +175,7 @@ namespace Server.Services
         /// <summary>
         /// Allows a user to join an existing journey if they are buddies with the journey owner.
         /// </summary>
-        public async Task<ServiceResult> JoinJourneyAsync(int userId, int journeyId)
+        public async Task<ServiceResult> SendJoinJourneyRequest(int userId, int journeyId)
         {
             if (!await db.Users.AnyAsync(u => u.Id == userId))
                 return ServiceResult.Fail(ServiceResultStatus.UserNotFound, "User not found");
@@ -186,8 +190,27 @@ namespace Server.Services
             if (journey.FinishedAt != null && journey.FinishedAt != DateTime.MinValue)
                 return ServiceResult.Fail(ServiceResultStatus.InvalidOperation, "Cannot join a finished journey");
 
-            if (journey.Participants.Any(p => p.UserId == userId))
-                return ServiceResult.Fail(ServiceResultStatus.InvalidOperation, "Already part of this journey");
+            // Check if user is already in journey
+            JourneyParticipants? existing = journey.Participants.FirstOrDefault(p => p.UserId == userId);
+            if (existing != null)
+            {
+                if (existing.Status == RequestStatus.Rejected)
+                {
+                    existing.Status = RequestStatus.Pending;
+                    await db.SaveChangesAsync();
+                    return ServiceResult.Succes($"Changed Rejected from {userId} in journey {journeyId} to pending.");
+                }
+                else
+                {
+                    switch (existing.Status)
+                    {
+                        case RequestStatus.Pending: return ServiceResult.Fail(ServiceResultStatus.InvalidOperation, "Join request already pending");
+                        case RequestStatus.Accepted: return ServiceResult.Fail(ServiceResultStatus.InvalidOperation, "Already part of this journey");
+                        case RequestStatus.Blocked: return ServiceResult.Fail(ServiceResultStatus.InvalidOperation, "Join request was blocked");
+                        default: return ServiceResult.Fail(ServiceResultStatus.InvalidOperation, "Invalid request state");
+                    }
+                }
+            }
 
             // Find owner
             JourneyParticipants? owner = journey.Participants.FirstOrDefault(p => p.Role == JourneyRole.Owner);
@@ -211,13 +234,54 @@ namespace Server.Services
             {
                 UserId = userId,
                 JourneyId = journey.Id,
-                Role = JourneyRole.Participant
+                Role = JourneyRole.Participant,
+                Status = RequestStatus.Pending
             };
 
             db.JourneyParticipants.Add(participant);
             await db.SaveChangesAsync();
 
-            return ServiceResult.Succes("Successfully joined the journey");
+            return ServiceResult.Succes("Join request sent. Awaiting owner approval.");
+        }
+
+        public async Task<ServiceResult> RespondToJourneyRequest(int ownerId, int journeyId, int requesterId, RequestStatus status)
+        {
+            // Check journey and owner
+            Journey? journey = await db.Journeys
+                .Include(j => j.Participants)
+                .FirstOrDefaultAsync(j => j.Id == journeyId);
+
+            if (journey == null)
+                return ServiceResult.Fail(ServiceResultStatus.ResourceNotFound, "Journey not found");
+
+            JourneyParticipants? owner = journey.Participants.FirstOrDefault(p => p.UserId == ownerId && p.Role == JourneyRole.Owner);
+            if (owner == null)
+                return ServiceResult.Fail(ServiceResultStatus.Unauthorized, "Only the owner can respond to join requests");
+
+            // Find the pending request
+            JourneyParticipants? request = journey.Participants.FirstOrDefault(p => p.UserId == requesterId);
+            if (request == null)
+                return ServiceResult.Fail(ServiceResultStatus.ResourceNotFound, "Join request not found");
+
+            if (request.Status != RequestStatus.Pending)
+                return ServiceResult.Fail(ServiceResultStatus.InvalidOperation, "This join request has already been handled");
+
+            // Apply decision
+            if (status == RequestStatus.Accepted)
+            {
+                request.Status = RequestStatus.Accepted;
+                request.JoinedAt = DateTime.UtcNow;
+            }
+            else
+            {
+                request.Status = status;
+            }
+
+            await db.SaveChangesAsync();
+            if (status == RequestStatus.Accepted)
+                return ServiceResult.Succes("Join request approved successfully");
+            
+            return ServiceResult.Succes("Join request rejected successfully");
         }
 
 

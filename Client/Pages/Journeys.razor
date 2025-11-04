@@ -67,13 +67,15 @@ else
                     JourneyParticipantDto? currentUser = j.Participants.FirstOrDefault(p => p.UserId == currentUserId);
                     bool isOwner = currentUser?.Role == JourneyRole.Owner;
                     bool isFinished = j.FinishedAt != null;
+                    if (currentUser?.Status != RequestStatus.Accepted)
+                    { continue; }
 
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <div>
                             <strong>@j.StartGPS → @j.EndGPS</strong><br />
                             <small>Aangemaakt: @j.CreatedAt.ToShortDateString()</small>
                             <small>Eigenaar: @j.OwnerName</small><br />
-                            <small>Mede-Reizigers: @string.Join(", ", j.Participants.Where(p => p.UserId != currentUserId && p.Role != JourneyRole.Owner).Select(p => p.UserName))</small><br />
+                            <small>Mede-Reizigers: @string.Join(", ", j.Participants.Where(p => p.UserId != currentUserId && p.Status == RequestStatus.Accepted && p.Role != JourneyRole.Owner).Select(p => p.UserName))</small><br />
                             <small>Starttijd: @j.StartAt</small>
                             @if (isFinished)
                             {
@@ -86,11 +88,9 @@ else
                             @if (editingJourneyId == j.Id)
                             {
                                 <br />
-                                <text>Vertrek Gps: </text><input type="text" class="form-control form-control-sm mb-1" style="width:120px; display:inline-block" @bind="editStartGPS" /> <br />
-                                <text>Bestemming Gps: </text><input type="text" class="form-control form-control-sm mb-1" style="width:120px; display:inline-block" @bind="editEndGPS" /><br />
-                                <text>Startijd: </text><input type="datetime-local" @bind="startAt" class="border rounded px-2 py-1 w-full" />
-
-                                <br />
+                                <text>Vertrek Gps: </text><input type="text" class="form-control form-control-sm mb-1" style="width:120px; display:inline-block" @bind="journeyCreateDto.StartGPS" /><br />
+                                <text>Bestemming Gps: </text><input type="text" class="form-control form-control-sm mb-1" style="width:120px; display:inline-block" @bind="journeyCreateDto.EndGPS" /><br />
+                                <text>Startijd: </text><input type="datetime-local" @bind="journeyCreateDto.StartAt" class="border rounded px-2 py-1 w-full" /><br />
 
                                 <button class="btn btn-sm btn-primary me-1" @onclick="SaveEdit">Opslaan</button>
                                 <button class="btn btn-sm btn-secondary" @onclick="Cancel">Annuleren</button>
@@ -101,7 +101,23 @@ else
                                 {
                                     <button class="btn btn-warning" @onclick="() => StartEditingJourney(j)">Aanpassen</button>
                                     <button class="btn btn-warning" @onclick="() => FinishJourney(j.Id)">Reis Afronden</button>
-                                }                       
+
+                                    var pendingRequests = j.Participants.Where(p => p.Status == RequestStatus.Pending && p.UserId != currentUserId);
+                                    if (pendingRequests.Any())
+                                    {
+                                        <div class="mt-2">
+                                            <strong>Openstaande aanvragen:</strong><br />
+                                            @foreach (var req in pendingRequests)
+                                            {
+                                                <div class="d-flex align-items-center gap-2 mb-1">
+                                                    <span>@req.UserName</span>
+                                                    <button class="btn btn-sm btn-success" @onclick="() => RespondToJoinRequest(j.Id, req.UserId, RequestStatus.Accepted)">Accepteer</button>
+                                                    <button class="btn btn-sm btn-danger" @onclick="() => RespondToJoinRequest(j.Id, req.UserId, RequestStatus.Rejected)">Afwijzen</button>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                }
                             }
                         </div>
                     </li>
@@ -119,16 +135,30 @@ else
         <ul class="list-group">
             @foreach (var j in buddyJourneys)
             {
+                RequestStatus? status = null;
                 JourneyParticipantDto? currentUser = j.Participants.FirstOrDefault(p => p.UserId == currentUserId);
+                if (currentUser != null)
+                    status = currentUser.Status;
+
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     <div>
                         <strong>@j.StartGPS → @j.EndGPS</strong><br />
-                        <small>Aangemaakt: @j.CreatedAt.ToShortDateString()</small>
                         <small>Eigenaar: @j.OwnerName</small><br />
-                        <small>Mede-Reizigers: @string.Join(", ", j.Participants.Where(p => p.UserId != currentUserId && p.Role != JourneyRole.Owner).Select(p => p.UserName))</small><br />
                         <small>Starttijd: @j.StartAt</small>
                     </div>
-                    <button class="btn btn-sm btn-outline-success" @onclick="() => JoinBuddyJourney(j.Id)">Mee reizen</button>
+
+                    @if (status == null || status == RequestStatus.Rejected)
+                    {
+                        <button class="btn btn-sm btn-outline-success" @onclick="() => SendJoinRequest(j.Id)">Aanvraag indienen</button>
+                    }
+                    else if (status == RequestStatus.Pending)
+                    {
+                        <span class="badge bg-warning text-dark">In afwachting</span>
+                    }
+                    else if (status == RequestStatus.Accepted)
+                    {
+                        <span class="badge bg-success">Geaccepteerd</span>
+                    }
                 </li>
             }
         </ul>
@@ -152,12 +182,10 @@ else
 
     //variables for editingdata
     private int editingJourneyId = -1;
-    private string editStartGPS = string.Empty;
-    private string editEndGPS = string.Empty;
-    private DateTime startAt;
 
     protected override async Task OnInitializedAsync()
     {
+
         journeyCreateDto.StartAt = DateTime.Now;
         currentUserId = await getUserId();
         await LoadJourneys();
@@ -192,14 +220,37 @@ else
         errorMessage = "Er ging iets mis, huidige gebruiker is niet gevonden in de database";
         return -1;
     }
-
-    private async Task JoinBuddyJourney(int journeyId)
+    private async Task SendJoinRequest(int journeyId)
     {
-        var result = await JourneyService.JoinJourneyAsync(journeyId);
-        if (result.Message != null)
-            Console.WriteLine(result.Message);
+        ServiceResult? result = await JourneyService.SendJoinRequestAsync(journeyId);
+        if (result.IsSuccess)
+        {
+            successMessage = "Aanvraag verstuurd!";
+            errorMessage = "";
+        }
+        else
+        {
+            errorMessage = result.Message;
+            successMessage = "";
+        }
 
-        await LoadJourneys(); // Refresh lists
+        await LoadJourneys();
+    }
+
+    private async Task RespondToJoinRequest(int journeyId, int requesterId, RequestStatus status)
+    {
+        ServiceResult? result = await JourneyService.RespondToJoinRequestAsync(journeyId, requesterId, status);
+        if (result.IsSuccess)
+        {
+            successMessage = "";
+            errorMessage = "";
+        }
+        else
+        {
+            errorMessage = result.Message;
+            successMessage = "";
+        }
+        await LoadJourneys();
     }
     private async Task LeaveJourney(int journeyId)
     {
@@ -223,8 +274,9 @@ else
     private void StartEditingJourney(JourneyDto journey)
     {
         editingJourneyId = journey.Id;
-        editStartGPS = journey.StartGPS;
-        editEndGPS = journey.EndGPS;
+        journeyCreateDto.StartGPS = journey.StartGPS;
+        journeyCreateDto.EndGPS = journey.EndGPS;
+        journeyCreateDto.StartAt = journey.StartAt;
     }
 
     private void Cancel()
@@ -237,7 +289,7 @@ else
     {
         if (editingJourneyId > 0)
         {
-            var result = await JourneyService.UpdateJourneyAsync(editingJourneyId, editStartGPS, editEndGPS, startAt);
+            var result = await JourneyService.UpdateJourneyAsync(editingJourneyId, journeyCreateDto.StartGPS, journeyCreateDto.EndGPS, journeyCreateDto.StartAt);
             Console.WriteLine(result.Message ?? "Updated");
             editingJourneyId = -1;
             await OnInitializedAsync(); // reload list
@@ -254,7 +306,7 @@ else
 
     private async Task HandleCreate()
     {
-        var result = await JourneyService.AddJourneyAsync(journeyCreateDto);
+        var result = await JourneyService.AddJourneyAsync(journeyCreateDto.StartGPS, journeyCreateDto.EndGPS, journeyCreateDto.StartAt);
         if (result.IsSuccess)
         {
             errorMessage = "";

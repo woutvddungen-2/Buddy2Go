@@ -10,6 +10,7 @@ namespace Server.Models
         public int UserId { get; set; }
         public User User { get; set; } = null!;
         public JourneyRole Role { get; set; } = JourneyRole.Participant;
+        public RequestStatus Status { get; set; }
 
         public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
     }

@@ -2,10 +2,10 @@
 {
     public enum DangerousPlaceType
     {
-        AccidentProne,
-        CrimeSpot,
-        HazardousRoad,
-        PoorLighting,
-        Other
+        AccidentProne = 0,
+        CrimeSpot= 1,
+        Trash = 2,
+        PoorLighting = 3,
+        Other = 4
     }
 }

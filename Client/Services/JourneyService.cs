@@ -1,7 +1,10 @@
 ﻿using Client.Common;
 using Microsoft.AspNetCore.Components.WebAssembly.Http;
+using Shared.Models;
 using Shared.Models.Dtos;
+using System.Linq.Expressions;
 using System.Net.Http.Json;
+using static System.Net.WebRequestMethods;
 
 namespace Client.Services
 {
@@ -54,13 +57,13 @@ namespace Client.Services
             }
         }
 
-        public async Task<ServiceResult> AddJourneyAsync(JourneyCreateDto dto)
+        public async Task<ServiceResult> AddJourneyAsync(string? startGPS, string? endGPS, DateTime startAt)
         {
             try
             {
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, "api/Journey/AddJourney")
                 {
-                    Content = JsonContent.Create(dto)
+                    Content = JsonContent.Create(new JourneyCreateDto { StartGPS = startGPS, EndGPS = endGPS, StartAt = startAt })
                 };
                 request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
                 HttpResponseMessage? response = await httpClient.SendAsync(request);
@@ -76,19 +79,47 @@ namespace Client.Services
             }
         }
 
-        public async Task<ServiceResult> JoinJourneyAsync(int journeyId)
+        /// <summary>
+        /// Sends a request to join a journey.
+        /// </summary>
+        public async Task<ServiceResult> SendJoinRequestAsync(int journeyId)
         {
             try
             {
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, $"api/Journey/JoinJourney/{journeyId}");
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, $"api/Journey/SendJoinRequest/{journeyId}");
                 request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
                 HttpResponseMessage? response = await httpClient.SendAsync(request);
 
                 if (!response.IsSuccessStatusCode)
                     return ServiceResult.Fail(await response.Content.ReadAsStringAsync());
-                return ServiceResult.Succes();
+                return ServiceResult.Succes(await response.Content.ReadAsStringAsync());
             }
             catch (Exception ex)
+            {
+                return ServiceResult.Fail(ex.Message);
+            }
+
+        }
+
+        /// <summary>
+        /// Responds to a pending join request (Accept or Reject).
+        /// </summary>
+        public async Task<ServiceResult> RespondToJoinRequestAsync(int journeyId, int requesterId, RequestStatus status)
+        {
+            try
+            {
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, $"api/Journey/RespondToJoinRequest/{journeyId}")
+                {
+                    Content = JsonContent.Create(new RequestResponseDto { RequesterId = requesterId, Status = status})
+                };
+                request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
+                HttpResponseMessage? response = await httpClient.SendAsync(request);
+
+                if (!response.IsSuccessStatusCode)
+                    return ServiceResult.Fail(await response.Content.ReadAsStringAsync());
+                return ServiceResult.Succes(await response.Content.ReadAsStringAsync());
+            }
+            catch (Exception ex) 
             {
                 return ServiceResult.Fail(ex.Message);
             }
