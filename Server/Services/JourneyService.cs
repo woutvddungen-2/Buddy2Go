@@ -291,6 +291,9 @@ namespace Server.Services
             return ServiceResult.Succes("Join request sent. Awaiting owner approval.");
         }
 
+        /// <summary>
+        /// Responds to a join request of another user
+        /// </summary>
         public async Task<ServiceResult> RespondToJourneyRequest(int ownerId, int journeyId, int requesterId, RequestStatus status)
         {
             Journey? journey = await db.Journeys
@@ -449,28 +452,28 @@ namespace Server.Services
                 logger.LogWarning("LeaveJourney failed, user {user} not participant of Journey {journey}", userId, journeyId);
                 return ServiceResult.Fail(ServiceResultStatus.InvalidOperation, "You are not a participant of this journey");
             }
-            // logic for owner leaving the journey
+
             if (participant.Role == JourneyRole.Owner)
             {
-                if (journey.Participants.Count <= 1)
-                {
-                    db.Journeys.Remove(journey);
-                    await db.SaveChangesAsync();
+                JourneyParticipants? newOwner = journey.Participants
+                    .Where(p => p.UserId != userId && p.Status == RequestStatus.Accepted)
+                    .OrderBy(p => p.JoinedAt)
+                    .FirstOrDefault();
 
-                    logger.LogInformation("Journey {journey} deleted as there were no participants.", journeyId);
-                    return ServiceResult.Succes($"Journey {journeyId} deleted as there were no participants.");
-                }
-                else
+                if (newOwner != null)
                 {
-                    JourneyParticipants? newOwner = journey.Participants.First(p => p.UserId != userId);
                     newOwner.Role = JourneyRole.Owner;
-
                     db.JourneyParticipants.Remove(participant);
                     await db.SaveChangesAsync();
 
                     logger.LogInformation("Ownership transferred from User {oldowner} to User {newownder}. {oldowner} has left the journey: {journey}.", userId, newOwner.UserId, userId, journeyId);
                     return ServiceResult.Succes();
                 }
+                db.Journeys.Remove(journey);
+                await db.SaveChangesAsync();
+
+                logger.LogInformation("Journey {journey} deleted as there were no participants.", journeyId);
+                return ServiceResult.Succes($"Journey {journeyId} deleted as there were no participants.");                
             }
 
             db.JourneyParticipants.Remove(participant);
