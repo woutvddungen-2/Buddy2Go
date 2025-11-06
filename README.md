@@ -10,3 +10,15 @@ dotnet add package Swashbuckle.AspNetCore
 
 ```
 
+create database: 
+```
+dev.mysql.com/downloads/mysql
+install mysql.
+
+got to project folder with terminal:
+cd .\Server\
+dotnet tool restore
+dotnet ef migrations add initialcreate
+dotnet ef database update
+```
+
