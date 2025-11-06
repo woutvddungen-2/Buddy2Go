@@ -15,7 +15,7 @@ builder.Services.AddScoped(sp =>
 {
     var http = new HttpClient
     {
-        BaseAddress = new Uri("https://localhost:5001/")
+        BaseAddress = new Uri("https://mydev.local:5001/")
     };
     // Make sure the browser includes cookies
     http.DefaultRequestHeaders.Add("Accept", "application/json");
