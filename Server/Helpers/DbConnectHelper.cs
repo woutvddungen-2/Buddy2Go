@@ -21,7 +21,7 @@ namespace Server.Helpers
 
             if (!string.IsNullOrWhiteSpace(server) && !string.IsNullOrWhiteSpace(database) && !string.IsNullOrWhiteSpace(user) && !string.IsNullOrWhiteSpace(password) && !string.IsNullOrWhiteSpace(port))
             {
-                string connectionString = $"Server={server};Port={port};Database={database};User={user};Password={password};";
+                string connectionString = $"Server={server};Port={port};Database={database};User={user};Password={password};AllowPublicKeyRetrieval=True;SslMode=None;";
 
                 services.AddDbContext<AppDbContext>(options =>
                 options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));

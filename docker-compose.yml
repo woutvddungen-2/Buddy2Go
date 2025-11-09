@@ -1,0 +1,54 @@
+version: '3.9'
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: __xh8xq9KmE4E.CwpQDG
+      MYSQL_DATABASE: Buddy2Go
+      MYSQL_ROOT_HOST: '%'
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+        test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+        interval: 5s
+        retries: 5
+
+  server:
+    build:
+      context: .
+      dockerfile: Server/Dockerfile
+    environment:
+      DbSettings__Ip: mysql
+      DbSettings__DbName: Buddy2Go
+      DbSettings__UserID: root
+      DbSettings__Password: __xh8xq9KmE4E.CwpQDG
+      DbSettings__Port: 3306
+      AllowedOrigins: http://client:5002
+      JwtSettings__Secret: "ThisIsASuperSecretKey12345678901"
+      ASPNETCORE_ENVIRONMENT: Development
+    volumes:
+      - ./Server/certs/aspnetapp.pfx:/https/aspnetapp.pfx:ro
+    ports:
+      - "5001:5001"
+    depends_on:
+        mysql:
+            condition: service_healthy
+
+  client:
+    build:
+      context: .
+      dockerfile: Client/Dockerfile
+    environment:
+      API_BASE_URL: https://server:5001
+    volumes:
+    - ./Client/certs/client.crt:/etc/nginx/ssl/client.crt:ro
+    - ./Client/certs/client.key:/etc/nginx/ssl/client.key:ro
+    ports:
+      - "5002:5002"
+    depends_on:
+      - server
+
+volumes:
+  mysql_data:

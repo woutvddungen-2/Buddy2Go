@@ -14,12 +14,15 @@ namespace Server.Helpers
             await context.Database.MigrateAsync();
 
             // Remove data in correct FK order
-            await context.Messages.ExecuteDeleteAsync();
-            await context.JourneyParticipants.ExecuteDeleteAsync();
-            await context.Buddys.ExecuteDeleteAsync();
-            await context.DangerousPlace.ExecuteDeleteAsync();
-            await context.Journeys.ExecuteDeleteAsync();
-            await context.Users.ExecuteDeleteAsync();
+            if (await context.Users.AnyAsync())
+            {
+                await context.Messages.ExecuteDeleteAsync();
+                await context.JourneyParticipants.ExecuteDeleteAsync();
+                await context.Buddys.ExecuteDeleteAsync();
+                await context.DangerousPlace.ExecuteDeleteAsync();
+                await context.Journeys.ExecuteDeleteAsync();
+                await context.Users.ExecuteDeleteAsync();
+            }
 
             // Seed fresh data
             await SeedDataAsync(context);

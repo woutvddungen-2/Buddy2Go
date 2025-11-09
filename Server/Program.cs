@@ -10,7 +10,11 @@ using Server.Data;
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // -------------------- Authentication --------------------
-string jwtSecret = builder.Configuration["JwtSettings:Secret"] ?? throw new Exception("JWT secret missing");
+string? jwtSecret = builder.Configuration["JwtSettings:Secret"];
+if (string.IsNullOrEmpty(jwtSecret))
+{
+    throw new Exception("JWT secret is missing. Set JwtSettings__Secret environment variable.");
+}
 
 builder.Services.AddAuthentication(options =>
 {
@@ -128,12 +132,36 @@ builder.Services.AddSwaggerGen(c =>
     });
 #endif
 
+//------------- Configure https for docker -------------------------------
+// Configure Kestrel for HTTPS inside Docker
+if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true")
+{
+    builder.WebHost.ConfigureKestrel(options =>
+    {
+        options.ListenAnyIP(5001, listenOptions =>
+        {
+            listenOptions.UseHttps("/https/aspnetapp.pfx", "MyPassword123");
+        });
+    });
+}
+
 // -------------------- CORS --------------------
+
+// Read environment variable
+string? urlsEnv = Environment.GetEnvironmentVariable("AllowedOrigins");
+
+// Split into array, removing empty entries and trimming whitespace
+string[] urls = Array.Empty<string>();
+if (!string.IsNullOrEmpty(urlsEnv))
+{
+    urls = urlsEnv.Split(';');
+}
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowBlazorWasm", policy =>
     {
-        policy.WithOrigins("https://localhost:5002", "https://mydev.local:5002")
+        policy.WithOrigins(urls)
               .AllowCredentials()
               .AllowAnyHeader()
               .AllowAnyMethod();

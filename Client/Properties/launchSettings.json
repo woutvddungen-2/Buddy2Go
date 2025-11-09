@@ -4,21 +4,21 @@
     "https (Development)": {
       "commandName": "Project",
       "dotnetRunMessages": true,
-      "launchBrowser": true,
+      "launchBrowser": false,
       "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
       "applicationUrl": "https://localhost:5002;https://mydev.local:5002",
       "environmentVariables": {
-        //"ASPNETCORE_ENVIRONMENT": "Development"
-        }
+        "API_BASE_URL": "https://mydev.local:5002"
+      }
       },
     "https (Production)": {
       "commandName": "Project",
       "dotnetRunMessages": true,
-      "launchBrowser": true,
+      "launchBrowser": false,
       "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
       "applicationUrl": "https://localhost:5002;https://mydev.local:5002",
       "environmentVariables": {
-        //"ASPNETCORE_ENVIRONMENT": "Production"
+        "API_BASE_URL": "https://mydev.local:5002"
       }
     }
     }
