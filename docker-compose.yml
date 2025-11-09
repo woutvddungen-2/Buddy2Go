@@ -25,8 +25,8 @@ services:
       DbSettings__UserID: root
       DbSettings__Password: __xh8xq9KmE4E.CwpQDG
       DbSettings__Port: 3306
-      AllowedOrigins: http://client:5002
       JwtSettings__Secret: "ThisIsASuperSecretKey12345678901"
+      AllowedOrigins: "https://localhost:5002;https://mydev.local:5002;https://client:5002"
       ASPNETCORE_ENVIRONMENT: Development
     volumes:
       - ./Server/certs/aspnetapp.pfx:/https/aspnetapp.pfx:ro

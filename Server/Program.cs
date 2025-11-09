@@ -174,24 +174,30 @@ DbConnectHelper.AddDatabase(builder.Services, builder.Configuration.GetSection("
 // -------------------- Build App --------------------
 WebApplication? app = builder.Build();
 
-// -------------------- Seed Database -----------------
-using IServiceScope scope = app.Services.CreateScope();
-AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-#if DEBUG
-await DbInitializer.ResetDatabaseAsync(db);
-#endif
-
 // -------------------- Logging --------------------
 ILogger logger = app.Services.GetRequiredService<ILogger<Program>>();
 
-if (DbConnectHelper.TestDatabaseConnection(app.Services, out Exception? ex))
+// -------------------- Seed Database -----------------
+
+for (int i = 0; i < 10; i++)
 {
-    logger.LogInformation("Successfully connected to the database.");
-}
-else
-{
-    logger.LogError(ex, "Failed to connect to the database.");
+    try
+    {
+        using IServiceScope scope = app.Services.CreateScope();
+        AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+#if DEBUG
+        await DbInitializer.ResetDatabaseAsync(db);
+#endif
+        logger.LogInformation("Database connected succesfully");
+        break;
+    }
+    catch
+    {
+        logger.LogWarning("Database not Initialized, Connection attempt: {count}", i);
+        Thread.Sleep(3000);
+    }
+
 }
 
 // -------------------- Middleware --------------------
