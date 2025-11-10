@@ -1,0 +1,76 @@
+﻿
+/* Main layout */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #fff;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.login-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    width: 25em;
+    padding: 2rem 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    background-color: white;
+}
+
+/* Logo & text */
+.logo {
+    width: 80%;
+    margin-bottom: 0rem;
+    align-self: center;
+}
+
+.app-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #033b63;
+    margin-bottom: 0.3rem;
+}
+
+.subtitle {
+    color: #4a4a4a;
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+}
+
+.register-header {
+    display: flex;
+    justify-content: flex-end;    
+}
+
+/* Register button */
+.register-btn {
+    background-color: #2ebd8c;
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-bottom: 1.5rem;
+}
+
+
+/* Login button */
+.login-btn {
+    background-color: #a344a3;
+    border: none;
+    color: white;
+    font-weight: 600;
+    padding: 1rem;
+    width: 100%;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    margin-top: 4px;
+}

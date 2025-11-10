@@ -1,0 +1,48 @@
+﻿.bottom-nav {
+    display: flex;
+    flex-wrap: wrap; /* allow wrapping on small screens */
+    justify-content: space-around;
+    align-items: center;
+    border-top: 1px solid #ccc;
+    padding: 6px 0;
+    background-color: #f9f9f9;
+    /*place at the bottom*/
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+}
+
+.nav-button {
+    flex: 1 1 auto;
+    min-width: 60px;
+    font-size: 0.9rem;
+    padding: 6px 0;
+    border: none;
+    background: none;
+    color: #333;
+}
+
+.nav-button:hover {
+    background-color: #ddd;
+}
+
+.page-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* full viewport height */
+}
+
+.content {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    padding-bottom: 60px; /* height of the nav */
+}
+
+.logout-button {
+    color: red;
+}
+
+

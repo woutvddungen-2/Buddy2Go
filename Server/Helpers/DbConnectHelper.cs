@@ -5,17 +5,23 @@ namespace Server.Helpers
 {
     public static class DbConnectHelper
     {
+        /// <summary>
+        /// Adds the database context using MySQL configuration from appsettings.
+        /// </summary>
+        /// <param name="services"></param>
+        /// <param name="config"></param>
+        /// <exception cref="Exception"></exception>
         public static void AddDatabase(IServiceCollection services, IConfigurationSection config)
         {
             string server = config["Ip"] ?? "localhost";
-            string database = config["DatabaseName"] ?? throw new Exception("Database name missing.");
+            string database = config["DbName"] ?? throw new Exception("Database name missing.");
             string user = config["UserID"] ?? throw new Exception("Database user missing.");
             string password = config["Password"] ?? throw new Exception("Database password missing.");
             string port = config["Port"] ?? "3306";
 
             if (!string.IsNullOrWhiteSpace(server) && !string.IsNullOrWhiteSpace(database) && !string.IsNullOrWhiteSpace(user) && !string.IsNullOrWhiteSpace(password) && !string.IsNullOrWhiteSpace(port))
             {
-                string connectionString = $"Server={server};Port={port};Database={database};User={user};Password={password};";
+                string connectionString = $"Server={server};Port={port};Database={database};User={user};Password={password};AllowPublicKeyRetrieval=True;SslMode=None;";
 
                 services.AddDbContext<AppDbContext>(options =>
                 options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
@@ -25,10 +31,17 @@ namespace Server.Helpers
                 throw new Exception("Database configuration is missing or incomplete.");
             }
         }
+
+        /// <summary>
+        /// Tests the database connection synchronously.
+        /// </summary>
+        /// <param name="serviceProvider"></param>
+        /// <param name="exception"></param>
+        /// <returns></returns>
         public static bool TestDatabaseConnection(IServiceProvider serviceProvider, out Exception? exception)
         {
-            using var scope = serviceProvider.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            using IServiceScope scope = serviceProvider.CreateScope();
+            AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
             try
             {

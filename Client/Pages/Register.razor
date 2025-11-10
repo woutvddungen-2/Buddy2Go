@@ -1,0 +1,120 @@
+﻿@page "/register"
+@inject UserService loginService
+@inject NavigationManager Navigation
+@using System.ComponentModel.DataAnnotations
+
+<h3 class="text-xl font-semibold mb-4">Register</h3>
+
+@if (isLoading)
+{
+    <p>Registreren...</p>
+}
+else
+{
+    <EditForm Model="@registerModel" OnValidSubmit="HandleRegister">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label class="block mb-1">Gebruikersnaam</label>
+            <InputText @bind-Value="registerModel.Username" class="border rounded px-2 py-1 w-full" />
+        </div>
+
+        <div class="mb-3">
+            <label class="block mb-1">Email</label>
+            <InputText @bind-Value="registerModel.Email" type="email" class="border rounded px-2 py-1 w-full" />
+        </div>
+
+        <div class="mb-3">
+            <label class="block mb-1">Telefoonnummer</label>
+            <InputText @bind-Value="registerModel.PhoneNumber" type="phone" class="border rounded px-2 py-1 w-full" />
+        </div>
+
+        <div class="mb-3">
+            <label class="block mb-1">Wachtwoord</label>
+            <InputText @bind-Value="registerModel.Password" type="password" class="border rounded px-2 py-1 w-full" />
+        </div>
+
+        <div class="mb-3">
+            <label class="block mb-1">Wachtwoord bevestigen</label>
+            <InputText @bind-Value="registerModel.ConfirmPassword" type="password" class="border rounded px-2 py-1 w-full" />
+        </div>
+
+        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Registreren</button>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <p class="text-red-600 mt-3">@errorMessage</p>
+        }
+
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <p class="text-green-600 mt-3">@successMessage</p>
+        }
+    </EditForm>
+}
+
+@code {
+    private RegisterModel registerModel = new();
+    private bool isLoading = false;
+    private string? errorMessage;
+    private string? successMessage;
+
+    private async Task HandleRegister()
+    {
+        isLoading = true;
+        errorMessage = null;
+        successMessage = null;
+
+        if (registerModel.Password != registerModel.ConfirmPassword)
+        {
+            errorMessage = "Passwords do not match.";
+            isLoading = false;
+            return;
+        }
+
+        try
+        {
+            ServiceResult? result = await loginService.RegisterAsync(registerModel.Username, registerModel.Password, registerModel.Email, registerModel.PhoneNumber);
+
+            if (result.IsSuccess)
+            {
+                successMessage = "Registration successful! You can now log in.";
+                registerModel = new RegisterModel(); // clear form
+                Navigation.NavigateTo("/");
+            }
+            else
+            {
+                errorMessage = result.Message;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Registration failed: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    //TODO: add better verification of password strenght, email correct format and phonenumber correct format
+    //      add conformation checks using sms and/or email messages (server side?)
+    public class RegisterModel
+    {
+        [Required]
+        public string Username { get; set; } = string.Empty;
+
+        [Required, EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [Phone(ErrorMessage = "Please enter a valid phone number.")]
+        public string PhoneNumber { get; set; } = string.Empty;
+
+        [Required, MinLength(8)]
+        public string Password { get; set; } = string.Empty;
+
+        [Required]
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+}

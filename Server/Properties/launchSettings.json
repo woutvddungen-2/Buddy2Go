@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "https (Development)": {
+      "commandName": "Project",
+      "launchBrowser": false,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DbSettings__Ip": "localhost",
+        "DbSettings__DbName": "Buddy2Go",
+        "DbSettings__UserID": "root",
+        "DbSettings__Password": "__xh8xq9KmE4E.CwpQDG",
+        "DbSettings__Port": "3306",
+        "JwtSettings__Secret": "ThisIsASuperSecretKey12345678901",
+        "AllowedOrigins": "https://localhost:5002;https://mydev.local:5002;https://client:5002"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "https://localhost:5001;https://mydev.local:5001"
+
+    }
+  }
+}

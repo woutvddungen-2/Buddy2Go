@@ -1,0 +1,232 @@
+﻿@page "/buddys"
+@inject BuddyService BuddyService
+@inject UserService UserService
+
+<h3 class="text-2xl font-semibold mb-4">Buddy's'</h3>
+
+<!--FIND USER BY PHONE -->
+<div class="p-4 bg-gray-100 rounded-2xl shadow mb-6">
+    <h4 class="text-lg font-medium mb-2">Vind een Buddy d.m.v. telefoonnummer:</h4>
+    <div class="flex gap-2">
+        <input @bind="searchPhone" class="border rounded px-2 py-1 flex-1" placeholder="Telefoonnummer...." />
+        <button class="bg-blue-600 text-white px-4 py-1 rounded" @onclick="FindUserByPhone">Zoeken</button>
+    </div>
+
+    @if (searchResult != null)
+    {
+        <div class="mt-3">
+            <p><strong>Gebruiker gevonden: </strong> @searchResult.Username (@searchResult.Email)</p>
+            <button class="bg-green-600 text-white px-3 py-1 rounded" @onclick="() => SendRequest(searchResult.Id)">Verstuur buddyverzoek</button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <p class="mt-2 text-sm text-gray-700">@message</p>
+    }
+</div>
+
+<!--PENDING REQUESTS -->
+<div class="p-4 bg-gray-100 rounded-2xl shadow mb-6">
+    <h4 class="text-lg font-medium mb-2">Openstaande verzoeken</h4>
+    @if (pendingRequests.Count == 0)
+    {
+        <p class="text-gray-600">Geen openstaande verzoeken</p>
+    }
+    else
+    {
+        @foreach (var req in pendingRequests)
+        {
+            <div class="flex justify-between items-center border-b py-2">
+                <span>@req.Requester.Username (@req.Requester.PhoneNumber)</span>
+                <div class="flex gap-2">
+                    <button class="bg-green-600 text-white px-3 py-1 rounded" @onclick="() => RespondToRequest(req.Requester.Id, RequestStatus.Accepted)">Accepteren</button>
+                    <button class="bg-red-600 text-white px-3 py-1 rounded" @onclick="() => RespondToRequest(req.Requester.Id, RequestStatus.Rejected)">Afwijzen</button>
+                    <button class="bg-red-600 text-white px-3 py-1 rounded" @onclick="() => RespondToRequest(req.Requester.Id, RequestStatus.Blocked)">Blokkeren</button>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+<!--OUTGOING PENDING/REJECTED REQUESTS -->
+<div class="p-4 bg-gray-100 rounded-2xl shadow mb-6">
+    <h4 class="text-lg font-medium mb-2">Jouw verstuurde verzoeken</h4>
+    @if (sentRequests.Count == 0)
+    {
+        <p class="text-gray-600">Geen verstuurde verzoeken</p>
+    }
+    else
+    {
+        @foreach (var req in sentRequests)
+        {
+            <div class="flex justify-between items-center border-b py-2">
+                <span>@req.Addressee.Username (@req.Addressee.PhoneNumber)</span>
+                <span class="text-sm text-gray-500">@req.Status</span>
+                <div class="flex gap-2">
+                    @if (req.Status == RequestStatus.Rejected)
+                    {
+                        <button class="bg-red-600 text-white px-3 py-1 rounded" @onclick="() => RemoveBuddy(req.Requester.Id, req.Addressee.Id)">Verwijderen</button>
+                        <button class="bg-blue-600 text-white px-3 py-1 rounded" @onclick="() => ResendRequest(req.Addressee.Id)">Verstuur verzoek opnieuw</button>
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>
+
+
+<!--BUDDY LIST -->
+<div class="p-4 bg-gray-100 rounded-2xl shadow">
+    <h4 class="text-lg font-medium mb-2">Your Buddies</h4>
+    @if (buddies.Count == 0)
+    {
+        <p class="text-gray-600">Je hebt nog geen buddy's'</p>
+    }
+    else
+    {
+        @foreach (var buddy in buddies)
+        {
+            @if (buddy.Requester.Id == currentUserId)
+            {
+                <div class="flex justify-between items-center border-b py-2">
+                    <span>Buddy: @buddy.Addressee.Username</span>
+                    <button class="bg-red-600 text-white px-3 py-1 rounded" @onclick="() => RemoveBuddy(buddy.Requester.Id, buddy.Addressee.Id)">Verwijderen</button>
+                </div>
+            }
+            else
+            {
+                <div class="flex justify-between items-center border-b py-2">
+                    <span>Buddy: @buddy.Requester.Username</span>
+                    <button class="bg-red-600 text-white px-3 py-1 rounded" @onclick="() => RemoveBuddy(buddy.Requester.Id, buddy.Addressee.Id)">Verwijderen</button>
+                </div>
+            }
+
+        }
+    }
+</div>
+<BottomNav/>
+@code {
+    private string searchPhone = string.Empty;
+    private UserDto? searchResult;
+    private string message = string.Empty;
+
+    private int currentUserId;
+    private List<BuddyDto> buddies = new();
+    private List<BuddyDto> pendingRequests = new();
+    private List<BuddyDto> sentRequests = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var userIdResult = await UserService.GetUserId();
+        if (userIdResult.IsSuccess)
+            currentUserId = userIdResult.Data;
+
+        await LoadBuddies();
+        await LoadPendingRequests();
+        await LoadSentRequests();
+    }
+
+    private async Task LoadBuddies()
+    {
+        var result = await BuddyService.GetBuddyList();
+        if (result.IsSuccess && result.Data != null)
+            buddies = result.Data;
+    }
+
+    private async Task LoadPendingRequests()
+    {
+        var result = await BuddyService.GetPendingRequests();
+        if (result.IsSuccess && result.Data != null)
+            pendingRequests = result.Data;
+    }
+
+    private async Task FindUserByPhone()
+    {
+        searchResult = null;
+        message = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(searchPhone))
+        {
+            message = "Please enter a phone number.";
+            return;
+        }
+
+        var result = await UserService.FindUserbyPhone(searchPhone);
+        if (result.IsSuccess && result.Data != null)
+        {
+            searchResult = result.Data;
+            message = "User found!";
+        }
+        else
+        {
+            message = "No user found with that phone number.";
+        }
+    }
+
+    private async Task SendRequest(int userId)
+    {
+        var result = await BuddyService.SendBuddyRequest(userId);
+        if (result.IsSuccess)
+            message = "Buddy request sent!";
+        else
+            message = $"Buddy request Failed!, {result.Message}";
+    }
+
+    private async Task RespondToRequest(int requesterId, RequestStatus status)
+    {
+        var result = await BuddyService.RespondToBuddyRequest(requesterId, status);
+        if (result.IsSuccess)
+        {
+            await LoadPendingRequests();
+            await LoadBuddies();
+        }
+    }
+
+    private async Task RemoveBuddy(int requesterId, int addresseeId, bool block = false)
+    {
+        ServiceResult result;
+        if (requesterId == currentUserId)
+            result = await BuddyService.RemoveBuddy(addresseeId, block);
+        else
+            result = await BuddyService.RemoveBuddy(requesterId, block);
+
+        if (result.IsSuccess)
+            message = "Buddy succesfully removed";
+        else
+            message = $"Delete failed, {result.Message}";
+        await OnInitializedAsync();
+    }
+
+    private async Task LoadSentRequests()
+    {
+        var result = await BuddyService.GetSendRequests();
+        if (result.IsSuccess && result.Data != null)
+            sentRequests = result.Data;
+    }
+
+    // Resend buddy request for rejected
+    private async Task ResendRequest(int addresseeId)
+    {
+        var result = await BuddyService.SendBuddyRequest(addresseeId);
+        if (result.IsSuccess)
+            message = "Buddy request re-sent!";
+        else
+            message = $"Failed to resend request: {result.Message}";
+
+        await LoadSentRequests();
+    }
+
+    // Block buddy for pending incoming
+    // private async Task BlockBuddy(int requesterId)
+    // {
+    //     var result = await BuddyService.RemoveBuddy(requesterId, true);
+    //     if (result.IsSuccess)
+    //         message = "Buddy blocked!";
+    //     else
+    //         message = $"Failed to block: {result.Message}";
+
+    //     await LoadPendingRequests();
+    //     await LoadBuddies();
+    // }
+}

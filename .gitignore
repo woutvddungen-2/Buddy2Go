@@ -361,6 +361,4 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-
-# File with the envirement variables:
-/Server/Properties/launchSettings.json
+/Server/Migrations
