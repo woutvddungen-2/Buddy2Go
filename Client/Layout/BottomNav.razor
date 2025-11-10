@@ -1,6 +1,8 @@
 ﻿@namespace Client.Layout
 @inject Client.Services.UserService LoginService
-
+<head>
+    <link href="css/BottomNav.css" rel="stylesheet" />
+</head>
 
 <div class="bottom-nav">
     <button class="nav-button" @onclick="@(() => NavigateTo("/journeys"))">Journeys</button>

@@ -7,9 +7,9 @@ RUN dotnet publish "Client/Client.csproj" -c Debug -o /app/publish
 
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
-COPY --from=build /app/publish /usr/share/nginx/html
+COPY --from=build /app/publish/wwwroot /usr/share/nginx/html
 
-COPY Client/nginx-client.conf /etc/nginx/conf.d/default.conf
+COPY Client/nginx.conf /etc/nginx/nginx.conf
 
 EXPOSE 5002
 CMD ["nginx", "-g", "daemon off;"]
