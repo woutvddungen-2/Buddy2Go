@@ -1,0 +1,44 @@
+﻿@using Shared.Models;
+
+<div class="journey-card">
+    <div class="date">@Journey.StartAt.ToString("dddd dd-MM-yyyy")</div>
+    <div class="time">@Journey.StartAt.ToString("HH:mm")</div>
+
+    <div class="locations">
+        <span>Van <strong>@Journey.StartGPS</strong></span>
+        <span>Naar <strong>@Journey.EndGPS</strong></span>
+    </div>
+
+    <div class="owner">
+        <span>Eigenaar: </span>
+        @if (Journey.OwnerId == CurrentUserId)
+        {
+            <strong>Jij</strong>
+        }
+        else
+        {
+            <strong>@Journey.OwnerName</strong>
+        }
+    </div>
+
+    <div class="buddies">
+        <span>Reisbuddies:</span>
+        @foreach (var buddy in Journey.Participants.Where(p => p.UserId != CurrentUserId))
+        {
+            <span class="buddy">@buddy.UserName</span>
+        }
+    </div>
+
+    @if (JourneyCardButtons is not null)
+    {
+        <div class="card-actions">
+            @JourneyCardButtons
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public JourneyDto Journey { get; set; } = default!;
+    [Parameter] public int CurrentUserId { get; set; }
+    [Parameter] public RenderFragment? JourneyCardButtons { get; set; }
+}

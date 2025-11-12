@@ -1,11 +1,12 @@
 ﻿@page "/"
-@using System.Net
+@layout NoLayout
 
 @inject Client.Services.UserService LoginService
 @inject NavigationManager Navigation
-<head>
+
+<HeadContent>
     <link href="css/Home.css" rel="stylesheet" />
-</head>
+</HeadContent>
 
 @if (isLoading)
 {
@@ -108,7 +109,7 @@ else
         ServiceResult? result = await LoginService.LoginAsync(loginModel.Username.Trim(), loginModel.Password);
 
         if (result.IsSuccess)
-            Navigation.NavigateTo("/Journeys");
+            Navigation.NavigateTo("/JourneyHome");
         else
             errorMessage = result.Message ?? "Login failed. Please try again.";
 

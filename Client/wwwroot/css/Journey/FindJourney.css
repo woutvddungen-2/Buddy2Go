@@ -1,0 +1,61 @@
+﻿.journey-card {
+    border-left: 6px solid #004b6b;
+}
+
+    .journey-card::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: -20px;
+        transform: translateY(-50%);
+        width: 0;
+        height: 0;
+        border-top: 60px solid transparent;
+        border-bottom: 60px solid transparent;
+        border-right: 60px solid #004b6b;
+        z-index: -1;
+    }
+
+    .journey-card strong,
+    .journey-card .date,
+    .journey-card .time {
+        color: #004b6b;
+    }
+
+.btn-join {
+    background: #004b6b;
+    color: #fff;
+    border: 2px solid #004b6b;
+}
+
+    .btn-join:hover {
+        background: #00678c;
+    }
+
+.btn-chat {
+    background: #fff;
+    color: #004b6b;
+    border: 2px solid #004b6b;
+}
+
+    .btn-chat:hover {
+        background: #e9f4fa;
+    }
+
+.btn-reject {
+    background: #fff;
+    color: #c62828;
+    border: 2px solid #c62828;
+}
+
+    .btn-reject:hover {
+        background: #ffe5e5;
+    }
+
+.pending-action {
+    background: #f0f0f0;
+    color: #444;
+    border: 2px solid #ccc;
+    cursor: default;
+}
+

@@ -1,0 +1,85 @@
+﻿@page "/MyJourneys"
+@layout MainLayout
+@inject JourneyService JourneyService
+@inject UserService UserService
+@using Client.Components
+
+<HeadContent>
+    <link href="css/Journey/JourneyCard.css" rel="stylesheet" />
+    <link href="css/Journey/MyJourneys.css" rel="stylesheet" />
+</HeadContent>
+
+
+<h3 class="title">Mijn reizen</h3>
+@if (isLoading)
+{
+    <p>Reizen laden...</p>
+}
+else if (Journeys.Count == 0)
+{
+    <p>Je hebt nog geen reizen.</p>
+}
+else
+{
+    <div class="journey-list">
+        @foreach (var journey in Journeys)
+        {
+            <JourneyCard Journey="@journey" CurrentUserId="@CurrentUserId">
+                <JourneyCardButtons>
+                    <button class="card-button btn-chat" disabled>
+                        Chat (soon)
+                    </button>
+
+                    @if (journey.OwnerId == CurrentUserId)
+                    {
+                        <button class="card-button btn-finish" @onclick="(() => FinishJourney(journey.Id))">
+                            Reis afronden
+                        </button>
+                    }
+                </JourneyCardButtons>
+            </JourneyCard>
+        }
+    </div>
+}
+
+@code {
+    private List<JourneyDto> Journeys = new();
+    private int CurrentUserId;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        CurrentUserId = await getUserId();
+        await LoadJourneys();
+    }
+
+    private async Task<int> getUserId()
+    {
+        ServiceResult<int> result = await UserService.GetUserId();
+        if (result.IsSuccess)
+            return result.Data;
+        return -1;
+    }
+
+    private async Task LoadJourneys()
+    {
+        ServiceResult<List<JourneyDto>> result = await JourneyService.GetMyJourneysAsync();
+        
+        if (result.IsSuccess && result.Data != null)
+            Journeys = result.Data;
+
+        isLoading = false;
+    }
+    private async Task FinishJourney(int journeyId)
+    {
+        Console.WriteLine($"Finishing journey {journeyId}...");
+
+        var result = await JourneyService.FinishJourney(journeyId);
+
+        if (result.IsSuccess)
+        {
+            await LoadJourneys(); // refresh list
+        }
+    }
+
+}

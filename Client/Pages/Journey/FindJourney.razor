@@ -1,0 +1,83 @@
+﻿@page "/FindJourney"
+@inject JourneyService JourneyService
+@inject UserService UserService
+@using Client.Components
+
+<HeadContent>
+    <link href="css/Journey/JourneyCard.css" rel="stylesheet" />
+    <link href="css/Journey/FindJourney.css" rel="stylesheet" />
+</HeadContent>
+
+
+<h2 class="page-title">Reizen zoeken</h2>
+
+@if (isLoading)
+{
+    <p>Reizen worden geladen...</p>
+}
+else if (buddyJourneys.Count == 0)
+{
+    <p>Geen openstaande reizen.</p>
+}
+else
+{
+    <div class="journey-list">
+        @foreach (var j in buddyJourneys)
+        {
+            JourneyParticipantDto? currentUser = j.Participants.FirstOrDefault(p => p.UserId == currentUserId);
+            var status = currentUser?.Status;
+
+            <JourneyCard Journey="j" CurrentUserId="@currentUserId">
+                <JourneyCardButtons>
+                    @if (status == null || status == RequestStatus.Rejected)
+                    {
+                        <button class="btn-join" @onclick="() => SendJoinRequest(j.Id)">Ik wil Meerijzen</button>
+                        <button class="btn-chat" disabled>Open chat</button>
+                    }
+                    else if (status == RequestStatus.Pending)
+                    {
+                        <button class="pending-action" disabled>In afwachting...</button>
+                    }
+                    else if (status == RequestStatus.Accepted)
+                    {
+                        <button class="btn-chat" disabled>Geaccepteerd</button>
+                    }
+                </JourneyCardButtons>
+            </JourneyCard>
+        }
+    </div>
+}
+
+<BottomNav />
+
+@code {
+    private int currentUserId = -1;
+    private List<JourneyDto> buddyJourneys = new();
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentUserId = await getUserId();
+        await LoadJourneys();
+    }
+
+    private async Task<int> getUserId()
+    {
+        var result = await UserService.GetUserId();
+        return result.IsSuccess ? result.Data : -1;
+    }
+
+    private async Task LoadJourneys()
+    {
+        isLoading = true;
+        var buddyResult = await JourneyService.GetBuddyJourneysAsync();
+        buddyJourneys = buddyResult.Data ?? new List<JourneyDto>();
+        isLoading = false;
+    }
+
+    private async Task SendJoinRequest(int journeyId)
+    {
+        var result = await JourneyService.SendJoinRequestAsync(journeyId);
+        await LoadJourneys();
+    }
+}

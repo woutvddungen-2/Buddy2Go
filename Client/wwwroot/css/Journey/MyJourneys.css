@@ -1,0 +1,25 @@
+﻿.journey-card {
+    border-right: 6px solid #7b2cbf;
+}
+
+    .journey-card strong,
+    .journey-card .date,
+    .journey-card .time {
+        color: #7b2cbf;
+    }
+
+.btn-chat {
+    background: #e9e9e9;
+    color: #555;
+    cursor: not-allowed;
+}
+
+.btn-finish {
+    background: #7b2cbf;
+    color: #fff;
+    border: 2px solid #7b2cbf;
+}
+
+    .btn-finish:hover {
+        background: #673ab7;
+    }

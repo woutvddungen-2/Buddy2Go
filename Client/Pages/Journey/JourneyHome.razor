@@ -1,0 +1,26 @@
+﻿@page "/JourneyHome"
+@layout MainLayout
+@inject NavigationManager Nav
+
+<HeadContent>
+    <link href="css/Journey/JourneyHome.css" rel="stylesheet" />
+</HeadContent>
+
+<div class="home-container">
+
+    <div class="card purple-card" @onclick='() => Nav.NavigateTo("/MyJourneys")'>
+        <div class="card-title">Mijn reizen</div>
+        <div class="card-image-placeholder"></div>
+    </div>
+
+    <div class="card green-card" @onclick='() => Nav.NavigateTo("/CreateJourney")'>
+        <div class="card-image-placeholder"></div>
+        <div class="card-title">Ik zoek een reisbuddy</div>
+    </div>
+
+    <div class="card blue-card" @onclick='() => Nav.NavigateTo("/FindJourney")'>
+        <div class="card-title">Help een buddy</div>
+        <div class="card-image-placeholder"></div>
+    </div>
+
+</div>

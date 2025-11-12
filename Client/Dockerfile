@@ -2,8 +2,8 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 COPY . .
-#RUN dotnet publish "Client/Client.csproj" -c Release -o /app/publish
-RUN dotnet publish "Client/Client.csproj" -c Debug -o /app/publish
+
+RUN dotnet publish "Client/Client.csproj" -c Release -o /app/publish
 
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
