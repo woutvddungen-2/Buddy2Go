@@ -11,11 +11,11 @@ namespace Server.Data
 
         public DbSet<User> Users { get; set; }
         public DbSet<Journey> Journeys { get; set; }
-        public DbSet<JourneyMessages> Messages { get; set; }
-        public DbSet<JourneyParticipants> JourneyParticipants { get; set; }
-        public DbSet<DangerousPlace> DangerousPlace { get; set; }
+        public DbSet<JourneyMessage> Messages { get; set; }
+        public DbSet<JourneyParticipant> JourneyParticipants { get; set; }
+        public DbSet<DangerousPlace> DangerousPlaces { get; set; }
         public DbSet<Buddy> Buddys { get; set; }
-
+        public DbSet<Place> Places { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -25,7 +25,7 @@ namespace Server.Data
             // --------------------
             // Configure composite key for JourneyParticipants
             // --------------------
-            modelBuilder.Entity<JourneyParticipants>()
+            modelBuilder.Entity<JourneyParticipant>()
                 .HasKey(jp => new { jp.UserId, jp.JourneyId });
             modelBuilder.Entity<Buddy>()
                 .HasKey(b => new { b.RequesterId, b.AddresseeId });
@@ -33,22 +33,22 @@ namespace Server.Data
             // --------------------
             // Configure relationships
             // --------------------
-            modelBuilder.Entity<JourneyParticipants>()
+            modelBuilder.Entity<JourneyParticipant>()
                 .HasOne(jp => jp.User)
                 .WithMany(u => u.JourneyParticipations)
                 .HasForeignKey(jp => jp.UserId);
 
-            modelBuilder.Entity<JourneyParticipants>()
+            modelBuilder.Entity<JourneyParticipant>()
                 .HasOne(jp => jp.Journey)
                 .WithMany(j => j.Participants)
                 .HasForeignKey(jp => jp.JourneyId);
 
-            modelBuilder.Entity<JourneyMessages>()
+            modelBuilder.Entity<JourneyMessage>()
                 .HasOne(m => m.Sender)
                 .WithMany(u => u.SentMessages)
                 .HasForeignKey(m => m.SenderId);
 
-            modelBuilder.Entity<JourneyMessages>()
+            modelBuilder.Entity<JourneyMessage>()
                 .HasOne(m => m.Journey)
                 .WithMany(j => j.Messages)
                 .HasForeignKey(m => m.JourneyId);
@@ -67,6 +67,16 @@ namespace Server.Data
                 .HasOne(b => b.Addressee)
                 .WithMany()
                 .HasForeignKey(b => b.AddresseeId);
+
+            modelBuilder.Entity<Journey>()
+                .HasOne(j => j.Start)
+                .WithMany()
+                .HasForeignKey(j => j.StartId);
+
+            modelBuilder.Entity<Journey>()
+                .HasOne(j => j.End)
+                .WithMany()
+                .HasForeignKey(j => j.EndId);
         }
 
     }

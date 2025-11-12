@@ -1,6 +1,6 @@
 ﻿namespace Server.Models
 {
-    public class JourneyMessages
+    public class JourneyMessage
     {
         public int Id { get; set; }
         public int JourneyId { get; set; }

@@ -5,8 +5,15 @@
     <div class="time">@Journey.StartAt.ToString("HH:mm")</div>
 
     <div class="locations">
-        <span>Van <strong>@Journey.StartGPS</strong></span>
-        <span>Naar <strong>@Journey.EndGPS</strong></span>
+        @if (Journey.Start is not null && Journey.End is not null)
+        {
+            <span>Van <strong>@FormatPlace(Journey.Start)</strong></span>
+            <span>Naar <strong>@FormatPlace(Journey.End)</strong></span>
+        }
+        else
+        {
+            <span><em>Locaties niet beschikbaar</em></span>
+        }
     </div>
 
     <div class="owner">
@@ -41,4 +48,11 @@
     [Parameter] public JourneyDto Journey { get; set; } = default!;
     [Parameter] public int CurrentUserId { get; set; }
     [Parameter] public RenderFragment? JourneyCardButtons { get; set; }
+
+    private string FormatPlace(PlaceDto place)
+    {
+        if (place.District == null)
+            return place.City;
+        return $"{place.City}, {place.District}";
+    }
 }

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Server.Common;
+using Server.Models;
 using Server.Services;
 using Shared.Models.Dtos;
 using System.Security.Claims;
@@ -129,14 +130,14 @@ namespace Server.Controllers
         [HttpPost("AddJourney")]
         public async Task<IActionResult> AddJourney([FromBody] JourneyCreateDto dto)
         {
-            if (dto == null || string.IsNullOrEmpty(dto.StartGPS) || string.IsNullOrEmpty(dto.EndGPS))
+            if (dto == null)
             {
                 logger.LogWarning("Invalid journey data received in AddJourney.");
                 return BadRequest("Invalid journey data.");
             }
 
             int userId = GetUserIdFromJwt();
-            ServiceResult result = await service.AddJourneyAsync(userId, dto.StartGPS, dto.EndGPS, dto.StartAt);
+            ServiceResult result = await service.AddJourneyAsync(userId, dto.StartPlaceId, dto.EndPlaceId, dto.StartAt);
 
             switch (result.Status)
             {
@@ -162,7 +163,7 @@ namespace Server.Controllers
             }
 
             int userId = GetUserIdFromJwt();
-            ServiceResult result = await service.UpdateJourneyGpsAsync(userId, JourneyId, dto.StartGPS, dto.EndGPS);
+            ServiceResult result = await service.UpdateJourneyGpsAsync(userId, JourneyId, dto.StartPlaceId, dto.EndPlaceId);
 
             switch (result.Status)
             {
@@ -228,6 +229,23 @@ namespace Server.Controllers
                     return StatusCode(500, result.Message);
             }
         }
+
+        [HttpGet("GetPlaces")]
+        public async Task<IActionResult> GetPlaces()
+        {
+            ServiceResult<List<PlaceDto>> result = await service.GetPlacesAsync();
+            switch (result.Status)
+            {
+                case ServiceResultStatus.Success:
+                    return Ok(result.Data);
+                case ServiceResultStatus.Error:
+                    return StatusCode(500, result.Message);
+                default:
+                    logger.LogError("GetPlaces unknown error, Message:{message}", result.Message);
+                    return StatusCode(500, result.Message);
+            }
+        }
+
 
 
         // Helper method to extract user ID from JWT

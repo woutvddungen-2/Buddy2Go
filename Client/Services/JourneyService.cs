@@ -4,7 +4,6 @@ using Shared.Models;
 using Shared.Models.Dtos;
 using System.Linq.Expressions;
 using System.Net.Http.Json;
-using static System.Net.WebRequestMethods;
 
 namespace Client.Services
 {
@@ -57,13 +56,13 @@ namespace Client.Services
             }
         }
 
-        public async Task<ServiceResult> AddJourneyAsync(string? startGPS, string? endGPS, DateTime startAt)
+        public async Task<ServiceResult> AddJourneyAsync(int startPlaceId, int endPlaceId, DateTime startAt)
         {
             try
             {
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, "api/Journey/AddJourney")
                 {
-                    Content = JsonContent.Create(new JourneyCreateDto { StartGPS = startGPS, EndGPS = endGPS, StartAt = startAt })
+                    Content = JsonContent.Create(new JourneyCreateDto { StartPlaceId = startPlaceId, EndPlaceId = endPlaceId, StartAt = startAt })
                 };
                 request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
                 HttpResponseMessage? response = await httpClient.SendAsync(request);
@@ -144,15 +143,15 @@ namespace Client.Services
         }
         
 
-        public async Task<ServiceResult> UpdateJourneyAsync(int journeyId, string? startGps, string? endGps, DateTime startAt)
+        public async Task<ServiceResult> UpdateJourneyAsync(int journeyId, int startPlaceId, int endPlaceId, DateTime startAt)
         {
             try
             {
                 JourneyCreateDto dto = new JourneyCreateDto
                 {
                     StartAt = startAt,
-                    StartGPS = startGps,
-                    EndGPS = endGps
+                    StartPlaceId = startPlaceId,
+                    EndPlaceId = endPlaceId
                 };
                 HttpRequestMessage request = new(HttpMethod.Patch, $"api/Journey/UpdateGPS/{journeyId}")
                 {
@@ -189,6 +188,26 @@ namespace Client.Services
             catch (Exception ex)
             {
                 return ServiceResult.Fail(ex.Message);
+            }
+        }
+
+        public async Task<ServiceResult<List<PlaceDto>>> GetPlacesAsync()
+        {
+            try
+            {
+                HttpRequestMessage request = new(HttpMethod.Get, $"api/Journey/GetPlaces");
+                request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
+                HttpResponseMessage response = await httpClient.SendAsync(request);
+
+                if (!response.IsSuccessStatusCode)
+                    return ServiceResult<List<PlaceDto>>.Fail(await response.Content.ReadAsStringAsync());
+
+                List<PlaceDto>? data = await response.Content.ReadFromJsonAsync<List<PlaceDto>>();
+                return ServiceResult<List<PlaceDto>>.Succes(data ?? new());
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<List<PlaceDto>>.Fail(ex.Message);
             }
         }
     }

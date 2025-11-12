@@ -3,14 +3,18 @@
     public class Journey
     {
         public int Id { get; set; }
-        public string StartGPS { get; set; } = string.Empty;
-        public string EndGPS { get; set; } = string.Empty;
+        public int StartId { get; set; }
+        public int EndId { get; set; }
+
+        public Place Start { get; set; } = null!;
+        public Place End { get; set; } = null!;
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime StartAt { get; set; } = DateTime.UtcNow;
         public DateTime? FinishedAt { get; set; } = null;
 
         // Navigation
-        public ICollection<JourneyParticipants> Participants { get; set; } = null!;
-        public ICollection<JourneyMessages> Messages { get; set; } = null!;
+        public ICollection<JourneyParticipant> Participants { get; set; } = null!;
+        public ICollection<JourneyMessage> Messages { get; set; } = null!;
     }
 }

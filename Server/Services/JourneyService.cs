@@ -34,6 +34,8 @@ namespace Server.Services
             }
 
             List<Journey> journeys = await db.Journeys
+                .Include(j => j.Start)
+                .Include(j => j.End)
                 .Include(j => j.Participants)
                     .ThenInclude(p => p.User)
                 .Where(j => j.Participants.Any(p => p.UserId == userId))
@@ -44,21 +46,21 @@ namespace Server.Services
                 Id = j.Id,
                 OwnerId = j.Participants.First(p => p.Role == JourneyRole.Owner).UserId,
                 OwnerName = j.Participants.First(p => p.Role == JourneyRole.Owner).User.Username,
-                StartGPS = j.StartGPS,
-                EndGPS = j.EndGPS,
+                Start = new PlaceDto { Id = j.Start.Id, City = j.Start.City, District = j.Start.District, CentreGPS = j.Start.CentreGPS },
+                End = new PlaceDto { Id = j.End.Id, City = j.End.City, District = j.End.District, CentreGPS = j.End.CentreGPS },
                 CreatedAt = j.CreatedAt,
                 StartAt = j.StartAt,
                 FinishedAt = j.FinishedAt,
                 Participants = j.Participants
-                .Select(p => new JourneyParticipantDto
-                {
-                    UserId = p.UserId,
-                    UserName = p.User?.Username ?? "Unknown",
-                    Status = p.Status,
-                    Role = p.Role,
-                    JoinedAt = p.JoinedAt
-                })
-                .ToList()
+                    .Select(p => new JourneyParticipantDto
+                    {
+                        UserId = p.UserId,
+                        UserName = p.User?.Username ?? "Unknown",
+                        Status = p.Status,
+                        Role = p.Role,
+                        JoinedAt = p.JoinedAt
+                    })
+                    .ToList()
             }).ToList();
 
             logger.LogDebug("GetMyJourneys, successfully retrieved {count} journey(s) for User:{user}", dtos.Count, userId);
@@ -83,6 +85,8 @@ namespace Server.Services
                 .ToListAsync();
 
             List<Journey> journeys = await db.Journeys
+                .Include(j => j.Start)
+                .Include(j => j.End)
                 .Include(j => j.Participants)
                     .ThenInclude(p => p.User)
                 .Where(j =>
@@ -96,8 +100,8 @@ namespace Server.Services
                 Id = j.Id,
                 OwnerId = j.Participants.First(p => p.Role == JourneyRole.Owner).UserId,
                 OwnerName = j.Participants.First(p => p.Role == JourneyRole.Owner).User.Username,
-                StartGPS = j.StartGPS,
-                EndGPS = j.EndGPS,
+                Start = new PlaceDto { Id = j.Start.Id, City = j.Start.City, District = j.Start.District, CentreGPS = j.Start.CentreGPS },
+                End = new PlaceDto { Id = j.End.Id, City = j.End.City, District = j.End.District, CentreGPS = j.End.CentreGPS },
                 CreatedAt = j.CreatedAt,
                 StartAt = j.StartAt,
                 FinishedAt = j.FinishedAt,
@@ -160,7 +164,7 @@ namespace Server.Services
         /// <summary>
         /// Creates a new journey for a user.
         /// </summary>
-        public async Task<ServiceResult> AddJourneyAsync(int userId, string startGPS, string endGPS, DateTime startAt)
+        public async Task<ServiceResult> AddJourneyAsync(int userId, int startPlaceId, int endPlaceId, DateTime startAt)
         {
             User? user = await db.Users.FindAsync(userId);
             if (user == null)
@@ -168,25 +172,23 @@ namespace Server.Services
                 logger.LogWarning("AddJourney, user not found, User:{user}", userId);
                 return ServiceResult.Fail(ServiceResultStatus.UserNotFound, "User not found");
             }
-
-            if (startGPS == null || endGPS == null)
+            if (!await db.Places.AnyAsync(p => p.Id == startPlaceId) || !await db.Places.AnyAsync(p => p.Id == endPlaceId))
             {
-                logger.LogWarning("AddJourney Failed for User {user}, startGps and EndGPS cannot be NULL", userId);
-                return ServiceResult.Fail(ServiceResultStatus.ValidationError, "StartGPS and EndGPS cannot be null");
+                logger.LogWarning("AddJourney Failed for User {user}, startPlace or EndPlace cannot be found in database", userId);
+                return ServiceResult.Fail(ServiceResultStatus.ValidationError, "startPlace or EndPlace cannot be found in database");
             }
-
 
             Journey journey = new Journey
             {
-                StartGPS = startGPS,
-                EndGPS = endGPS,
+                StartId = startPlaceId,
+                EndId = endPlaceId,
                 StartAt = startAt,
                 FinishedAt = null,
                 Participants = [],
                 Messages = []
             };
 
-            journey.Participants.Add(new JourneyParticipants
+            journey.Participants.Add(new JourneyParticipant
             {
                 UserId = user.Id,
                 Role = JourneyRole.Owner,
@@ -225,7 +227,7 @@ namespace Server.Services
                 return ServiceResult.Fail(ServiceResultStatus.InvalidOperation, "Cannot join a finished journey");
             }
 
-            JourneyParticipants? existing = journey.Participants.FirstOrDefault(p => p.UserId == userId);
+            JourneyParticipant? existing = journey.Participants.FirstOrDefault(p => p.UserId == userId);
             if (existing != null)
             {
                 if (existing?.Status == RequestStatus.Rejected)
@@ -251,7 +253,7 @@ namespace Server.Services
                 }
             }
 
-            JourneyParticipants? owner = journey.Participants.FirstOrDefault(p => p.Role == JourneyRole.Owner);
+            JourneyParticipant? owner = journey.Participants.FirstOrDefault(p => p.Role == JourneyRole.Owner);
             if (owner == null)
             {
                 logger.LogWarning("SendJoinJourneyRequest Failed, Journey {journey} has no owner", journeyId);
@@ -276,7 +278,7 @@ namespace Server.Services
             }
 
 
-            JourneyParticipants participant = new JourneyParticipants
+            JourneyParticipant participant = new JourneyParticipant
             {
                 UserId = userId,
                 JourneyId = journey.Id,
@@ -307,13 +309,13 @@ namespace Server.Services
             }
 
 
-            JourneyParticipants? owner = journey.Participants.FirstOrDefault(p => p.UserId == ownerId && p.Role == JourneyRole.Owner);
+            JourneyParticipant? owner = journey.Participants.FirstOrDefault(p => p.UserId == ownerId && p.Role == JourneyRole.Owner);
             if (owner == null)
             {
                 logger.LogWarning("RespondtoJourneyRequest failed, User {user} is not owner of Journey {Journey}", ownerId, journeyId);
                 return ServiceResult.Fail(ServiceResultStatus.Unauthorized, "Only the owner can respond to join requests");
             }
-            JourneyParticipants? request = journey.Participants.FirstOrDefault(p => p.UserId == requesterId);
+            JourneyParticipant? request = journey.Participants.FirstOrDefault(p => p.UserId == requesterId);
             if (request == null)
             {
                 logger.LogWarning("RespondtoJourneyRequest failed, in Journey {Journey}, Join request not found for user {userId}", journeyId, ownerId);
@@ -350,7 +352,7 @@ namespace Server.Services
         /// <summary>
         /// Updates the GPS coordinates of an existing journey.
         /// </summary>
-        public async Task<ServiceResult> UpdateJourneyGpsAsync(int userId, int journeyId, string? startGps, string? endGps)
+        public async Task<ServiceResult> UpdateJourneyGpsAsync(int userId, int journeyId, int startPlaceId, int endPlaceId)
         {
             if (!await db.Users.AnyAsync(u => u.Id == userId))
             {
@@ -365,7 +367,7 @@ namespace Server.Services
                 logger.LogWarning("UpdateJourney, Journey not found, Journey:{journey}", journeyId);
                 return ServiceResult.Fail(ServiceResultStatus.ResourceNotFound, "Journey not found");
             }
-            JourneyParticipants? participant = journey.Participants.FirstOrDefault(p => p.UserId == userId);
+            JourneyParticipant? participant = journey.Participants.FirstOrDefault(p => p.UserId == userId);
             if (participant == null || participant.Role != JourneyRole.Owner)
             {
                 logger.LogWarning("UpdateJourney, User {user} is not owner of Journey:{journey}", userId, journeyId);
@@ -376,13 +378,22 @@ namespace Server.Services
                 logger.LogWarning("UpdateJourney, Journey:{journey} already finished", journeyId);
                 return ServiceResult.Fail(ServiceResultStatus.ValidationError, "Cannot update a finished journey");
             }
-
-
-            if (!string.IsNullOrWhiteSpace(startGps)) 
-                journey.StartGPS = startGps;
-            if (!string.IsNullOrWhiteSpace(endGps)) 
-                journey.EndGPS = endGps;
-
+            if (startPlaceId > 0)
+            {
+                if (!await db.Places.AnyAsync(p => p.Id == startPlaceId))
+                {
+                    logger.LogWarning("UpdateJourney Failed for User {user}, startPlace cannot be found in database", userId);
+                    return ServiceResult.Fail(ServiceResultStatus.ValidationError, "startPlace cannot be found in database");
+                }
+            }
+            if (endPlaceId > 0)
+            {
+                if (!await db.Places.AnyAsync(p => p.Id == endPlaceId))
+                {
+                    logger.LogWarning("UpdateJourney Failed for User {user}, EndPlace cannot be found in database", userId);
+                    return ServiceResult.Fail(ServiceResultStatus.ValidationError, "EndPlace cannot be found in database");
+                }
+            }
             await db.SaveChangesAsync();
 
             logger.LogInformation("UpdateJourney, Journey {journey}, succesfully updated by user: {user}", journeyId, userId);
@@ -408,7 +419,7 @@ namespace Server.Services
                 logger.LogWarning("FinishJourney Failed, Journey {journey} not found", journeyId);
                 return ServiceResult.Fail(ServiceResultStatus.ResourceNotFound, "Journey not found");
             }
-            JourneyParticipants? participant = journey.Participants.FirstOrDefault(p => p.UserId == userId);
+            JourneyParticipant? participant = journey.Participants.FirstOrDefault(p => p.UserId == userId);
             if (participant == null || participant.Role != JourneyRole.Owner)
             {
                 logger.LogWarning("FinishJourney Failed, User {user} is not the owner of Journey {journey}", userId, journeyId);
@@ -446,7 +457,7 @@ namespace Server.Services
                 logger.LogWarning("LeaveJourney failed, Journey {journey} not found", journeyId);
                 return ServiceResult.Fail(ServiceResultStatus.ResourceNotFound, "Journey not found");
             }
-            JourneyParticipants? participant = journey.Participants.FirstOrDefault(p => p.UserId == userId);
+            JourneyParticipant? participant = journey.Participants.FirstOrDefault(p => p.UserId == userId);
             if (participant == null)
             {
                 logger.LogWarning("LeaveJourney failed, user {user} not participant of Journey {journey}", userId, journeyId);
@@ -455,7 +466,7 @@ namespace Server.Services
 
             if (participant.Role == JourneyRole.Owner)
             {
-                JourneyParticipants? newOwner = journey.Participants
+                JourneyParticipant? newOwner = journey.Participants
                     .Where(p => p.UserId != userId && p.Status == RequestStatus.Accepted)
                     .OrderBy(p => p.JoinedAt)
                     .FirstOrDefault();
@@ -481,6 +492,33 @@ namespace Server.Services
 
             logger.LogInformation("User:{user} left Journey:{journey}", userId, journeyId);
             return ServiceResult.Succes();
+        }
+
+        public async Task<ServiceResult<List<PlaceDto>>> GetPlacesAsync()
+        {
+            try
+            {
+                var places = await db.Places
+                    .AsNoTracking()
+                    .OrderBy(p => p.City)
+                    .ThenBy(p => p.District)
+                    .ToListAsync();
+
+                List<PlaceDto> dto = places.Select(p => new PlaceDto
+                {
+                    Id = p.Id,
+                    City = p.City,
+                    District = p.District,
+                    CentreGPS = p.CentreGPS
+                }).ToList();
+
+                return ServiceResult<List<PlaceDto>>.Succes(dto);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("Error While Getting places: {error}", ex.Message);
+                return ServiceResult<List<PlaceDto>>.Fail(ServiceResultStatus.Error, $"Error while loading places: {ex.Message}");
+            }
         }
     }
 }

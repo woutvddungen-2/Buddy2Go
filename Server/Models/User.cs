@@ -10,8 +10,8 @@
         public DateTime CreatedAt { get; set; }
 
         // Navigation properties
-        public ICollection<JourneyParticipants> JourneyParticipations { get; set; } = null!;
-        public ICollection<JourneyMessages> SentMessages { get; set; } = null!;
+        public ICollection<JourneyParticipant> JourneyParticipations { get; set; } = null!;
+        public ICollection<JourneyMessage> SentMessages { get; set; } = null!;
         public ICollection<DangerousPlace> Reports { get; set; } = null!;
         public ICollection<Journey> OwnedJourneys { get; set; } = null!;
 

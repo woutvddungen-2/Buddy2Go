@@ -2,7 +2,7 @@
 
 namespace Server.Models
 {
-    public class JourneyParticipants
+    public class JourneyParticipant
     {
         public int JourneyId { get; set; }
         public Journey Journey { get; set; } = null!;

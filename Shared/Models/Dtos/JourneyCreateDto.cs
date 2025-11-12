@@ -1,9 +1,15 @@
-﻿namespace Shared.Models.Dtos
+﻿using Shared.Validation;
+using System.ComponentModel.DataAnnotations;
+
+public class JourneyCreateDto
 {
-    public class JourneyCreateDto
-    {
-        public string? StartGPS { get; set; } = string.Empty;
-        public string? EndGPS { get; set; } = string.Empty;
-        public DateTime StartAt { get; set; }
-    }
+    [Required(ErrorMessage = "Startplaats is verplicht.")]
+    public int StartPlaceId { get; set; }
+
+    [Required(ErrorMessage = "Eindplaats is verplicht.")]
+    public int EndPlaceId { get; set; }
+
+    [Required(ErrorMessage = "Starttijd is verplicht.")]
+    [NotPastDate]
+    public DateTime StartAt { get; set; }
 }
