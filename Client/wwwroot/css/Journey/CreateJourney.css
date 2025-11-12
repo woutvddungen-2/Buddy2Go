@@ -1,0 +1,27 @@
+﻿.input-field {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #4CAF50;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+    .input-field:focus {
+        border-color: #2E7D32;
+    }
+
+.submit-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 100%;
+    font-weight: 600;
+}
+
+    .submit-button:hover {
+        background-color: #388E3C;
+    }

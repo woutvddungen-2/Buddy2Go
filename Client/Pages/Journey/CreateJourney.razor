@@ -1,8 +1,103 @@
-﻿@layout MainLayout
+﻿@page "/CreateJourney"
+@inject JourneyService JourneyService
+@inject NavigationManager NavManager
 
+<HeadContent>
+    <link href="css/Journey/CreateJourney.css" rel="stylesheet" />
+</HeadContent>
 
-<h3>CreateJourney</h3>
+<div class="create-journey-container">
+    <h3 class="title">Ik zoek een reisbuddy</h3>
+
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert alert-success">@successMessage</div>
+    }
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    <EditForm Model="@journeyCreateDto" OnValidSubmit="HandleCreate">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-field">
+            <label>Datum</label>
+            <input type="datetime-local" @bind="journeyCreateDto.StartAt" class="input-field" />
+        </div>
+
+        <div class="form-field">
+            <label>Ik reis van</label>
+            <InputSelect @bind-Value="journeyCreateDto.StartPlaceId" class="input-field">
+                <option value="">-- Kies een stad --</option>
+                @foreach (var p in allPlaces)
+                {
+                    <option value="@p.Id">@FormatPlace(p)</option>
+                }
+            </InputSelect>
+        </div>
+
+        <div class="form-field">
+            <label>Ik reis naar</label>
+            <InputSelect @bind-Value="journeyCreateDto.EndPlaceId" class="input-field">
+                <option value="">-- Kies een stad --</option>
+                @foreach (var p in allPlaces)
+                {
+                    <option value="@p.Id">@FormatPlace(p)</option>
+                }
+            </InputSelect>
+        </div>
+
+        <button type="submit" class="submit-button">Verstuur buddyverzoek</button>
+    </EditForm>
+</div>
 
 @code {
+    private JourneyCreateDto journeyCreateDto = new();
+    private string? successMessage;
+    private string? errorMessage;
 
+    private List<PlaceDto> allPlaces = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        ServiceResult<List<PlaceDto>> result = await JourneyService.GetPlacesAsync();
+        if (result.IsSuccess && result.Data != null)
+        {
+            allPlaces = result.Data;
+        }
+        else
+        {
+            errorMessage = "Failed to get Places from database";
+        }
+        journeyCreateDto.StartAt = DateTime.Now;
+    }
+
+    private string FormatPlace(PlaceDto p)
+    {
+        if (string.IsNullOrWhiteSpace(p.District))
+            return p.City;
+        return $"{p.City} ({p.District})";
+    }
+
+    private async Task HandleCreate()
+    {
+        var result = await JourneyService.AddJourneyAsync(
+            journeyCreateDto.StartPlaceId,
+            journeyCreateDto.EndPlaceId,
+            journeyCreateDto.StartAt);
+
+        if (result.IsSuccess)
+        {
+            successMessage = "Buddyverzoek succesvol verzonden!";
+            errorMessage = "";
+            await Task.Delay(1500);
+            NavManager.NavigateTo("/MyJourneys");
+        }
+        else
+        {
+            errorMessage = result.Message ?? "Er ging iets mis bij het aanmaken van de reis.";
+        }
+    }
 }
