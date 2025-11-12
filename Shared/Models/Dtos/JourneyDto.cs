@@ -7,8 +7,8 @@
         public int OwnerId { get; set; }
         public string OwnerName { get; set; } = string.Empty;
 
-        public required PlaceDto Start { get; set; }
-        public required PlaceDto End { get; set; }
+        public PlaceDto Start { get; set; } = null!;
+        public PlaceDto End { get; set; } = null!;
 
         public DateTime CreatedAt { get; set; }
         public DateTime StartAt { get; set; } 
