@@ -5,11 +5,11 @@ namespace Shared.Validation
 {
     public class NotPastDateAttribute : ValidationAttribute
     {
-        private readonly int _minuteBuffer;
+        private readonly int minuteBuffer;
 
         public NotPastDateAttribute(int minuteBuffer = 2)
         {
-            _minuteBuffer = minuteBuffer;
+            this.minuteBuffer = minuteBuffer;
             ErrorMessage = $"De vertrektijd mag niet in het verleden liggen.";
         }
 
@@ -19,7 +19,7 @@ namespace Shared.Validation
                 return ValidationResult.Success;
 
             // Allow 5-minute user buffer
-            var now = DateTime.UtcNow.AddMinutes(-_minuteBuffer);
+            var now = DateTime.UtcNow.AddMinutes(-minuteBuffer);
 
             if (dateTime.ToUniversalTime() < now)
                 return new ValidationResult(ErrorMessage);

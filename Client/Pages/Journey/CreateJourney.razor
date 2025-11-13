@@ -3,12 +3,12 @@
 @inject NavigationManager NavManager
 
 <HeadContent>
+    <link href="css/Journey/JourneyCard.css" rel="stylesheet" />
     <link href="css/Journey/CreateJourney.css" rel="stylesheet" />
 </HeadContent>
 
-<div class="create-journey-container">
+<div class="card create-journey-card">
     <h3 class="title">Ik zoek een reisbuddy</h3>
-
     @if (!string.IsNullOrEmpty(successMessage))
     {
         <div class="alert alert-success">@successMessage</div>
@@ -21,16 +21,21 @@
     <EditForm Model="@journeyCreateDto" OnValidSubmit="HandleCreate">
         <DataAnnotationsValidator />
         <ValidationSummary />
+        <div class="form-row">
+            <div class="form-field date-field">
+                <label>Datum</label>
+                <input type="date" @bind="date" @bind:after="UpdateStartAt" class="input-field" />
+            </div>
 
-        <div class="form-field">
-            <label>Datum</label>
-            <input type="datetime-local" @bind="journeyCreateDto.StartAt" class="input-field" />
+            <div class="form-field time-field">
+                <label>Tijd</label>
+                <input type="time" @bind="time" @bind:after="UpdateStartAt" class="input-field" />
+            </div>
         </div>
-
         <div class="form-field">
             <label>Ik reis van</label>
             <InputSelect @bind-Value="journeyCreateDto.StartPlaceId" class="input-field">
-                <option value="">-- Kies een stad --</option>
+                <option value=0>-- Kies een stad --</option>
                 @foreach (var p in allPlaces)
                 {
                     <option value="@p.Id">@FormatPlace(p)</option>
@@ -41,7 +46,7 @@
         <div class="form-field">
             <label>Ik reis naar</label>
             <InputSelect @bind-Value="journeyCreateDto.EndPlaceId" class="input-field">
-                <option value="">-- Kies een stad --</option>
+                <option value=0>-- Kies een stad --</option>
                 @foreach (var p in allPlaces)
                 {
                     <option value="@p.Id">@FormatPlace(p)</option>
@@ -53,10 +58,13 @@
     </EditForm>
 </div>
 
+
 @code {
+    private DateOnly? date;
+    private TimeOnly? time;
     private JourneyCreateDto journeyCreateDto = new();
-    private string? successMessage;
-    private string? errorMessage;
+    private string? errorMessage = null;
+    private string? successMessage = null;
 
     private List<PlaceDto> allPlaces = new();
 
@@ -71,7 +79,9 @@
         {
             errorMessage = "Failed to get Places from database";
         }
-        journeyCreateDto.StartAt = DateTime.Now;
+        date = DateOnly.FromDateTime(DateTime.Now);
+        time = TimeOnly.FromDateTime(DateTime.Now);
+        UpdateStartAt();
     }
 
     private string FormatPlace(PlaceDto p)
@@ -86,18 +96,28 @@
         var result = await JourneyService.AddJourneyAsync(
             journeyCreateDto.StartPlaceId,
             journeyCreateDto.EndPlaceId,
-            journeyCreateDto.StartAt);
+            journeyCreateDto.StartAt
+        );
 
         if (result.IsSuccess)
         {
             successMessage = "Buddyverzoek succesvol verzonden!";
-            errorMessage = "";
+            errorMessage = null;
+            StateHasChanged();
             await Task.Delay(1500);
             NavManager.NavigateTo("/MyJourneys");
         }
         else
         {
             errorMessage = result.Message ?? "Er ging iets mis bij het aanmaken van de reis.";
+        }
+    }
+
+    private void UpdateStartAt()
+    {
+        if (date.HasValue && time.HasValue)
+        {
+            journeyCreateDto.StartAt = date.Value.ToDateTime(time.Value);
         }
     }
 }

@@ -1,4 +1,18 @@
-﻿.input-field {
+﻿.card {
+    position: relative;
+    background: #fff;
+    border-radius: 18px;
+    padding: 1.6rem;
+    margin: 0 auto;
+    max-width: 640px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+
+.input-field {
     width: 100%;
     padding: 10px;
     border: 2px solid #4CAF50;
@@ -10,6 +24,23 @@
     .input-field:focus {
         border-color: #2E7D32;
     }
+
+.form-row {
+    display: flex;
+    gap: 16px;
+}
+
+.date-field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.time-field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
 
 .submit-button {
     background-color: #4CAF50;
