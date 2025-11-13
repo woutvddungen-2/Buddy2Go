@@ -10,6 +10,7 @@ FROM nginx:alpine
 COPY --from=build /app/publish/wwwroot /usr/share/nginx/html
 
 COPY Client/nginx.conf /etc/nginx/nginx.conf
+COPY Client/wwwroot/docker.appsettings.json /usr/share/nginx/html/appsettings.json
 
 EXPOSE 5002
 CMD ["nginx", "-g", "daemon off;"]

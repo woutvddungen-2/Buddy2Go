@@ -6,7 +6,6 @@ WORKDIR /src
 COPY . .
 
 # Publish the Server project
-#RUN dotnet publish "Server/Server.csproj" -c Release -o /app/publish
 RUN dotnet publish "Server/Server.csproj" -c Debug -o /app/publish
 
 # Stage 2: Run the app
