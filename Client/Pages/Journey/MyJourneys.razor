@@ -28,12 +28,29 @@ else
         {
             <JourneyCard Journey="@journey" CurrentUserId="@CurrentUserId">
                 <JourneyCardButtons>
-                    <button class="card-button btn-chat" disabled>
-                        Chat (soon)
+                    <button class="card-button btn-chat" @onclick="(() => OpenChat(journey.Id))">
+                        Chat
                     </button>
-
                     @if (journey.OwnerId == CurrentUserId)
                     {
+                        <div class="pending-requests">
+                            @foreach (var p in journey.Participants.Where(p => p.Status == RequestStatus.Pending && p.UserId != CurrentUserId).ToList())
+                            {
+                                <div class="pending-item">
+                                    <span>@p.UserName wil meerijden</span>
+
+                                    <button class="btn-accept"
+                                            @onclick="() => RespondToRequest(journey.Id, p.UserId, RequestStatus.Accepted)">
+                                        ✔ Accepteren
+                                    </button>
+
+                                    <button class="btn-reject"
+                                            @onclick="() => RespondToRequest(journey.Id, p.UserId, RequestStatus.Rejected)">
+                                        ✖ Weigeren
+                                    </button>
+                                </div>
+                            }
+                        </div>
                         <button class="card-button btn-finish" @onclick="(() => FinishJourney(journey.Id))">
                             Reis afronden
                         </button>
@@ -45,6 +62,7 @@ else
 }
 
 @code {
+
     private List<JourneyDto> Journeys = new();
     private int CurrentUserId;
     private bool isLoading = true;
@@ -53,6 +71,7 @@ else
     {
         CurrentUserId = await getUserId();
         await LoadJourneys();
+
     }
 
     private async Task<int> getUserId()
@@ -87,5 +106,17 @@ else
     {
         Nav.NavigateTo("/JourneyHome");
     }
+    private void OpenChat(int journeyId)
+    {
+        Nav.NavigateTo($"/JourneyChat/{journeyId}");
+    }
+    private async Task RespondToRequest(int journeyId, int requesterId, RequestStatus status)
+    {
+        var result = await JourneyService.RespondToJoinRequestAsync(journeyId, requesterId, status);
+
+        if (result.IsSuccess)
+            await LoadJourneys(); // Refresh the list
+    }
+
 
 }

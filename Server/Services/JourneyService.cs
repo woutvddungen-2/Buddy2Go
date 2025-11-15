@@ -38,7 +38,8 @@ namespace Server.Services
                 .Include(j => j.End)
                 .Include(j => j.Participants)
                     .ThenInclude(p => p.User)
-                .Where(j => j.Participants.Any(p => p.UserId == userId))
+                .Where(j => j.Participants.Any(p => p.UserId == userId &&
+                            (p.Status == RequestStatus.Accepted || p.Role == JourneyRole.Owner)))
                 .ToListAsync();
 
             List<JourneyDto> dtos = journeys.Select(j => new JourneyDto
@@ -78,11 +79,16 @@ namespace Server.Services
                 return ServiceResult<List<JourneyDto>>.Fail(ServiceResultStatus.UserNotFound, "User not found");
             }
 
-
             List<int> buddyIds = await db.Buddys
                 .Where(b => (b.RequesterId == userId || b.AddresseeId == userId) && b.Status == RequestStatus.Accepted)
                 .Select(b => b.RequesterId == userId ? b.AddresseeId : b.RequesterId)
                 .ToListAsync();
+
+            if (buddyIds.Count < 1)
+            {
+                logger.LogDebug("GetBuddyJourneys, no buddies for User:{user}", userId);
+                return ServiceResult<List<JourneyDto>>.Succes(new List<JourneyDto>());
+            }
 
             List<Journey> journeys = await db.Journeys
                 .Include(j => j.Start)
@@ -92,7 +98,9 @@ namespace Server.Services
                 .Where(j =>
                     j.Participants.Any(p => p.Role == JourneyRole.Owner && buddyIds.Contains(p.UserId)) &&
                     j.FinishedAt == null &&
-                    !j.Participants.Any(p => p.UserId == userId))
+                    !j.Participants.Any(p =>
+                    p.UserId == userId && (p.Status == RequestStatus.Accepted || p.Status == RequestStatus.Blocked))
+                )
                 .ToListAsync();
 
             List<JourneyDto> dtos = journeys.Select(j => new JourneyDto
@@ -154,6 +162,7 @@ namespace Server.Services
                 UserId = jp.UserId,
                 UserName = jp.User?.Username ?? "Unknown",
                 Role = jp.Role,
+                Status = jp.Status,
                 JoinedAt = jp.JoinedAt
             }).ToList();
 
@@ -191,13 +200,18 @@ namespace Server.Services
             journey.Participants.Add(new JourneyParticipant
             {
                 UserId = user.Id,
+                User = user,
+                Journey = journey,
                 Role = JourneyRole.Owner,
                 Status = RequestStatus.Accepted,
                 JoinedAt = DateTime.UtcNow
             });
 
             await db.Journeys.AddAsync(journey);
+
             await db.SaveChangesAsync();
+            await db.Entry(journey).ReloadAsync();
+            await db.Entry(journey).Collection(j => j.Participants).LoadAsync();
 
             logger.LogInformation("AddJourney, journey added successfully for User:{user}", userId);
             return ServiceResult.Succes("Succesfully added Journey");

@@ -119,7 +119,8 @@
     {
         if (date.HasValue && time.HasValue)
         {
-            journeyCreateDto.StartAt = date.Value.ToDateTime(time.Value);
+            DateTime starAt = date.Value.ToDateTime(time.Value);
+            journeyCreateDto.StartAt = starAt.ToUniversalTime();
         }
     }
 

@@ -56,13 +56,13 @@ namespace Client.Services
             }
         }
 
-        public async Task<ServiceResult> AddJourneyAsync(int startPlaceId, int endPlaceId, DateTime startAt)
+        public async Task<ServiceResult> AddJourneyAsync(int startPlaceId, int endPlaceId, DateTime startAtUtc)
         {
             try
             {
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, "api/Journey/AddJourney")
                 {
-                    Content = JsonContent.Create(new JourneyCreateDto { StartPlaceId = startPlaceId, EndPlaceId = endPlaceId, StartAt = startAt })
+                    Content = JsonContent.Create(new JourneyCreateDto { StartPlaceId = startPlaceId, EndPlaceId = endPlaceId, StartAt = startAtUtc })
                 };
                 request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
                 HttpResponseMessage? response = await httpClient.SendAsync(request);
@@ -143,13 +143,13 @@ namespace Client.Services
         }
         
 
-        public async Task<ServiceResult> UpdateJourneyAsync(int journeyId, int startPlaceId, int endPlaceId, DateTime startAt)
+        public async Task<ServiceResult> UpdateJourneyAsync(int journeyId, int startPlaceId, int endPlaceId, DateTime startAtUtc)
         {
             try
             {
                 JourneyCreateDto dto = new JourneyCreateDto
                 {
-                    StartAt = startAt,
+                    StartAt = startAtUtc,
                     StartPlaceId = startPlaceId,
                     EndPlaceId = endPlaceId
                 };

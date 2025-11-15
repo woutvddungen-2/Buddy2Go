@@ -1,8 +1,8 @@
 ﻿@using Shared.Models;
 
 <div class="journey-card">
-    <div class="date">@Journey.StartAt.ToString("dddd dd-MM-yyyy")</div>
-    <div class="time">@Journey.StartAt.ToString("HH:mm")</div>
+    <div class="date">@Journey.StartAt.ToLocalTime().ToString("dddd dd-MM-yyyy")</div>
+    <div class="time">@Journey.StartAt.ToLocalTime().ToString("HH:mm")</div>
 
     <div class="locations">
         @if (Journey.Start is not null && Journey.End is not null)
@@ -30,7 +30,7 @@
 
     <div class="buddies">
         <span>Reisbuddies:</span>
-        @foreach (var buddy in Journey.Participants.Where(p => p.UserId != CurrentUserId))
+        @foreach (var buddy in Journey.Participants.Where(p => p.UserId != CurrentUserId && p.Status == RequestStatus.Accepted))
         {
             <span class="buddy">@buddy.UserName</span>
         }

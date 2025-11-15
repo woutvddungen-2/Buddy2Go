@@ -246,15 +246,11 @@ namespace Server.Controllers
             }
         }
 
-
-
         // Helper method to extract user ID from JWT
         private int GetUserIdFromJwt()
         {
             Claim? claim = User.FindFirst(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedAccessException();
             return int.Parse(claim.Value);
         }
-
-
     }
 }

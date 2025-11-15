@@ -139,24 +139,5 @@ namespace Client.Services
                 return ServiceResult<UserDto>.Fail(ex.Message);
             }
         }
-        //public async Task<ServiceResult<List<BuddyDto>>> FindUserbyEmail(string Email)
-        //{
-        //    try
-        //    {
-        //        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, $"api/Buddy/Pending");
-        //        request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
-        //        HttpResponseMessage? response = await httpClient.SendAsync(request);
-
-        //        if (!response.IsSuccessStatusCode)
-        //            return ServiceResult<List<BuddyDto>>.Fail(await response.Content.ReadAsStringAsync());
-
-        //        List<BuddyDto>? data = await response.Content.ReadFromJsonAsync<List<BuddyDto>>();
-        //        return ServiceResult<List<BuddyDto>>.Succes(data ?? new());
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return ServiceResult<List<BuddyDto>>.Fail(ex.Message);
-        //    }
-        //}
     }
 }
