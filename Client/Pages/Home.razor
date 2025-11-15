@@ -66,7 +66,7 @@ else
         ServiceResult? result = await LoginService.IsLoggedInAsync();
         if (result.IsSuccess)
         {
-            Navigation.NavigateTo("/Journeys");
+            Navigation.NavigateTo("/JourneyHome");
         }
     }
     private async Task LoginAlice()

@@ -2,15 +2,17 @@
 
 @inject JourneyService JourneyService
 @inject UserService UserService
+@inject NavigationManager Nav
 @using Client.Components
 
 <HeadContent>
+    <link href="css/common/Header.css" rel="stylesheet" />
     <link href="css/Journey/JourneyCard.css" rel="stylesheet" />
     <link href="css/Journey/MyJourneys.css" rel="stylesheet" />
 </HeadContent>
 
+<Header Title="Mijn Reizen" BackTo="/JourneyHome" />
 
-<h3 class="title">Mijn reizen</h3>
 @if (isLoading)
 {
     <p>Reizen laden...</p>
@@ -80,6 +82,10 @@ else
         {
             await LoadJourneys(); // refresh list
         }
+    }
+    private void GoBack()
+    {
+        Nav.NavigateTo("/JourneyHome");
     }
 
 }

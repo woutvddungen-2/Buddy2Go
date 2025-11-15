@@ -23,7 +23,7 @@ services:
       DbSettings__Password: __xh8xq9KmE4E.CwpQDG
       DbSettings__Port: 3306
       JwtSettings__Secret: "ThisIsASuperSecretKey12345678901"
-      AllowedOrigins: "https://app.buddy-2-go.nl;https://app.buddy-2-go.nl:443"
+      AllowedOrigins: "https://app.buddy-2-go.nl;https://app.buddy-2-go.nl:443;https://app.buddy-to-go.nl:5002;https://buddy2go-dev.nl;https://buddy2go-dev.nl:443;https://buddy2go-dev.nl:5002"
       ASPNETCORE_ENVIRONMENT: Development
     volumes:
       - ./certs/aspnetapp.pfx:/https/aspnetapp.pfx:ro

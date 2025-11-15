@@ -1,0 +1,35 @@
+﻿.page-header {
+    width: 100%;
+    padding-top: 1rem;
+    padding-bottom: 0.8rem;
+    padding-left: 70px;
+    padding-right: 70px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.top-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.back-button {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+
+    padding: 6px 10px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    transition: 0.2s ease-in-out;
+    white-space: nowrap;
+    border: 2px solid transparent;
+    background: white;
+}

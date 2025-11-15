@@ -1,0 +1,21 @@
+﻿@inject NavigationManager Nav
+
+<div class="page-header">
+    @if (!string.IsNullOrWhiteSpace(BackTo))
+    {
+        <button class="back-button" @onclick="GoBack">⟵</button>
+    }
+    <h3 class="top-title">@Title</h3>
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string? BackTo { get; set; }
+    [Parameter] public string BackButtonClass { get; set; } = "";
+
+    private void GoBack()
+    {
+        if (!string.IsNullOrWhiteSpace(BackTo))
+            Nav.NavigateTo(BackTo!);
+    }
+}

@@ -1,14 +1,16 @@
 ﻿@page "/CreateJourney"
 @inject JourneyService JourneyService
-@inject NavigationManager NavManager
+@inject NavigationManager Nav
 
 <HeadContent>
+    <link href="css/common/Header.css" rel="stylesheet" />
     <link href="css/Journey/JourneyCard.css" rel="stylesheet" />
     <link href="css/Journey/CreateJourney.css" rel="stylesheet" />
 </HeadContent>
 
+<Header Title="Reis Maken" BackTo="/JourneyHome" />
+
 <div class="card create-journey-card">
-    <h3 class="title">Ik zoek een reisbuddy</h3>
     @if (!string.IsNullOrEmpty(successMessage))
     {
         <div class="alert alert-success">@successMessage</div>
@@ -105,7 +107,7 @@
             errorMessage = null;
             StateHasChanged();
             await Task.Delay(1500);
-            NavManager.NavigateTo("/MyJourneys");
+            Nav.NavigateTo("/MyJourneys");
         }
         else
         {
@@ -119,5 +121,10 @@
         {
             journeyCreateDto.StartAt = date.Value.ToDateTime(time.Value);
         }
+    }
+
+    private void GoBack()
+    {
+        Nav.NavigateTo("/JourneyHome");
     }
 }

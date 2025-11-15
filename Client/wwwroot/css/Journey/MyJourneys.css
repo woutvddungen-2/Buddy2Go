@@ -23,3 +23,13 @@
     .btn-finish:hover {
         background: #673ab7;
     }
+
+.back-button {
+    color: #7b2cbf;
+    border-color: #7b2cbf;
+}
+
+    .back-button:hover {
+        background: #7b2cbf;
+        color: white;
+    }
