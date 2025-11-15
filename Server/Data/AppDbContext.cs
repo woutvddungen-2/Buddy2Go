@@ -9,7 +9,7 @@ namespace Server.Data
 
         public DbSet<User> Users { get; set; }
         public DbSet<Journey> Journeys { get; set; }
-        public DbSet<JourneyMessage> Messages { get; set; }
+        public DbSet<JourneyMessage> JourneyMessages { get; set; }
         public DbSet<JourneyParticipant> JourneyParticipants { get; set; }
         public DbSet<DangerousPlace> DangerousPlaces { get; set; }
         public DbSet<Buddy> Buddys { get; set; }

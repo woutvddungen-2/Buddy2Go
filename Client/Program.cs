@@ -10,6 +10,7 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<JourneyService>();
 builder.Services.AddScoped<BuddyService>();
+builder.Services.AddScoped<ChatService>();
 
 var config = builder.Configuration;
 string apiBase = config["ApiBaseUrl"] ?? throw new Exception("No BASE URL loaded");

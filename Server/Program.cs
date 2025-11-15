@@ -101,6 +101,7 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<JourneyService>();
 builder.Services.AddScoped<BuddyService>();
+builder.Services.AddScoped<ChatService>();
 
 // -------------------- Swagger --------------------
 #if DEBUG

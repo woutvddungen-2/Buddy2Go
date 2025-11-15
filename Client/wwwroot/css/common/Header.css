@@ -1,4 +1,5 @@
 ﻿.page-header {
+    position: relative;
     width: 100%;
     padding-top: 1rem;
     padding-bottom: 0.8rem;
@@ -18,7 +19,7 @@
 }
 
 .back-button {
-    position: fixed;
+    position:absolute;
     top: 1rem;
     left: 1rem;
 

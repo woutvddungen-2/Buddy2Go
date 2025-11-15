@@ -1,0 +1,113 @@
+﻿@page "/JourneyChat/{JourneyId:int}"
+
+@inject ChatService ChatService
+@inject JourneyService JourneyService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<HeadContent>
+    <link href="css/common/Header.css" rel="stylesheet" />
+    <link href="css/Journey/Chat.css" rel="stylesheet" />
+</HeadContent>
+
+<Header Title="@title" BackTo="/MyJourneys" />
+
+<div class="chat-page">
+
+    @if (IsLoading)
+    {
+        <p>Berichten laden...</p>
+    }
+    else
+    {
+        <div class="chat-messages" @ref="MessagesContainer">
+            @foreach (var msg in Messages)
+            {
+                <div class="chat-message">
+                    <strong>@msg.SenderName:</strong> @msg.Content
+                    <div class="time">@msg.SentAt.ToLocalTime().ToShortTimeString()</div>
+                </div>
+            }
+        </div>
+
+        <div class="chat-input">
+            <input @bind="NewMessage" @bind:event="oninput" placeholder="Type hier je bericht..." />
+            <button class="send-btn" @onclick="SendMessage">Versturen</button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int JourneyId { get; set; }
+
+    bool IsLoading = true;
+    string NewMessage = "";
+    List<JourneyMessageDto> Messages = new();
+    ElementReference MessagesContainer;
+    private string title = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = true;
+        await LoadMessages();
+        await LoadJourney();
+        IsLoading = false;
+        StateHasChanged();
+        await ScrollToBottom();
+    }
+
+    private async Task LoadMessages()
+    {        
+        var result = await ChatService.GetMessagesAsync(JourneyId);
+        if (result.IsSuccess && result.Data != null)
+            Messages = result.Data;       
+
+    }
+
+    private async Task LoadJourney()
+    {
+        var result = await JourneyService.GetMyJourneysAsync();
+        var journey = result.Data?
+            .FirstOrDefault(j => j.Id == JourneyId);
+
+        if (journey != null)
+        {
+            title = $"Chat voor: {journey.Start.City}";
+            if (journey.Start.District != null)
+                title += $", {journey.Start.District}";
+            title += $" → {journey.End.City}";
+            if (journey.End.District != null)
+                title += $", {journey.End.District}";
+            title += $" (Reis van {journey.OwnerName})";
+        }
+        else
+        {
+            title = "Chat";
+        }
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(NewMessage))
+            return;
+
+        var result = await ChatService.SendMessageAsync(JourneyId, NewMessage);
+
+        if (result.IsSuccess && result.Data != null)
+        {
+            Messages.Add(result.Data);
+            NewMessage = "";
+            await ScrollToBottom();
+        }
+    }
+
+    private async Task ScrollToBottom()
+    {
+        await JS.InvokeVoidAsync("scrollHelper.scrollToEnd", MessagesContainer);
+    }
+
+    private void GoBack()
+    {
+        Nav.NavigateTo("/MyJourneys");
+    }
+}
