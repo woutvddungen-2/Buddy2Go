@@ -50,3 +50,7 @@
     .send-btn:hover {
         background: #0060cc;
     }
+
+.top-title {
+    font-size: 1.0rem;
+}
