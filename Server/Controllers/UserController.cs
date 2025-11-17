@@ -14,10 +14,19 @@ namespace Server.Controllers
     {
         private readonly UserService service;
         private readonly ILogger logger;
-        public UserController(UserService service)
+        bool useSecureCookie;
+
+        public UserController(UserService service, ILogger<UserController> logger, IHostEnvironment env)
         {
             this.service = service;
-            logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<UserController>();
+            this.logger = logger;
+            bool runningInDocker = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
+
+#if DEBUG
+            useSecureCookie = false;
+#else
+            useSecureCookie = !env.IsDevelopment();
+#endif
         }
 
         [HttpPost("Register")]
@@ -56,7 +65,7 @@ namespace Server.Controllers
             switch (result.Status)
             {
                 case ServiceResultStatus.Success:
-                    Response.Cookies.Append("jwt", result.Data!, new CookieOptions { HttpOnly = true, Secure = true, SameSite = SameSiteMode.Lax });
+                    Response.Cookies.Append("jwt", result.Data!, new CookieOptions { HttpOnly = true, Secure = useSecureCookie, SameSite = SameSiteMode.Lax });
                     logger.LogInformation("User {Username} logged in successfully", login.Username);
                     return Ok(new { token = result.Data });
 

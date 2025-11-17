@@ -13,4 +13,4 @@ FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
 WORKDIR /app
 COPY --from=build /app/publish .
 EXPOSE 5001
-ENTRYPOINT ["dotnet", "Server.dll", "--urls", "https://+:5001"]
+ENTRYPOINT ["dotnet", "Server.dll", "--urls", "http://+:5001"]

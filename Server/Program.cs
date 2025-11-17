@@ -134,17 +134,12 @@ builder.Services.AddSwaggerGen(c =>
 #endif
 
 //------------- Configure https for docker -------------------------------
-// Configure Kestrel for HTTPS inside Docker
-if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true")
+// Configure Kestrel for HTTP inside Docker
+builder.WebHost.ConfigureKestrel(options =>
 {
-    builder.WebHost.ConfigureKestrel(options =>
-    {
-        options.ListenAnyIP(5001, listenOptions =>
-        {
-            listenOptions.UseHttps("/https/aspnetapp.pfx", "MyPassword123");
-        });
-    });
-}
+    options.ListenAnyIP(5001);
+});
+
 
 // -------------------- CORS --------------------
 
@@ -203,7 +198,6 @@ for (int i = 0; i < 10; i++)
 
 // -------------------- Middleware --------------------
 app.UseCors("AllowBlazorWasm");
-app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 

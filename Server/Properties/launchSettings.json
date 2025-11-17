@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
-    "https (Development)": {
+    "http (Development)": {
       "commandName": "Project",
       "launchBrowser": false,
       "environmentVariables": {
@@ -12,10 +12,10 @@
         "DbSettings__Password": "__xh8xq9KmE4E.CwpQDG",
         "DbSettings__Port": "3306",
         "JwtSettings__Secret": "ThisIsASuperSecretKey12345678901",
-        "AllowedOrigins": "https://localhost;https://buddy2go-dev.nl:443;https://buddy2go-dev.nl;https://buddy2go-dev.nl:5002"
+        "AllowedOrigins": "http://localhost;http://buddy2go-dev.nl:443;http://buddy2go-dev.nl;http://buddy2go-dev.nl:5002;https://localhost;https://buddy2go-dev.nl:443;https://buddy2go-dev.nl;https://buddy2go-dev.nl:5002"
       },
       "dotnetRunMessages": true,
-      "applicationUrl": "https://localhost:5001;https://buddy2go-dev.nl:5001"
+      "applicationUrl": "http://localhost:5001;http://buddy2go-dev.nl:5001"
 
     }
   }

@@ -12,5 +12,5 @@ COPY --from=build /app/publish/wwwroot /usr/share/nginx/html
 COPY Client/nginx.conf /etc/nginx/nginx.conf
 COPY Client/wwwroot/build.appsettings.json /usr/share/nginx/html/appsettings.json
 
-EXPOSE 5002 80
+EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
