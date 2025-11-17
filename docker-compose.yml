@@ -25,7 +25,7 @@ services:
       DbSettings__Password: __xh8xq9KmE4E.CwpQDG
       DbSettings__Port: 3306
       JwtSettings__Secret: "ThisIsASuperSecretKey12345678901"
-      AllowedOrigins: "https://buddy2go-dev.nl;https://buddy2go-dev.nl:443"
+      AllowedOrigins: "https://buddy2go-dev.nl;https://buddy2go-dev.nl:443;https://app.buddy-2-go.nl;https://app.buddy-2-go.nl:443"
       ASPNETCORE_ENVIRONMENT: Development
     volumes:
       - ./Server/certs/aspnetapp.pfx:/https/aspnetapp.pfx:ro
@@ -44,6 +44,7 @@ services:
     - ./Client/certs/client.key:/etc/nginx/ssl/client.key:ro
     ports:
       - "443:5002"
+      - "80:80"
     depends_on:
       - server
 

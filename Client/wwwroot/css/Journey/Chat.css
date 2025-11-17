@@ -54,3 +54,13 @@
 .top-title {
     font-size: 1.0rem;
 }
+
+.back-button {
+    color: #004b6b;
+    border-color: #004b6b;
+}
+
+    .back-button:hover {
+        background: #004b6b;
+        color: white;
+    }

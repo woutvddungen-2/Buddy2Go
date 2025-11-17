@@ -40,6 +40,7 @@ services:
       - ./certs/client.key:/etc/nginx/ssl/client.key:ro
     ports:
       - "443:5002"
+      - "80:80"
     depends_on:
       - server
 
