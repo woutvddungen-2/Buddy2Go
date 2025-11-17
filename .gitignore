@@ -362,13 +362,6 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /Server/Migrations
-/Buddy2Go_Deployment
-/Buddy2Go_Deployment.tar.gz
-/Buddy2Go_Deployment_V0.1.3
-/Buddy2Go_Deployment_V0.1.4
-/Buddy2Go_Deployment_V0.1.5
-/Buddy2Go_Deployment_V0.1.6
-/Buddy2Go_V0.1.3.tar.gz
-/Buddy2Go_V0.1.4.tar.gz
-/Buddy2Go_V0.1.5.tar.gz
-/Buddy2Go_V0.1.6.tar.gz
+/version.txt
+/version-local.txt
+/version-deploy.txt
