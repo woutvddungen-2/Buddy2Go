@@ -5,7 +5,12 @@
 @inject NavigationManager Navigation
 @using System.ComponentModel.DataAnnotations
 
-<h3 class="text-xl font-semibold mb-4">Register</h3>
+<HeadContent>
+    <link href="css/common/Header.css" rel="stylesheet" />
+    <link href="css/Register.css" rel="stylesheet" />
+</HeadContent>
+
+<Header Title="Maak een Account" BackTo="/" />
 
 @if (isLoading)
 {
@@ -13,47 +18,58 @@
 }
 else
 {
-    <EditForm Model="@registerModel" OnValidSubmit="HandleRegister">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+    <div class="register-page">
+        <div class="register-card">
+            @if (isLoading)
+            {
+                <p class="loading-text">Registreren...</p>
+            }
+            else
+            {
+                <EditForm Model="@registerModel" OnValidSubmit="HandleRegister">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
 
-        <div class="mb-3">
-            <label class="block mb-1">Gebruikersnaam</label>
-            <InputText @bind-Value="registerModel.Username" class="border rounded px-2 py-1 w-full" />
+                    <div class="input-group">
+                        <label>Gebruikersnaam</label>
+                        <InputText @bind-Value="registerModel.Username" class="input-field" />
+                    </div>
+
+                    <div class="input-group">
+                        <label>Email</label>
+                        <InputText @bind-Value="registerModel.Email" type="email" class="input-field" />
+                    </div>
+
+                    <div class="input-group">
+                        <label>Telefoonnummer</label>
+                        <InputText @bind-Value="registerModel.PhoneNumber" type="text" class="input-field" />
+                    </div>
+
+                    <div class="input-group">
+                        <label>Wachtwoord</label>
+                        <InputText @bind-Value="registerModel.Password" type="password" class="input-field" />
+                    </div>
+
+                    <div class="input-group">
+                        <label>Wachtwoord bevestigen</label>
+                        <InputText @bind-Value="registerModel.ConfirmPassword" type="password" class="input-field" />
+                    </div>
+
+                    <button type="submit" class="register-btn">Registreren</button>
+
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <p class="error-message">@errorMessage</p>
+                    }
+
+                    @if (!string.IsNullOrEmpty(successMessage))
+                    {
+                        <p class="success-message">@successMessage</p>
+                    }
+                </EditForm>
+            }
         </div>
-
-        <div class="mb-3">
-            <label class="block mb-1">Email</label>
-            <InputText @bind-Value="registerModel.Email" type="email" class="border rounded px-2 py-1 w-full" />
-        </div>
-
-        <div class="mb-3">
-            <label class="block mb-1">Telefoonnummer</label>
-            <InputText @bind-Value="registerModel.PhoneNumber" type="phone" class="border rounded px-2 py-1 w-full" />
-        </div>
-
-        <div class="mb-3">
-            <label class="block mb-1">Wachtwoord</label>
-            <InputText @bind-Value="registerModel.Password" type="password" class="border rounded px-2 py-1 w-full" />
-        </div>
-
-        <div class="mb-3">
-            <label class="block mb-1">Wachtwoord bevestigen</label>
-            <InputText @bind-Value="registerModel.ConfirmPassword" type="password" class="border rounded px-2 py-1 w-full" />
-        </div>
-
-        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Registreren</button>
-
-        @if (!string.IsNullOrEmpty(errorMessage))
-        {
-            <p class="text-red-600 mt-3">@errorMessage</p>
-        }
-
-        @if (!string.IsNullOrEmpty(successMessage))
-        {
-            <p class="text-green-600 mt-3">@successMessage</p>
-        }
-    </EditForm>
+    </div>
 }
 
 @code {
