@@ -98,7 +98,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 
 //-------------------- Services --------------------
-builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<JourneyService>();
 builder.Services.AddScoped<BuddyService>();
 builder.Services.AddScoped<ChatService>();

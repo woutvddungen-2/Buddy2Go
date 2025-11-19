@@ -12,11 +12,11 @@ namespace Server.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly UserService service;
+        private readonly IUserService service;
         private readonly ILogger logger;
         bool useSecureCookie;
 
-        public UserController(UserService service, ILogger<UserController> logger, IHostEnvironment env)
+        public UserController(IUserService service, ILogger<UserController> logger, IHostEnvironment env)
         {
             this.service = service;
             this.logger = logger;

@@ -11,12 +11,10 @@ using System.Text;
 
 namespace Server.Services
 {
-    public class UserService
+    public class UserService: IUserService
     {
         private readonly AppDbContext db;
         private readonly string jwtSecret;
-
-
 
         public UserService(AppDbContext db, IConfiguration config)
         {
@@ -220,7 +218,7 @@ namespace Server.Services
         /// <param name="password">The password to evaluate for strength.</param>
         /// <returns><see langword="true"/> if the password is at least 8 characters long and contains at least one uppercase
         /// letter, one lowercase letter, one digit, and one special character; otherwise, <see langword="false"/>.</returns>
-        public bool IsPasswordStrong(string password)
+        public static bool IsPasswordStrong(string password)
         {
             if (password.Length < 8)
                 return false;
