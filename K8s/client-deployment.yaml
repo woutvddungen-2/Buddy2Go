@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: buddy2go-client
+  namespace: buddy2go
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: buddy2go-client
+  template:
+    metadata:
+      labels:
+        app: buddy2go-client
+    spec:
+      containers:
+        - name: client
+          image: buddy2go-client:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: client-config-volume
+              mountPath: /usr/share/nginx/html/appsettings.json
+              subPath: appsettings.json
+      volumes:
+        - name: client-config-volume
+          configMap:
+            name: client-config
+            items:
+              - key: ApiBaseUrl
+                path: appsettings.json

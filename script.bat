@@ -118,17 +118,74 @@ echo.
 
 
 REM ============================================================
-echo Writing README.RUN.txt...
-(
-echo Buddy2Go %MODE% Package %NEW_VERSION%
-echo ---------------------------------------------
-echo docker load -i images/server_%NEW_VERSION%.tar
-echo docker load -i images/client_%NEW_VERSION%.tar
-echo docker load -i images/mysql_8_0.tar
+echo Copying Kubernetes manifests...
+
+if exist "K8s" (
+    echo Adding K8s manifests to output...
+    mkdir "%DEPLOY_FOLDER%\k8s" >nul 2>&1
+    xcopy /E /I /Y "K8s" "%DEPLOY_FOLDER%\k8s" >nul
+) else (
+    echo WARNING: K8s folder not found — skipping Kubernetes export.
+)
 echo.
-echo Start containers:
-echo    docker compose up -d
-) > "%DEPLOY_FOLDER%\README.RUN.txt"
+
+
+
+REM ============================================================
+echo Writing README.RUN.txt...
+
+if "%MODE%"=="deploy" (
+    REM ------------ Kubernetes README --------------
+    (
+    echo Buddy2Go Kubernetes Deployment Package %NEW_VERSION%
+    echo ====================================================
+    echo.
+    echo This package contains docker images and Kubernetes manifests.
+    echo.
+    echo ----------------------------------------------------
+    echo 1. Load Docker Images into local Docker
+    echo ----------------------------------------------------
+    echo docker load -i images/server_%NEW_VERSION%.tar
+    echo docker load -i images/client_%NEW_VERSION%.tar
+    echo docker load -i images/mysql_8_0.tar
+    echo.
+    echo ----------------------------------------------------
+    echo 2. Push images to your private registry \(if required\)
+    echo ----------------------------------------------------
+    echo docker tag buddy2go-server:%NEW_VERSION% registry/company/buddy2go-server:%NEW_VERSION%
+    echo docker tag buddy2go-client:%NEW_VERSION% registry/company/buddy2go-client:%NEW_VERSION%
+    echo.
+    echo docker push registry/company/buddy2go-server:%NEW_VERSION%
+    echo docker push registry/company/buddy2go-client:%NEW_VERSION%
+    echo.
+    echo ----------------------------------------------------
+    echo 3. Apply Kubernetes manifests
+    echo ----------------------------------------------------
+    echo kubectl apply -f k8s/
+    echo.
+    echo ----------------------------------------------------
+    echo 4. Verify Deployment
+    echo ----------------------------------------------------
+    echo kubectl get pods -n buddy2go
+    echo kubectl get svc -n buddy2go
+    echo kubectl get ingress -n buddy2go
+    echo.
+    echo Deployment version: %NEW_VERSION%
+    ) > "%DEPLOY_FOLDER%\README.RUN.txt"
+) else (
+    REM ------------ LOCAL README -------------------
+    (
+    echo Buddy2Go LOCAL Package %NEW_VERSION%
+    echo =============================================
+    echo docker load -i images/server_%NEW_VERSION%.tar
+    echo docker load -i images/client_%NEW_VERSION%.tar
+    echo docker load -i images/mysql_8_0.tar
+    echo.
+    echo Start containers:
+    echo    docker compose up -d
+    ) > "%DEPLOY_FOLDER%\README.RUN.txt"
+)
+
 echo.
 
 
