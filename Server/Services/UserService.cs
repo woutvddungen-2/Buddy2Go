@@ -12,15 +12,13 @@ using System.Text;
 
 namespace Server.Services
 {
-    public class UserService
+    public class UserService: IUserService
     {
         private readonly AppDbContext db;
         private readonly string jwtSecret;
         private ILogger logger;
-
-
         public UserService(AppDbContext db, ILogger<UserService> logger, IConfiguration config)
-        {
+        {            
             this.db = db;
             this.logger = logger;
             jwtSecret = config["JwtSettings:Secret"] ?? throw new Exception("JWT secret missing");
@@ -144,7 +142,7 @@ namespace Server.Services
                 return ServiceResult<UserDto>.Fail(ServiceResultStatus.Blocked, "This user is blocked");
             }
 
-            logger.LogDebug("FindUserbyPhone, user {userId} found the following User: {FoundUserId}", userId, result.Data?.Id);
+            logger.LogDebug("FindUserbyPhone, user {userId} found the following User: {FoundUserId}", userId, user.Id);
             return ServiceResult<UserDto>.Succes(new UserDto
             {
                 Id = user.Id,
@@ -246,7 +244,7 @@ namespace Server.Services
         /// <param name="password">The password to evaluate for strength.</param>
         /// <returns><see langword="true"/> if the password is at least 8 characters long and contains at least one uppercase
         /// letter, one lowercase letter, one digit, and one special character; otherwise, <see langword="false"/>.</returns>
-        public bool IsPasswordStrong(string password)
+        public static bool IsPasswordStrong(string password)
         {
             if (password.Length < 8)
                 return false;
