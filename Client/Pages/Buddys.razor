@@ -2,33 +2,47 @@
 @inject BuddyService BuddyService
 @inject UserService UserService
 
-<h3 class="text-2xl font-semibold mb-4">Buddy's'</h3>
+<!-- PAGE TITLE -->
+<h3 class="text-2xl font-bold mb-6 text-purple-600">Buddy's</h3>
 
-<!--FIND USER BY PHONE -->
-<div class="p-4 bg-gray-100 rounded-2xl shadow mb-6">
-    <h4 class="text-lg font-medium mb-2">Vind een Buddy d.m.v. telefoonnummer:</h4>
-    <div class="flex gap-2">
-        <input @bind="searchPhone" class="border rounded px-2 py-1 flex-1" placeholder="Telefoonnummer...." />
-        <button class="bg-blue-600 text-white px-4 py-1 rounded" @onclick="FindUserByPhone">Zoeken</button>
+<!-- FIND USER BY PHONE -->
+<div class="p-5 bg-gray-100 rounded-2xl shadow-sm border border-gray-200 mb-6">
+    <h4 class="text-lg font-semibold mb-3 text-gray-800">Vind een Buddy via telefoonnummer</h4>
+
+    <div class="flex gap-3">
+        <input @bind="searchPhone"
+               placeholder="Telefoonnummer..."
+               class="border border-gray-300 rounded-lg px-3 py-2 flex-1 focus:ring-2 focus:ring-purple-400 focus:border-purple-400 outline-none" />
+
+        <button @onclick="FindUserByPhone"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow">
+            Zoeken
+        </button>
     </div>
 
     @if (searchResult != null)
     {
-        <div class="mt-3">
-            <p><strong>Gebruiker gevonden: </strong> @searchResult.Username (@searchResult.Email)</p>
-            <button class="bg-green-600 text-white px-3 py-1 rounded" @onclick="() => SendRequest(searchResult.Id)">Verstuur buddyverzoek</button>
+        <div class="mt-4 p-3 bg-white rounded-xl shadow-inner border border-gray-200">
+            <p class="text-gray-700">
+                <strong>Gebruiker gevonden:</strong> @searchResult.Username (@searchResult.Email)
+            </p>
+            <button class="mt-3 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow"
+                    @onclick="() => SendRequest(searchResult.Id)">
+                Verstuur buddyverzoek
+            </button>
         </div>
     }
 
     @if (!string.IsNullOrEmpty(message))
     {
-        <p class="mt-2 text-sm text-gray-700">@message</p>
+        <p class="mt-3 text-sm text-gray-600">@message</p>
     }
 </div>
 
-<!--PENDING REQUESTS -->
-<div class="p-4 bg-gray-100 rounded-2xl shadow mb-6">
-    <h4 class="text-lg font-medium mb-2">Openstaande verzoeken</h4>
+<!-- PENDING REQUESTS -->
+<div class="p-5 bg-gray-100 rounded-2xl shadow-sm border border-gray-200 mb-6">
+    <h4 class="text-lg font-semibold mb-3 text-gray-800">Openstaande buddyverzoeken</h4>
+
     @if (pendingRequests.Count == 0)
     {
         <p class="text-gray-600">Geen openstaande verzoeken</p>
@@ -37,21 +51,34 @@
     {
         @foreach (var req in pendingRequests)
         {
-            <div class="flex justify-between items-center border-b py-2">
-                <span>@req.Requester.Username (@req.Requester.PhoneNumber)</span>
+            <div class="flex justify-between items-center border-b last:border-none py-3">
+                <span class="font-medium text-gray-700">@req.Requester.Username (@req.Requester.PhoneNumber)</span>
+
                 <div class="flex gap-2">
-                    <button class="bg-green-600 text-white px-3 py-1 rounded" @onclick="() => RespondToRequest(req.Requester.Id, RequestStatus.Accepted)">Accepteren</button>
-                    <button class="bg-red-600 text-white px-3 py-1 rounded" @onclick="() => RespondToRequest(req.Requester.Id, RequestStatus.Rejected)">Afwijzen</button>
-                    <button class="bg-red-600 text-white px-3 py-1 rounded" @onclick="() => RespondToRequest(req.Requester.Id, RequestStatus.Blocked)">Blokkeren</button>
+                    <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg"
+                            @onclick="() => RespondToRequest(req.Requester.Id, RequestStatus.Accepted)">
+                        Accepteren
+                    </button>
+
+                    <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg"
+                            @onclick="() => RespondToRequest(req.Requester.Id, RequestStatus.Rejected)">
+                        Afwijzen
+                    </button>
+
+                    <button class="bg-red-700 hover:bg-red-800 text-white px-3 py-1 rounded-lg"
+                            @onclick="() => RespondToRequest(req.Requester.Id, RequestStatus.Blocked)">
+                        Blokkeren
+                    </button>
                 </div>
             </div>
         }
     }
 </div>
 
-<!--OUTGOING PENDING/REJECTED REQUESTS -->
-<div class="p-4 bg-gray-100 rounded-2xl shadow mb-6">
-    <h4 class="text-lg font-medium mb-2">Jouw verstuurde verzoeken</h4>
+<!-- SENT REQUESTS -->
+<div class="p-5 bg-gray-100 rounded-2xl shadow-sm border border-gray-200 mb-6">
+    <h4 class="text-lg font-semibold mb-3 text-gray-800">Jouw verstuurde verzoeken</h4>
+
     @if (sentRequests.Count == 0)
     {
         <p class="text-gray-600">Geen verstuurde verzoeken</p>
@@ -60,48 +87,57 @@
     {
         @foreach (var req in sentRequests)
         {
-            <div class="flex justify-between items-center border-b py-2">
-                <span>@req.Addressee.Username (@req.Addressee.PhoneNumber)</span>
+            <div class="flex justify-between items-center border-b last:border-none py-3">
+                <span class="font-medium text-gray-700">
+                    @req.Addressee.Username (@req.Addressee.PhoneNumber)
+                </span>
+
                 <span class="text-sm text-gray-500">@req.Status</span>
-                <div class="flex gap-2">
-                    @if (req.Status == RequestStatus.Rejected)
-                    {
-                        <button class="bg-red-600 text-white px-3 py-1 rounded" @onclick="() => RemoveBuddy(req.Requester.Id, req.Addressee.Id)">Verwijderen</button>
-                        <button class="bg-blue-600 text-white px-3 py-1 rounded" @onclick="() => ResendRequest(req.Addressee.Id)">Verstuur verzoek opnieuw</button>
-                    }
-                </div>
+
+                @if (req.Status == RequestStatus.Rejected)
+                {
+                    <div class="flex gap-2">
+                        <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg"
+                                @onclick="() => RemoveBuddy(req.Requester.Id, req.Addressee.Id)">
+                            Verwijderen
+                        </button>
+
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg"
+                                @onclick="() => ResendRequest(req.Addressee.Id)">
+                            Verstuur opnieuw
+                        </button>
+                    </div>
+                }
             </div>
         }
     }
 </div>
 
+<!-- BUDDY LIST -->
+<div class="p-5 bg-gray-100 rounded-2xl shadow-sm border border-gray-200">
+    <h4 class="text-lg font-semibold mb-3 text-gray-800">Jouw Buddies</h4>
 
-<!--BUDDY LIST -->
-<div class="p-4 bg-gray-100 rounded-2xl shadow">
-    <h4 class="text-lg font-medium mb-2">Your Buddies</h4>
     @if (buddies.Count == 0)
     {
-        <p class="text-gray-600">Je hebt nog geen buddy's'</p>
+        <p class="text-gray-600">Je hebt nog geen buddy's</p>
     }
     else
     {
         @foreach (var buddy in buddies)
         {
-            @if (buddy.Requester.Id == currentUserId)
-            {
-                <div class="flex justify-between items-center border-b py-2">
-                    <span>Buddy: @buddy.Addressee.Username</span>
-                    <button class="bg-red-600 text-white px-3 py-1 rounded" @onclick="() => RemoveBuddy(buddy.Requester.Id, buddy.Addressee.Id)">Verwijderen</button>
-                </div>
-            }
-            else
-            {
-                <div class="flex justify-between items-center border-b py-2">
-                    <span>Buddy: @buddy.Requester.Username</span>
-                    <button class="bg-red-600 text-white px-3 py-1 rounded" @onclick="() => RemoveBuddy(buddy.Requester.Id, buddy.Addressee.Id)">Verwijderen</button>
-                </div>
-            }
+            <div class="flex justify-between items-center border-b last:border-none py-3">
+                <span class="font-medium text-gray-700">
+                    Buddy:
+                    @(buddy.Requester.Id == currentUserId
+                                ? buddy.Addressee.Username
+                                : buddy.Requester.Username)
+        </span>
 
+                <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg"
+                        @onclick="() => RemoveBuddy(buddy.Requester.Id, buddy.Addressee.Id)">
+                    Verwijderen
+                </button>
+            </div>
         }
     }
 </div>
@@ -121,9 +157,7 @@
         if (userIdResult.IsSuccess)
             currentUserId = userIdResult.Data;
 
-        await LoadBuddies();
-        await LoadPendingRequests();
-        await LoadSentRequests();
+        await ReloadAll();
     }
 
     private async Task LoadBuddies()
@@ -147,20 +181,32 @@
 
         if (string.IsNullOrWhiteSpace(searchPhone))
         {
-            message = "Please enter a phone number.";
+            message = "Vul een telefoonnummer in.";
+            StateHasChanged();
             return;
         }
 
         var result = await UserService.FindUserbyPhone(searchPhone);
-        if (result.IsSuccess && result.Data != null)
+
+        if (!result.IsSuccess || result.Data == null)
         {
-            searchResult = result.Data;
-            message = "User found!";
+            message = "Geen gebruiker gevonden met dit nummer.";
+            StateHasChanged();
+            return;
         }
-        else
+
+        if (result.Data.Id == currentUserId)
         {
-            message = "No user found with that phone number.";
+            message = "Je kunt jezelf niet als buddy toevoegen";
+            searchResult = null;
+            StateHasChanged();
+            return;
         }
+
+        // Otherwise it's a valid user
+        searchResult = result.Data;
+        message = "Gebruiker gevonden!";
+        StateHasChanged();
     }
 
     private async Task SendRequest(int userId)
@@ -170,6 +216,7 @@
             message = "Buddy request sent!";
         else
             message = $"Buddy request Failed!, {result.Message}";
+        await ReloadAll();
     }
 
     private async Task RespondToRequest(int requesterId, RequestStatus status)
@@ -177,8 +224,7 @@
         var result = await BuddyService.RespondToBuddyRequest(requesterId, status);
         if (result.IsSuccess)
         {
-            await LoadPendingRequests();
-            await LoadBuddies();
+            await ReloadAll();
         }
     }
 
@@ -194,7 +240,7 @@
             message = "Buddy succesfully removed";
         else
             message = $"Delete failed, {result.Message}";
-        await OnInitializedAsync();
+        await ReloadAll();
     }
 
     private async Task LoadSentRequests()
@@ -213,19 +259,13 @@
         else
             message = $"Failed to resend request: {result.Message}";
 
-        await LoadSentRequests();
+        await ReloadAll();
     }
-
-    // Block buddy for pending incoming
-    // private async Task BlockBuddy(int requesterId)
-    // {
-    //     var result = await BuddyService.RemoveBuddy(requesterId, true);
-    //     if (result.IsSuccess)
-    //         message = "Buddy blocked!";
-    //     else
-    //         message = $"Failed to block: {result.Message}";
-
-    //     await LoadPendingRequests();
-    //     await LoadBuddies();
-    // }
+    private async Task ReloadAll()
+    {
+        await LoadBuddies();
+        await LoadPendingRequests();
+        await LoadSentRequests();
+        StateHasChanged();
+    }
 }
