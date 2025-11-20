@@ -136,18 +136,19 @@ namespace Server.Controllers
         [HttpGet("FindbyPhonenumber/{number}")]
         public async Task<IActionResult> FindbyPhoneNumber(string number)
         {
-            ServiceResult<UserDto> result = await service.FindUserbyPhone(number);
+            int userId = GetUserIdFromJwt();
+            ServiceResult<UserDto> result = await service.FindUserbyPhone(number, userId);
 
             switch (result.Status)
             {
                 case ServiceResultStatus.Success:
-                    logger.LogDebug("user found the following User: {FoundUserId}", result.Data?.Id);
                     return Ok(result.Data);
                 case ServiceResultStatus.UserNotFound:
-                    logger.LogInformation("No user found with the following phonenumber: {Phonenumber}", number);
                     return NotFound(result.Message);
+                case ServiceResultStatus.Blocked:
+                    return BadRequest(result.Message);
                 default:
-                    logger.LogError("FindbyPhoneNumber, error: {message}, Number: {PhoneNumber}", result.Message, number);
+                    logger.LogError("FindbyPhoneNumber, user: {userId}, error: {message}, Number: {PhoneNumber}", userId, result.Message, number);
                     return StatusCode(500, "Unexpected error retrieving user info");
             }
         }

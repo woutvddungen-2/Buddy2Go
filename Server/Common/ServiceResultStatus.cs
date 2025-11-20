@@ -1,5 +1,6 @@
 ﻿namespace Server.Common
-{    public enum ServiceResultStatus
+{    
+    public enum ServiceResultStatus
     {
         Success,
         ResourceNotFound,
@@ -7,6 +8,7 @@
         Unauthorized,
         ValidationError,
         InvalidOperation,
+        Blocked,
         Error
     }
 

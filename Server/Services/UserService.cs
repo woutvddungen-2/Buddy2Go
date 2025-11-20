@@ -3,6 +3,7 @@ using Microsoft.IdentityModel.Tokens;
 using Server.Common;
 using Server.Data;
 using Server.Models;
+using Shared.Models;
 using Shared.Models.Dtos;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -15,12 +16,13 @@ namespace Server.Services
     {
         private readonly AppDbContext db;
         private readonly string jwtSecret;
+        private ILogger logger;
 
 
-
-        public UserService(AppDbContext db, IConfiguration config)
+        public UserService(AppDbContext db, ILogger<UserService> logger, IConfiguration config)
         {
             this.db = db;
+            this.logger = logger;
             jwtSecret = config["JwtSettings:Secret"] ?? throw new Exception("JWT secret missing");
         }
 
@@ -99,15 +101,23 @@ namespace Server.Services
             });
         }
 
-        public async Task<ServiceResult<UserDto>> FindUserbyPhone(string number)
+        public async Task<ServiceResult<UserDto>> FindUserbyPhone(string number, int userId)
         {
             //todo: add more robust check for correct number
             if (string.IsNullOrWhiteSpace(number))
+            {
+                logger.LogInformation("FindUserbyPhone, Tried finding phonenumber but no number given");
                 return ServiceResult<UserDto>.Fail(ServiceResultStatus.ValidationError, "phonenumber is required");
+            }
+                
 
             string digitsOnly = new string (number.Where(char.IsDigit).ToArray());
             if (digitsOnly.Length < 8)
+            {
+                logger.LogInformation("FindUserbyPhone, Tried finding phonenumber {number}, but it has less then 8 chacters, so not a valid number", number);
                 return ServiceResult<UserDto>.Fail(ServiceResultStatus.ValidationError, "phonenumber is not correct");
+            }
+                
 
             string last8 = digitsOnly.Substring(digitsOnly.Length - 8);
 
@@ -117,8 +127,24 @@ namespace Server.Services
                     EF.Functions.Like(u.Phonenumber, "%" + last8));
 
             if (user == null)
+            {
+                logger.LogInformation("FindUserbyPhone, No user found with the following phonenumber: {Phonenumber}", number);
                 return ServiceResult<UserDto>.Fail(ServiceResultStatus.UserNotFound, "Find not succesful");
+            }
+                
 
+            bool isBlocked = await db.Buddys.AnyAsync(b =>
+                (b.RequesterId == userId && b.AddresseeId == user.Id && b.Status == RequestStatus.Blocked) ||
+                (b.AddresseeId == userId && b.RequesterId == user.Id && b.Status == RequestStatus.Blocked)
+            );
+
+            if (isBlocked)
+            {
+                logger.LogInformation("FindUserbyPhone, User {userId} tried finding blocked user with phonenumber {Phonenumber}, this is not allowed", userId, number);
+                return ServiceResult<UserDto>.Fail(ServiceResultStatus.Blocked, "This user is blocked");
+            }
+
+            logger.LogDebug("FindUserbyPhone, user {userId} found the following User: {FoundUserId}", userId, result.Data?.Id);
             return ServiceResult<UserDto>.Succes(new UserDto
             {
                 Id = user.Id,
