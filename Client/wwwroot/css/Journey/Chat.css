@@ -14,10 +14,70 @@
 }
 
 .chat-message {
-    padding: 6px 10px;
-    background: white;
-    border-radius: 8px;
-    margin-bottom: 6px;
+    display: flex;
+    max-width: 75%;
+    margin-bottom: 10px;
+}
+
+    .chat-message.mine {
+        justify-content: flex-end;
+        margin-left: auto;
+        text-align: right;
+    }
+
+    .chat-message.other {
+        justify-content:flex-start;
+        margin-right: auto;
+        text-align: left;
+    }
+
+
+.bubble {
+    padding: 10px 14px;
+    border-radius: 14px;
+    display: inline-block;
+    width: fit-content;
+    max-width: 100%;
+    word-wrap: break-word;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+.chat-message.mine .bubble {
+    background-color: #5a189a;
+    color: white;
+}
+
+.chat-message.other .bubble {
+    background: #ffffff;
+    border: 1px solid #ddd;
+}
+
+.user-1 .bubble {
+    background: #d1e7ff !important;
+}
+
+.user-2 .bubble {
+    background: #ffe6cc !important;
+}
+
+.user-3 .bubble {
+    background: #e9ffd1 !important;
+}
+
+.user-4 .bubble {
+    background: #f3d1ff !important;
+}
+
+.user-5 .bubble {
+    background: #fff5d1 !important;
+}
+
+
+.time {
+    font-size: 0.72rem;
+    opacity: 0.6;
+    margin-top: 2px;
+    padding: 0 4px;
 }
 
 .chat-input {

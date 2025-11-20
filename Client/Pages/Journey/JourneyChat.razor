@@ -2,6 +2,7 @@
 
 @inject ChatService ChatService
 @inject JourneyService JourneyService
+@inject UserService UserService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
@@ -23,10 +24,30 @@
         <div class="chat-messages" @ref="MessagesContainer">
             @foreach (var msg in Messages)
             {
-                <div class="chat-message">
-                    <strong>@msg.SenderName:</strong> @msg.Content
-                    <div class="time">@msg.SentAt.ToLocalTime().ToShortTimeString()</div>
-                </div>
+                @if (msg.SenderId == CurrentUserId)
+                {
+                    <div class="chat-message mine">
+                        <div class="bubble">
+                            <strong>@msg.SenderName:</strong><br />
+                            @msg.Content
+                        </div>
+                        <div class="time">
+                            @msg.SentAt.ToLocalTime().ToShortTimeString()
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="chat-message other @( "user-" + msg.SenderId)">
+                        <div class="bubble">
+                            <strong>@msg.SenderName:</strong><br />
+                            @msg.Content
+                        </div>
+                        <div class="time">
+                            @msg.SentAt.ToLocalTime().ToShortTimeString()
+                        </div>
+                    </div>
+                }
             }
         </div>
 
@@ -40,6 +61,10 @@
 @code {
     [Parameter] public int JourneyId { get; set; }
 
+    private System.Timers.Timer? refreshTimer;
+
+
+    private int CurrentUserId;
     bool IsLoading = true;
     string NewMessage = "";
     List<JourneyMessageDto> Messages = new();
@@ -49,11 +74,16 @@
     protected override async Task OnInitializedAsync()
     {
         IsLoading = true;
+        ServiceResult<int> result = await UserService.GetUserId();
+        if (result.IsSuccess)
+            CurrentUserId = result.Data;
         await LoadMessages();
         await LoadJourney();
         IsLoading = false;
         StateHasChanged();
         await ScrollToBottom();
+
+        StartAutoRefresh();
     }
 
     private async Task LoadMessages()
@@ -78,7 +108,10 @@
             title += $" → {journey.End.City}";
             if (journey.End.District != null)
                 title += $", {journey.End.District}";
-            title += $" (Reis van {journey.OwnerName})";
+            if (journey.OwnerId == CurrentUserId)
+                title += $" (Reis van jou)";
+            else
+                title += $" (Reis van {journey.OwnerName})";
         }
         else
         {
@@ -109,5 +142,35 @@
     private void GoBack()
     {
         Nav.NavigateTo("/MyJourneys");
+    }
+
+    private void StartAutoRefresh()
+    {
+        refreshTimer = new System.Timers.Timer(5000); // 5 seconds
+        refreshTimer.Elapsed += async (_, _) => await RefreshMessages();
+        refreshTimer.AutoReset = true;
+        refreshTimer.Enabled = true;
+    }
+
+    private async Task RefreshMessages()
+    {
+        try
+        {
+            var result = await ChatService.GetMessagesAsync(JourneyId);
+            if (!result.IsSuccess || result.Data == null)
+                return;
+
+            bool wasAtBottom = await JS.InvokeAsync<bool>("scrollHelper.isNearBottom", MessagesContainer);
+            Messages = result.Data;
+
+            await InvokeAsync(StateHasChanged);
+
+            if (wasAtBottom)
+                await InvokeAsync(ScrollToBottom);
+        }
+        catch
+        {
+            // ignore refresh errors
+        }
     }
 }

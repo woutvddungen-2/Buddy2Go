@@ -21,8 +21,58 @@ else if (Journeys.Count == 0)
 {
     <p>Je hebt nog geen reizen.</p>
 }
+else if (isFinishing && finishingJourney is not null)
+{
+    <!-- Single journey finish view -->
+    <div class="journey-finish-container">
+        <button class="finish-back-button" @onclick="CancelFinish">← Terug naar mijn reizen</button>
+
+        <JourneyCard Journey="@finishingJourney" CurrentUserId="@CurrentUserId" />
+
+        <div class="finish-panel">
+            <h3>Hoe was deze reis?</h3>
+            <p>Kies een beoordeling:</p>
+
+            <div class="rating-row">
+
+                <button type="button" class="rating-smiley @(selectedRating == 1 ? "selected" : "")" title="Zeer slecht" @onclick="@(() => SetRating(1))">
+                    😡
+                </button>
+
+                <button type="button" class="rating-smiley @(selectedRating == 2 ? "selected" : "")" title="Slecht" @onclick="@(() => SetRating(2))">
+                    😕
+                </button>
+
+                <button type="button" class="rating-smiley @(selectedRating == 3 ? "selected" : "")" title="Oké" @onclick="@(() => SetRating(3))">
+                    😐
+                </button>
+
+                <button type="button" class="rating-smiley @(selectedRating == 4 ? "selected" : "")" title="Goed" @onclick="@(() => SetRating(4))">
+                    🙂
+                </button>
+
+                <button type="button" class="rating-smiley @(selectedRating == 5 ? "selected" : "")" title="Geweldig" @onclick="@(() => SetRating(5))">
+                    😄
+                </button>
+
+            </div>
+                <textarea class="finish-notes"
+                      @bind="notes"
+                      placeholder="Opmerkingen over deze reis (optioneel)...">
+                </textarea>
+
+            <div class="finish-actions">
+                <button class="btn-secondary" @onclick="CancelFinish">Annuleren</button>
+                <button class="btn-primary" @onclick="SubmitFinish">
+                    Beoordeling opslaan &amp; reis afronden
+                </button>
+            </div>
+        </div>
+    </div>
+}
 else
 {
+    <!-- Normal list view -->
     <div class="journey-list">
         @foreach (JourneyDto? journey in Journeys)
         {
@@ -30,38 +80,56 @@ else
                 <JourneyCardButtons>
                     @if (journey.OwnerId == CurrentUserId)
                     {
-                        List<JourneyParticipantDto> pendingRequests = journey.Participants
-                        .Where(p => p.Status == RequestStatus.Pending && p.UserId != CurrentUserId)
-                        .ToList();
-                        if (pendingRequests.Count > 0)
+                        if (journey.FinishedAt == null)
                         {
-                            <div class="pending-requests">
-                                @foreach (JourneyParticipantDto p in pendingRequests)
-                                {
-                                    <div class="pending-item">
-                                        <span>@p.UserName wil meereizen</span>
+                            List<JourneyParticipantDto> pendingRequests = journey.Participants
+                                .Where(p => p.Status == RequestStatus.Pending && p.UserId != CurrentUserId)
+                                .ToList();
 
-                                        <button class="btn-accept" @onclick="() => RespondToRequest(journey.Id, p.UserId, RequestStatus.Accepted)">
-                                            ✔ 
-                                        </button>
+                            if (pendingRequests.Count > 0)
+                            {
+                                <div class="pending-requests">
+                                    @foreach (JourneyParticipantDto p in pendingRequests)
+                                    {
+                                        <div class="pending-item">
+                                            <span>@p.UserName wil meereizen</span>
 
-                                        <button class="btn-reject" @onclick="() => RespondToRequest(journey.Id, p.UserId, RequestStatus.Rejected)">
-                                            ✖ 
-                                        </button>
-                                    </div>
-                                }
-                            </div>
+                                            <button class="btn-accept"
+                                                    @onclick="() => RespondToRequest(journey.Id, p.UserId, RequestStatus.Accepted)">
+                                                ✔
+                                            </button>
+
+                                            <button class="btn-reject"
+                                                    @onclick="() => RespondToRequest(journey.Id, p.UserId, RequestStatus.Rejected)">
+                                                ✖
+                                            </button>
+                                        </div>
+                                    }
+                                </div>
+                            }
                         }
                     }
-                    <button class="card-button btn-chat" @onclick="(() => OpenChat(journey.Id))">
-                        Chat
-                    </button>
+                    @if (journey.FinishedAt == null)
+                    {
+                        <button class="card-button btn-chat" @onclick="(() => OpenChat(journey.Id))">
+                            Chat
+                        </button>
+                    }
+
                     @if (journey.OwnerId == CurrentUserId)
                     {
-
-                        <button class="card-button btn-finish" @onclick="(() => FinishJourney(journey.Id))">
-                            Reis afronden
-                        </button>
+                        if (journey.FinishedAt != null)
+                        {
+                            <button class="card-button btn-finish disabled" disabled>
+                                Reis afgerond
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="card-button btn-finish" @onclick="(() => StartFinishJourney(journey))">
+                                Reis afronden
+                            </button>
+                        }
                     }
                 </JourneyCardButtons>
             </JourneyCard>
@@ -69,11 +137,19 @@ else
     </div>
 }
 
+
+
 @code {
 
     private List<JourneyDto> Journeys = new();
     private int CurrentUserId;
     private bool isLoading = true;
+
+    //Finishing parameters:
+    private bool isFinishing = false;
+    private JourneyDto? finishingJourney;
+    private int selectedRating = 0;
+    private string notes = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -99,25 +175,17 @@ else
 
         isLoading = false;
     }
-    private async Task FinishJourney(int journeyId)
-    {
-        Console.WriteLine($"Finishing journey {journeyId}...");
 
-        ServiceResult? result = await JourneyService.FinishJourney(journeyId);
-
-        if (result.IsSuccess)
-        {
-            await LoadJourneys(); // refresh list
-        }
-    }
     private void GoBack()
     {
         Nav.NavigateTo("/JourneyHome");
     }
+
     private void OpenChat(int journeyId)
     {
         Nav.NavigateTo($"/JourneyChat/{journeyId}");
     }
+
     private async Task RespondToRequest(int journeyId, int requesterId, RequestStatus status)
     {
         ServiceResult? result = await JourneyService.RespondToJoinRequestAsync(journeyId, requesterId, status);
@@ -127,4 +195,47 @@ else
     }
 
 
+    //methods for modal finish Journey
+    private async Task SubmitFinish()
+    {
+        if (finishingJourney is null || selectedRating == 0)
+            return;
+
+        // TODO: send rating + notes to backend in the future
+        Console.WriteLine($"Journey {finishingJourney.Id} rating: {selectedRating}, notes: {notes}");
+
+        var result = await JourneyService.FinishJourney(finishingJourney.Id);
+
+        if (result.IsSuccess)
+        {
+            await LoadJourneys();
+            CancelFinish();
+        }
+        else
+        {
+            // optionally show error UI
+            // for now, just keep user on the page
+        }
+    }
+
+    private void StartFinishJourney(JourneyDto journey)
+    {
+        finishingJourney = journey;
+        selectedRating = 0;
+        notes = string.Empty;
+        isFinishing = true;
+    }
+
+    private void CancelFinish()
+    {
+        isFinishing = false;
+        finishingJourney = null;
+        selectedRating = 0;
+        notes = string.Empty;
+    }
+
+    private void SetRating(int rating)
+    {
+        selectedRating = rating;
+    }
 }
