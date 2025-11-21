@@ -7,18 +7,10 @@ using Server.Controllers;
 using Server.Services;
 using Shared.Models.Dtos;
 
-namespace Server.Tests.Controllers
+namespace Server.Tests.Unit.Controllers
 {
     public class UserControllerTests
     {
-        private UserController CreateController(Mock<IUserService> svcMock)
-        {
-            var logger = Mock.Of<ILogger<UserController>>();
-            var env = Mock.Of<IHostEnvironment>();
-
-            return new UserController(svcMock.Object, logger, env);
-        }
-
         [Fact]
         public async Task Register_ShouldReturnBadRequest_WhenNull()
         {
@@ -53,6 +45,16 @@ namespace Server.Tests.Controllers
 
             // Assert
             Assert.IsType<OkObjectResult>(result);
+        }
+
+
+        // ------------ Helpers for tests
+        private UserController CreateController(Mock<IUserService> svcMock)
+        {
+            var logger = Mock.Of<ILogger<UserController>>();
+            var env = Mock.Of<IHostEnvironment>();
+
+            return new UserController(svcMock.Object, logger, env);
         }
     }
 }

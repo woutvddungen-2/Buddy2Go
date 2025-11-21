@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.IdentityModel.Tokens;
 using Server.Common;
 using Server.Data;
@@ -133,8 +134,12 @@ namespace Server.Services
             if (user == null)
                 return ServiceResult.Fail(ServiceResultStatus.UserNotFound, "User not found");
 
-            using var transaction = await db.Database.BeginTransactionAsync();
-           
+            // Only use transactions for real relational DB providers
+            bool useTransaction = db.Database.IsRelational();
+            using IDbContextTransaction? transaction = useTransaction
+                ? await db.Database.BeginTransactionAsync()
+                : null;
+
             try
             {
                 List<Buddy> buddies = await db.Buddys
@@ -171,13 +176,15 @@ namespace Server.Services
                 db.Users.Remove(user);
 
                 await db.SaveChangesAsync();
-                await transaction.CommitAsync();
+                if (useTransaction)
+                    await transaction!.CommitAsync();
 
                 return ServiceResult.Succes($"User {userId} deleted. Buddies removed and journeys updated.");
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
+                if (useTransaction)
+                    await transaction!.RollbackAsync();
                 return ServiceResult.Fail(ServiceResultStatus.Error, $"Failed to delete user: {ex.Message}");
             }
         }

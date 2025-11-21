@@ -6,7 +6,7 @@ using Server.Services;
 using Server.Tests.TestUtilities;
 using Shared.Models.Dtos;
 
-namespace Server.Tests.Services
+namespace Server.Tests.Unit.Services
 {
     public class UserServiceTests
     {
@@ -158,7 +158,55 @@ namespace Server.Tests.Services
             Assert.Equal("0611111111", result.Data?.PhoneNumber);
         }
 
-        // ------------- helpers ---------------
+        //---------- Delete User -------------------------
+        [Fact]
+        public async Task DeleteUser_ShouldFail_WhenUserNotFound()
+        {
+            UserService service = CreateService(out AppDbContext db);
+
+            ServiceResult result = await service.DeleteUserAsync(999);
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ServiceResultStatus.UserNotFound, result.Status);
+        }
+        [Fact]
+        public async Task DeleteUser_ShouldSucceed()
+        {
+            UserService service = CreateService(out AppDbContext db);
+            await AddTestUser(db, id: 1);
+
+            ServiceResult result = await service.DeleteUserAsync(1);
+
+            Assert.True(result.IsSuccess);
+            Assert.False(db.Users.Any());
+        }
+
+        // ------------- Helper Test -----------------
+        [Fact]
+        public void IsPasswordStrong_ShouldSucceed()
+        {
+            Assert.False(UserService.IsPasswordStrong("short"));
+            Assert.False(UserService.IsPasswordStrong("alllowercase1!"));
+            Assert.False(UserService.IsPasswordStrong("ALLUPPERCASE1!"));
+            Assert.False(UserService.IsPasswordStrong("NoNumbers!"));
+            Assert.False(UserService.IsPasswordStrong("NoSpecial1234"));
+
+            Assert.True(UserService.IsPasswordStrong("Password123!"));
+        }
+
+        [Fact]
+        public void HashPassword_And_VerifyPassword_ShouldSucceed()
+        { 
+            string password = "Password123!";
+            string hash = UserService.HashPassword(password);
+
+            Assert.True(UserService.VerifyPassword(password, hash));
+            Assert.False(UserService.VerifyPassword("WrongPassword", hash));
+        }
+
+
+
+        // ------------- helpers for testing ---------------
         private static UserService CreateService()
         {
             return CreateService(out _);
