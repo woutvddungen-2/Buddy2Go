@@ -1,5 +1,6 @@
 ﻿@page "/JourneyChat/{JourneyId:int}"
 
+@implements IDisposable
 @inject ChatService ChatService
 @inject JourneyService JourneyService
 @inject UserService UserService
@@ -172,5 +173,18 @@
         {
             // ignore refresh errors
         }
+    }
+    public void Dispose()
+    {
+        try
+        {
+            if (refreshTimer != null)
+            {
+                refreshTimer.Stop();
+                refreshTimer.Dispose();
+                refreshTimer = null;
+            }
+        }
+        catch { }
     }
 }

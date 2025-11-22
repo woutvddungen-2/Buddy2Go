@@ -27,7 +27,34 @@ else
         {
             <JourneyCard Journey="@journey" CurrentUserId="@CurrentUserId">
                 <JourneyCardButtons>
+                    @if (journey.OwnerId == CurrentUserId && journey.FinishedAt == null)
+                    {
+                        List<JourneyParticipantDto> pendingRequests = journey.Participants
+                        .Where(p => p.Status == RequestStatus.Pending && p.UserId != CurrentUserId)
+                        .ToList();
 
+                        if (pendingRequests.Count > 0)
+                        {
+                            <div class="pending-requests">
+                                @foreach (JourneyParticipantDto p in pendingRequests)
+                                {
+                                    <div class="pending-item">
+                                        <span>@p.UserName wil meereizen</span>
+
+                                        <button class="btn-accept"
+                                                @onclick="() => RespondToRequest(journey.Id, p.UserId, RequestStatus.Accepted)">
+                                            ✔
+                                        </button>
+
+                                        <button class="btn-reject"
+                                                @onclick="() => RespondToRequest(journey.Id, p.UserId, RequestStatus.Rejected)">
+                                            ✖
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    }
                     <button class="card-button btn-chat" @onclick="(() => GoToChat(journey.Id))">Chat</button>                   
 
                     @if (journey.OwnerId == CurrentUserId && journey.FinishedAt == null)
@@ -70,6 +97,14 @@ else
             Journeys = result.Data;
 
         isLoading = false;
+    }
+
+    private async Task RespondToRequest(int journeyId, int requesterId, RequestStatus status)
+    {
+        ServiceResult? result = await JourneyService.RespondToJoinRequestAsync(journeyId, requesterId, status);
+
+        if (result.IsSuccess)
+            await LoadJourneys();
     }
 
     private async Task LeaveJourney(int journeyId)
