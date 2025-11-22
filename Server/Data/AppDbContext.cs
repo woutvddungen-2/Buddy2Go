@@ -14,6 +14,7 @@ namespace Server.Data
         public DbSet<DangerousPlace> DangerousPlaces { get; set; }
         public DbSet<Buddy> Buddys { get; set; }
         public DbSet<Place> Places { get; set; }
+        public DbSet<Rating> Ratings { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -21,12 +22,16 @@ namespace Server.Data
             base.OnModelCreating(modelBuilder);
 
             // --------------------
-            // Configure composite key for JourneyParticipants
+            // Configure composite keys
             // --------------------
             modelBuilder.Entity<JourneyParticipant>()
                 .HasKey(jp => new { jp.UserId, jp.JourneyId });
+            
             modelBuilder.Entity<Buddy>()
                 .HasKey(b => new { b.RequesterId, b.AddresseeId });
+
+            modelBuilder.Entity<Rating>()
+                .HasKey(r => new { r.JourneyId, r.UserId});
 
             // --------------------
             // Configure relationships
@@ -35,7 +40,6 @@ namespace Server.Data
                 .HasOne(jp => jp.User)
                 .WithMany(u => u.JourneyParticipations)
                 .HasForeignKey(jp => jp.UserId);
-
             modelBuilder.Entity<JourneyParticipant>()
                 .HasOne(jp => jp.Journey)
                 .WithMany(j => j.Participants)
@@ -45,7 +49,6 @@ namespace Server.Data
                 .HasOne(m => m.Sender)
                 .WithMany(u => u.SentMessages)
                 .HasForeignKey(m => m.SenderId);
-
             modelBuilder.Entity<JourneyMessage>()
                 .HasOne(m => m.Journey)
                 .WithMany(j => j.Messages)
@@ -60,7 +63,6 @@ namespace Server.Data
                 .HasOne(b => b.Requester)
                 .WithMany()
                 .HasForeignKey(b => b.RequesterId);
-
             modelBuilder.Entity<Buddy>()
                 .HasOne(b => b.Addressee)
                 .WithMany()
@@ -70,13 +72,23 @@ namespace Server.Data
                 .HasOne(j => j.Start)
                 .WithMany()
                 .HasForeignKey(j => j.StartId);
-
             modelBuilder.Entity<Journey>()
                 .HasOne(j => j.End)
                 .WithMany()
                 .HasForeignKey(j => j.EndId);
 
-           modelBuilder.Entity<Place>().HasData(
+            modelBuilder.Entity<Rating>()
+                .HasOne(r => r.Journey)
+                .WithMany()
+                .HasForeignKey(r => r.JourneyId);
+            modelBuilder.Entity<Rating>()
+                .HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId);
+
+
+
+            modelBuilder.Entity<Place>().HasData(
                 new Place { Id = 1,  City = "Eindhoven", District = "Centrum",       CentreGPS = "51.4416,5.4697" },
                 new Place { Id = 2,  City = "Eindhoven", District = "Strijp",        CentreGPS = "51.4480,5.4485" },
                 new Place { Id = 3,  City = "Eindhoven", District = "Gestel",        CentreGPS = "51.4147,5.4688" },
