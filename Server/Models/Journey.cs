@@ -16,5 +16,6 @@
         // Navigation
         public ICollection<JourneyParticipant> Participants { get; set; } = null!;
         public ICollection<JourneyMessage> Messages { get; set; } = null!;
+        public ICollection<Rating> Ratings { get; set; } = null!;
     }
 }

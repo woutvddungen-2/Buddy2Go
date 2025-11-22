@@ -230,6 +230,53 @@ namespace Server.Controllers
             }
         }
 
+        [HttpPost("RateJourney/{journeyId}")]
+        public async Task<IActionResult> RateJourney(int journeyId, [FromBody] RatingDto dto)
+        {
+            int userId = GetUserIdFromJwt();
+
+            ServiceResult result = await service.RateJourneyAsync(userId, journeyId, dto.RatingValue, dto.Note);
+
+            switch (result.Status)
+            {
+                case ServiceResultStatus.Success:
+                    return Ok();
+                case ServiceResultStatus.UserNotFound:
+                case ServiceResultStatus.ResourceNotFound:
+                    return NotFound(result.Message);
+                case ServiceResultStatus.InvalidOperation:
+                case ServiceResultStatus.Unauthorized:
+                    return BadRequest(result.Message);
+                default:
+                    logger.LogError("RateJourney unknown error for User:{user}, Journey:{journey}, Msg:{message}",userId, journeyId, result.Message);
+                    return StatusCode(500, "Unexpected error occurred");
+            }
+        }
+
+        [HttpGet("GetMyRating/{journeyId}")]
+        public async Task<IActionResult> GetMyRating(int journeyId)
+        {
+            int userId = GetUserIdFromJwt();
+
+            ServiceResult<RatingDto?> result = await service.GetMyRatingAsync(userId, journeyId);
+
+            switch (result.Status)
+            {
+                case ServiceResultStatus.Success:
+                    return Ok(result.Data);
+                case ServiceResultStatus.ResourceNotFound:
+                    return NotFound(result.Message);
+                case ServiceResultStatus.Unauthorized:
+                    return Forbid(result.Message!);
+                default:
+                    logger.LogError("GetMyRating unknown error for User:{user}, Journey:{journey}, Msg:{message}",
+                        userId, journeyId, result.Message);
+                    return StatusCode(500, "Unexpected error occurred");
+            }
+        }
+
+
+
         [HttpGet("GetPlaces")]
         public async Task<IActionResult> GetPlaces()
         {
@@ -245,6 +292,8 @@ namespace Server.Controllers
                     return StatusCode(500, result.Message);
             }
         }
+
+
 
         // Helper method to extract user ID from JWT
         private int GetUserIdFromJwt()

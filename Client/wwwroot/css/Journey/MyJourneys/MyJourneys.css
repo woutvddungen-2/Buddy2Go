@@ -1,0 +1,139 @@
+﻿/* --- Journey card accent styling --- */
+.journey-card {
+    border-right: 6px solid #7b2cbf;
+}
+
+    .journey-card strong,
+    .journey-card .date,
+    .journey-card .time {
+        color: #7b2cbf;
+    }
+
+/* --- Chat button --- */
+.btn-chat {
+    background: #e9e9e9;
+    color: #555;
+    cursor: pointer;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 20px;
+    transition: 0.2s ease;
+}
+
+    .btn-chat:hover {
+        background: #dcdcdc;
+    }
+
+/* --- Finish button --- */
+.btn-finish {
+    background: #7b2cbf;
+    color: #fff;
+    border: 2px solid #7b2cbf;
+    padding: 8px 16px;
+    border-radius: 20px;
+    transition: 0.2s ease;
+}
+
+    .btn-finish:hover {
+        background: #673ab7;
+    }
+
+    /* Disabled finish */
+    .btn-finish.disabled,
+    .btn-finish:disabled {
+        background: #cccccc !important;
+        border-color: #bbbbbb !important;
+        color: #666 !important;
+        cursor: not-allowed !important;
+        opacity: 0.7;
+    }
+
+/* --- Pending request styling --- */
+.pending-requests {
+    margin-bottom: 0.8rem;
+    padding: 0.8rem;
+    background: #fafafa;
+    border: 1px solid #e3e3e3;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pending-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 4px 0;
+    font-size: 0.95rem;
+}
+
+    .pending-item span {
+        flex: 1;
+    }
+
+/* --- Accept / Reject buttons --- */
+.btn-accept,
+.btn-reject {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: 0.2s;
+    white-space: nowrap;
+}
+
+.btn-accept {
+    background-color: #4caf50;
+    color: white;
+}
+
+    .btn-accept:hover {
+        background-color: #449d48;
+    }
+
+.btn-reject {
+    background-color: #f44336;
+    color: white;
+}
+
+    .btn-reject:hover {
+        background-color: #d7382d;
+    }
+
+/* Rated buddy styling */
+.buddy-rated {
+    background-color: #f1f1f1 !important;
+}
+
+/* Edit rating button */
+.btn-edit-rating {
+    background: #e9d7ff;
+    border: 1px solid #c9b5ee;
+    color: #5a189a;
+    padding: 8px 16px;
+    border-radius: 20px;
+}
+
+    .btn-edit-rating:hover {
+        background: #d7c5fb;
+    }
+
+.journey-finished-label {
+    color: #7b2cbf;
+}
+
+/* --- Back button styling --- */
+.back-button {
+    color: #7b2cbf;
+    border-color: #7b2cbf;
+}
+
+    .back-button:hover {
+        background: #7b2cbf;
+        color: white;
+    }
+
+

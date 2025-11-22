@@ -534,5 +534,112 @@ namespace Server.Services
                 return ServiceResult<List<PlaceDto>>.Fail(ServiceResultStatus.Error, $"Error while loading places: {ex.Message}");
             }
         }
+
+        /// <summary>
+        /// Gets Rating from a specific Journey, for a specific user
+        /// </summary>
+        public async Task<ServiceResult<RatingDto?>> GetMyRatingAsync(int userId, int journeyId)
+        {
+            // Check journey exists
+            Journey? journey = await db.Journeys
+                .Include(j => j.Ratings)
+                .Include(j => j.Participants)
+                .FirstOrDefaultAsync(j => j.Id == journeyId);
+
+            if (journey == null)
+            {
+                logger.LogWarning("GetMyRating failed, Journey {journey} not found", journeyId);
+                return ServiceResult<RatingDto?>.Fail(ServiceResultStatus.ResourceNotFound, "Journey not found");
+            }
+
+            // Check user is part of journey
+            var participant = journey.Participants.FirstOrDefault(p => p.UserId == userId);
+            if (participant == null)
+            {
+                logger.LogWarning("GetMyRating failed, User {user} not in Journey {journey}", userId, journeyId);
+                return ServiceResult<RatingDto?>.Fail(ServiceResultStatus.Unauthorized, "You are not part of this journey");
+            }
+
+            // Find rating
+            Rating? rating = journey.Ratings.FirstOrDefault(r => r.UserId == userId);
+
+            if (rating == null)
+                return ServiceResult<RatingDto?>.Succes(null);
+
+            return ServiceResult<RatingDto?>.Succes(new RatingDto {RatingValue = rating.ratingValue, Note = rating.Note});
+        }
+
+        /// <summary>
+        /// Sets Rating from a specific Journey, for a specific user
+        /// </summary>
+        public async Task<ServiceResult> RateJourneyAsync(int userId, int journeyId, int ratingValue, string? note)
+        {
+            // Check user exists
+            if (!await db.Users.AnyAsync(u => u.Id == userId))
+            {
+                logger.LogWarning("RateJourney failed, User {user} not found", userId);
+                return ServiceResult.Fail(ServiceResultStatus.UserNotFound, "User not found");
+            }
+
+            // Check journey exists + includes participants
+            Journey? journey = await db.Journeys
+                .Include(j => j.Participants)
+                .Include(j => j.Ratings)
+                .FirstOrDefaultAsync(j => j.Id == journeyId);
+
+            if (journey == null)
+            {
+                logger.LogWarning("RateJourney failed, Journey {journey} not found", journeyId);
+                return ServiceResult.Fail(ServiceResultStatus.ResourceNotFound, "Journey not found");
+            }
+
+            // Check user is participant
+            JourneyParticipant? participant = journey.Participants.FirstOrDefault(p => p.UserId == userId);
+
+            if (participant == null)
+            {
+                logger.LogWarning("RateJourney failed, User {user} not participant of journey {journey}", userId, journeyId);
+                return ServiceResult.Fail(ServiceResultStatus.Unauthorized, "You are not part of this journey");
+            }
+
+            // If user left → rating locked
+            if (participant.Status == RequestStatus.Rejected)
+            {
+                return ServiceResult.Fail(ServiceResultStatus.InvalidOperation, "Cannot rate, you have left this journey");
+            }
+
+            // Try find existing rating
+            Rating? rating = journey.Ratings
+                .FirstOrDefault(r => r.UserId == userId && r.JourneyId == journeyId);
+
+            if (rating == null)
+            {
+                // Create new rating
+                rating = new Rating
+                {
+                    JourneyId = journeyId,
+                    UserId = userId,
+                    ratingValue = ratingValue,
+                    Note = note,
+                    Created = DateTime.UtcNow
+                };
+
+                db.Ratings.Add(rating);
+            }
+            else
+            {
+                // Update existing rating
+                rating.ratingValue = ratingValue;
+                rating.Note = note;
+                rating.Created = DateTime.UtcNow;
+            }
+
+            await db.SaveChangesAsync();
+
+            logger.LogInformation("RateJourney success: User {user} rated Journey {journey}", userId, journeyId);
+
+            return ServiceResult.Succes();
+        }
+
     }
 }

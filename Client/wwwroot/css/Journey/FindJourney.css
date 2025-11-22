@@ -38,6 +38,11 @@
         background: #ffe5e5;
     }
 
+.journey-finished-label {
+    color: #004b6b;
+}
+
+/* --- Back button styling --- */
 .back-button {
     color: #004b6b;
     border-color: #004b6b;

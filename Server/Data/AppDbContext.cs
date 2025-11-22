@@ -79,7 +79,7 @@ namespace Server.Data
 
             modelBuilder.Entity<Rating>()
                 .HasOne(r => r.Journey)
-                .WithMany()
+                .WithMany(j => j.Ratings)
                 .HasForeignKey(r => r.JourneyId);
             modelBuilder.Entity<Rating>()
                 .HasOne(r => r.User)

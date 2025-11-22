@@ -17,14 +17,22 @@
     </div>
 
     <div class="owner">
-        <span>Eigenaar: </span>
-        @if (Journey.OwnerId == CurrentUserId)
+        @if (Journey.FinishedAt is null)
         {
-            <strong>Jij</strong>
+            <span>Eigenaar: </span>
+
+            @if (Journey.OwnerId == CurrentUserId)
+            {
+                <strong>Jij</strong>
+            }
+            else
+            {
+                <strong>@Journey.OwnerName</strong>
+            }
         }
         else
         {
-            <strong>@Journey.OwnerName</strong>
+            <span class="journey-finished-label"><strong>Reis is afgerond</strong></span>
         }
     </div>
 

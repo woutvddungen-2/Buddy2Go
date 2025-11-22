@@ -37,11 +37,11 @@
 @code {
     private int myJourneyCount = 0;
     private int buddyJourneyCount = 0;
-    private bool isLoading = true;
+    //private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
-        isLoading = true;
+        //isLoading = true;
 
         var myJourneys = await JourneyService.GetMyJourneysAsync();
         if (myJourneys.IsSuccess)
@@ -51,6 +51,6 @@
         if (buddyJourneys.IsSuccess)
             buddyJourneyCount = buddyJourneys.Data!.Count;
 
-        isLoading = false;
+        //isLoading = false;
     }
 }
