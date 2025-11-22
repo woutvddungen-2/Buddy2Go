@@ -125,6 +125,23 @@
     color: #7b2cbf;
 }
 
+/* Leave Journey button*/
+.btn-leave {
+    background: #fff0f4;
+    color: #c62828;
+    border: 2px solid #c62828;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+    .btn-leave:hover {
+        background: #ffe5e9;
+    }
+
+
+
 /* --- Back button styling --- */
 .back-button {
     color: #7b2cbf;

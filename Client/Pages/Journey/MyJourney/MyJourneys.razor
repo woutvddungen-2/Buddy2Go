@@ -39,6 +39,7 @@ else
                         <button class="card-button btn-edit-rating" @onclick="@(() => GoToRateJourney(journey.Id))">Reis beoordelen</button>
                     }
 
+                    <button class="card-button btn-leave" @onclick="(() => LeaveJourney(journey.Id))">Reis verlaten</button>
                 </JourneyCardButtons>
             </JourneyCard>
         }
@@ -70,6 +71,16 @@ else
 
         isLoading = false;
     }
+
+    private async Task LeaveJourney(int journeyId)
+    {
+        ServiceResult result = await JourneyService.LeaveJourneyAsync(journeyId);
+        if (result.IsSuccess)
+            await LoadJourneys();
+        else
+            Console.WriteLine("Error leaving journey: " + result.Message);
+    }
+
 
     //navigation methods
     private void GoToChat(int journeyId)
