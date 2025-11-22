@@ -31,7 +31,9 @@ namespace Server.Data
                 .HasKey(b => new { b.RequesterId, b.AddresseeId });
 
             modelBuilder.Entity<Rating>()
-                .HasKey(r => new { r.JourneyId, r.UserId});
+                .HasIndex(r => new { r.JourneyId, r.UserId })
+                .IsUnique();
+
 
             // --------------------
             // Configure relationships
@@ -84,7 +86,8 @@ namespace Server.Data
             modelBuilder.Entity<Rating>()
                 .HasOne(r => r.User)
                 .WithMany()
-                .HasForeignKey(r => r.UserId);
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
 
 
 

@@ -566,7 +566,7 @@ namespace Server.Services
             if (rating == null)
                 return ServiceResult<RatingDto?>.Succes(null);
 
-            return ServiceResult<RatingDto?>.Succes(new RatingDto {RatingValue = rating.ratingValue, Note = rating.Note});
+            return ServiceResult<RatingDto?>.Succes(new RatingDto {RatingValue = rating.RatingValue, Note = rating.Note});
         }
 
         /// <summary>
@@ -619,7 +619,7 @@ namespace Server.Services
                 {
                     JourneyId = journeyId,
                     UserId = userId,
-                    ratingValue = ratingValue,
+                    RatingValue = ratingValue,
                     Note = note,
                     Created = DateTime.UtcNow
                 };
@@ -629,7 +629,7 @@ namespace Server.Services
             else
             {
                 // Update existing rating
-                rating.ratingValue = ratingValue;
+                rating.RatingValue = ratingValue;
                 rating.Note = note;
                 rating.Created = DateTime.UtcNow;
             }
