@@ -361,7 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-/Server/Migrations
 /version.txt
 /version-local.txt
 /version-deploy.txt
