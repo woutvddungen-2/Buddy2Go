@@ -11,8 +11,8 @@ using Server.Data;
 namespace Server.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251124143222_LocalCreateV0.1.2")]
-    partial class LocalCreateV012
+    [Migration("20251124144527_LocalCreateV0.1.8")]
+    partial class LocalCreateV018
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
