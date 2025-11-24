@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-
+using Server.Data;
 using Server.Helpers;
 using Server.Services;
 using System.Text;
-using Server.Data;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -172,27 +172,21 @@ WebApplication? app = builder.Build();
 
 // -------------------- Seed Database -----------------
 
-using (var scope = app.Services.CreateScope())
+for (int i = 0; i < 5; i++)
 {
+    using IServiceScope scope = app.Services.CreateScope();
     AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     ILogger logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-
     try
     {
-#if DEBUG
-        logger.LogInformation("DEBUG mode: Resetting and seeding dev database...");
-        await DbInitializer.ResetAndSeedAsync(db);
-#else
-        logger.LogInformation("PRODUCTION mode: Applying migrations...");
-        await DbInitializer.ApplyMigrationsAsync(db);
-#endif
-
+        await DbInitializer.InitializeAsync(db, logger);
         logger.LogInformation("Database ready.");
+        break;
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "Database initialization failed!");
-        throw;
+        logger.LogWarning(ex, "Database init failed, retrying {i}/5...", i + 1);
+        Thread.Sleep(3000);
     }
 }
 

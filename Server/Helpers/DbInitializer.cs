@@ -7,33 +7,25 @@ namespace Server.Helpers
 {
     public static class DbInitializer
     {
-        /// <summary>
-        /// Called only for DEBUG environments.
-        /// Resets database and seeds dev data.
-        /// </summary>
-        public static async Task ResetAndSeedAsync(AppDbContext context)
+        public static async Task InitializeAsync(AppDbContext context, ILogger logger)
         {
+            // Apply migrations (safe even if DB already exists)
             await context.Database.MigrateAsync();
 
-            if (await context.Users.AnyAsync())
-            {
-                await context.JourneyMessages.ExecuteDeleteAsync();
-                await context.JourneyParticipants.ExecuteDeleteAsync();
-                await context.Buddys.ExecuteDeleteAsync();
-                await context.DangerousPlaces.ExecuteDeleteAsync();
-                await context.Journeys.ExecuteDeleteAsync();
-                await context.Users.ExecuteDeleteAsync();
-            }
+#if DEBUG
+            logger.LogInformation("DEBUG mode: Clearing data...");
 
+            // Just clear data, not schema
+            await context.JourneyMessages.ExecuteDeleteAsync();
+            await context.JourneyParticipants.ExecuteDeleteAsync();
+            await context.Buddys.ExecuteDeleteAsync();
+            await context.DangerousPlaces.ExecuteDeleteAsync();
+            await context.Journeys.ExecuteDeleteAsync();
+            await context.Users.ExecuteDeleteAsync();
+
+            logger.LogInformation("DEBUG mode: Seeding data...");
             await SeedDataAsync(context);
-        }
-
-        /// <summary>
-        /// Called in production — just applies migrations.
-        /// </summary>
-        public static async Task ApplyMigrationsAsync(AppDbContext context)
-        {
-            await context.Database.MigrateAsync();
+#endif
         }
 
         private static async Task SeedDataAsync(AppDbContext context)
