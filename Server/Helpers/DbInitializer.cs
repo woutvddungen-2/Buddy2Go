@@ -7,13 +7,14 @@ namespace Server.Helpers
 {
     public static class DbInitializer
     {
-        public static async Task ResetDatabaseAsync(AppDbContext context)
+        /// <summary>
+        /// Called only for DEBUG environments.
+        /// Resets database and seeds dev data.
+        /// </summary>
+        public static async Task ResetAndSeedAsync(AppDbContext context)
         {
-#if DEBUG
-            // Ensure database exists and apply migrations
             await context.Database.MigrateAsync();
 
-            // Remove data in correct FK order
             if (await context.Users.AnyAsync())
             {
                 await context.JourneyMessages.ExecuteDeleteAsync();
@@ -24,9 +25,15 @@ namespace Server.Helpers
                 await context.Users.ExecuteDeleteAsync();
             }
 
-            // Seed fresh data
             await SeedDataAsync(context);
-#endif
+        }
+
+        /// <summary>
+        /// Called in production — just applies migrations.
+        /// </summary>
+        public static async Task ApplyMigrationsAsync(AppDbContext context)
+        {
+            await context.Database.MigrateAsync();
         }
 
         private static async Task SeedDataAsync(AppDbContext context)

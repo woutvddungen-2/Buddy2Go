@@ -1,0 +1,76 @@
+﻿@page "/FinishJourney/{JourneyId:int}"
+
+@inject JourneyService JourneyService
+@inject NavigationManager Nav
+
+<HeadContent>
+    <link href="css/common/Header.css" rel="stylesheet" />
+    <link href="css/Journey/JourneyCard.css" rel="stylesheet" />
+    <link href="css/Journey/MyJourneys/FinishJourney.css" rel="stylesheet" />
+</HeadContent>
+
+<Header Title="Reis afronden" OnBack="GoBack" BackTo="/MyJourneys" />
+
+@if (isLoading)
+{
+    <p>Reis laden...</p>
+}
+else if (Journey == null)
+{
+    <p>Reis niet gevonden.</p>
+}
+else
+{
+    <div class="journey-finish-container">
+
+        <JourneyCard Journey="@Journey" CurrentUserId="Journey.OwnerId" />
+
+        <div class="finish-panel">
+            <h3>Weet je zeker dat je deze reis wilt afronden?</h3>
+            <p>Na het afronden kan je de reis niet meer wijzigen.</p>
+
+            <div class="finish-actions">
+                <button class="btn-secondary" @onclick="GoBack">
+                    Annuleren
+                </button>
+
+                <button class="btn-primary" @onclick="SubmitFinish">
+                    Reis afronden
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int JourneyId { get; set; }
+
+    private JourneyDto? Journey;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadJourney();
+    }
+
+    private async Task LoadJourney()
+    {
+        var result = await JourneyService.GetMyJourneysAsync();
+        if (result.IsSuccess)
+            Journey = result.Data?.FirstOrDefault(j => j.Id == JourneyId);
+
+        isLoading = false;
+    }
+
+    private async Task SubmitFinish()
+    {
+        var result = await JourneyService.FinishJourney(JourneyId);
+        if (result.IsSuccess)
+            Nav.NavigateTo("/MyJourneys");
+    }
+
+    private void GoBack()
+    {
+        Nav.NavigateTo("/MyJourneys");
+    }
+}

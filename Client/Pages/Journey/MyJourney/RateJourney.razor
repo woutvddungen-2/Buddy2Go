@@ -1,0 +1,117 @@
+﻿@page "/RateJourney/{JourneyId:int}"
+
+@inject JourneyService JourneyService
+@inject NavigationManager Nav
+
+<HeadContent>
+    <link href="css/common/Header.css" rel="stylesheet" />
+    <link href="css/Journey/JourneyCard.css" rel="stylesheet" />
+    <link href="css/Journey/MyJourneys/RateJourney.css" rel="stylesheet" />
+</HeadContent>
+
+<Header Title="Reis beoordelen" OnBack="GoBack" BackTo="/MyJourneys" />
+
+@if (isLoading)
+{
+    <p>Reis laden...</p>
+}
+else if (Journey == null)
+{
+    <p>Reis niet gevonden.</p>
+}
+else
+{
+    <div class="journey-finish-container">
+
+        <JourneyCard Journey="@Journey" CurrentUserId="Journey.OwnerId" />
+
+        <div class="finish-panel">
+            <h3>Hoe was deze reis?</h3>
+
+            <div class="rating-row">
+                <button class="rating-smiley @(RatingValue == 1 ? "selected" : "")" @onclick="(() => SetRating(1))">😡</button>
+                <button class="rating-smiley @(RatingValue == 2 ? "selected" : "")" @onclick="(() => SetRating(2))">😕</button>
+                <button class="rating-smiley @(RatingValue == 3 ? "selected" : "")" @onclick="(() => SetRating(3))">😐</button>
+                <button class="rating-smiley @(RatingValue == 4 ? "selected" : "")" @onclick="(() => SetRating(4))">🙂</button>
+                <button class="rating-smiley @(RatingValue == 5 ? "selected" : "")" @onclick="(() => SetRating(5))">😄</button>
+            </div>
+
+            <textarea class="finish-notes"
+                      @bind="RatingNote"
+                      placeholder="Opmerkingen (optioneel)...">
+                </textarea>
+
+            <div class="finish-actions">
+                <button class="btn-secondary" @onclick="GoBack">
+                    Annuleren
+                </button>
+
+                <button class="btn-primary" @onclick="SubmitRating">
+                    Opslaan
+                </button>
+            </div>
+
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int JourneyId { get; set; }
+
+    private JourneyDto? Journey;
+    private bool isLoading = true;
+
+    private int RatingValue = 0;
+    private string RatingNote = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadJourney();
+        await LoadMyRating();
+    }
+
+    private async Task LoadJourney()
+    {
+        ServiceResult<List<JourneyDto>> result = await JourneyService.GetMyJourneysAsync();
+        if (result.IsSuccess)
+            Journey = result.Data?.FirstOrDefault(j => j.Id == JourneyId);
+
+        isLoading = false;
+    }
+
+    private async Task LoadMyRating()
+    {
+        ServiceResult<RatingDto?> result = await JourneyService.GetMyRatingAsync(JourneyId);
+        if (result.IsSuccess && result.Data != null)
+        {
+            RatingValue = result.Data.RatingValue;
+            RatingNote = result.Data.Note ?? "";
+        }
+    }
+
+    private async Task SubmitRating()
+    {
+        if (RatingValue < 1 || RatingValue > 5)
+            return;
+
+        string? note;
+        if (string.IsNullOrEmpty(RatingNote))
+            note = null;
+        else
+            note = RatingNote;
+
+        ServiceResult result = await JourneyService.RateJourneyAsync(JourneyId, RatingValue, note);
+        if (result.IsSuccess)
+            Nav.NavigateTo("/MyJourneys");
+    }
+
+    private void SetRating(int value)
+    {
+        RatingValue = value;
+    }
+
+    private void GoBack()
+    {
+        Nav.NavigateTo("/MyJourneys");
+    }
+}

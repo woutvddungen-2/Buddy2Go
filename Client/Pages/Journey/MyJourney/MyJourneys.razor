@@ -1,0 +1,135 @@
+﻿@page "/MyJourneys"
+
+@inject JourneyService JourneyService
+@inject UserService UserService
+@inject NavigationManager Nav
+
+<Header Title="Mijn Reizen" BackTo="/JourneyHome" />
+
+<HeadContent>
+    <link href="css/common/Header.css" rel="stylesheet" />
+    <link href="css/Journey/JourneyCard.css" rel="stylesheet" />
+    <link href="css/Journey/MyJourneys/MyJourneys.css" rel="stylesheet" />
+</HeadContent>
+
+@if (isLoading)
+{
+    <p>Reizen laden...</p>
+}
+else if (Journeys.Count == 0)
+{
+    <p>Je hebt nog geen reizen.</p>
+}
+else
+{
+    <div class="journey-list">
+        @foreach (var journey in Journeys)
+        {
+            <JourneyCard Journey="@journey" CurrentUserId="@CurrentUserId">
+                <JourneyCardButtons>
+                    @if (journey.OwnerId == CurrentUserId && journey.FinishedAt == null)
+                    {
+                        List<JourneyParticipantDto> pendingRequests = journey.Participants
+                        .Where(p => p.Status == RequestStatus.Pending && p.UserId != CurrentUserId)
+                        .ToList();
+
+                        if (pendingRequests.Count > 0)
+                        {
+                            <div class="pending-requests">
+                                @foreach (JourneyParticipantDto p in pendingRequests)
+                                {
+                                    <div class="pending-item">
+                                        <span>@p.UserName wil meereizen</span>
+
+                                        <button class="btn-accept"
+                                                @onclick="() => RespondToRequest(journey.Id, p.UserId, RequestStatus.Accepted)">
+                                            ✔
+                                        </button>
+
+                                        <button class="btn-reject"
+                                                @onclick="() => RespondToRequest(journey.Id, p.UserId, RequestStatus.Rejected)">
+                                            ✖
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    }
+                    <button class="card-button btn-chat" @onclick="(() => GoToChat(journey.Id))">Chat</button>                   
+
+                    @if (journey.OwnerId == CurrentUserId && journey.FinishedAt == null)
+                    {
+                            <button class="card-button btn-finish" @onclick="@(() => GoToFinishJourney(journey.Id))">Reis afronden</button>
+                    }
+                    else
+                    {
+                        <button class="card-button btn-edit-rating" @onclick="@(() => GoToRateJourney(journey.Id))">Reis beoordelen</button>
+                    }
+
+                    <button class="card-button btn-leave" @onclick="(() => LeaveJourney(journey.Id))">Reis verlaten</button>
+                </JourneyCardButtons>
+            </JourneyCard>
+        }
+    </div>
+}
+
+@code {
+    private List<JourneyDto> Journeys = new();
+    private int CurrentUserId;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        CurrentUserId = await GetUserId();
+        await LoadJourneys();
+    }
+
+    private async Task<int> GetUserId()
+    {
+        var result = await UserService.GetUserId();
+        return result.IsSuccess ? result.Data : -1;
+    }
+
+    private async Task LoadJourneys()
+    {
+        var result = await JourneyService.GetMyJourneysAsync();
+        if (result.IsSuccess && result.Data != null)
+            Journeys = result.Data;
+
+        isLoading = false;
+    }
+
+    private async Task RespondToRequest(int journeyId, int requesterId, RequestStatus status)
+    {
+        ServiceResult? result = await JourneyService.RespondToJoinRequestAsync(journeyId, requesterId, status);
+
+        if (result.IsSuccess)
+            await LoadJourneys();
+    }
+
+    private async Task LeaveJourney(int journeyId)
+    {
+        ServiceResult result = await JourneyService.LeaveJourneyAsync(journeyId);
+        if (result.IsSuccess)
+            await LoadJourneys();
+        else
+            Console.WriteLine("Error leaving journey: " + result.Message);
+    }
+
+
+    //navigation methods
+    private void GoToChat(int journeyId)
+    {
+        Nav.NavigateTo($"/JourneyChat/{journeyId}");
+    }
+
+    private void GoToRateJourney(int journeyId)
+    {
+        Nav.NavigateTo($"/RateJourney/{journeyId}");
+    }
+
+    private void GoToFinishJourney(int journeyId)
+    {
+        Nav.NavigateTo($"/FinishJourney/{journeyId}");
+    }
+}

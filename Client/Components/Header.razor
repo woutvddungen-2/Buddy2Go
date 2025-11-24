@@ -12,10 +12,17 @@
     [Parameter] public string Title { get; set; } = "";
     [Parameter] public string? BackTo { get; set; }
     [Parameter] public string BackButtonClass { get; set; } = "";
+    [Parameter] public EventCallback OnBack { get; set; }
 
-    private void GoBack()
+    private async Task GoBack()
     {
-        if (!string.IsNullOrWhiteSpace(BackTo))
-            Nav.NavigateTo(BackTo!);
+        if (OnBack.HasDelegate)
+        {
+            await OnBack.InvokeAsync();
+        }
+        else if (!string.IsNullOrEmpty(BackTo))
+        {
+            Nav.NavigateTo(BackTo);
+        }
     }
 }

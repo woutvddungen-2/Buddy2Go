@@ -51,27 +51,30 @@
     {
         @foreach (var req in pendingRequests)
         {
-            <div class="flex justify-between items-center border-b last:border-none py-3">
-                <span class="font-medium text-gray-700">@req.Requester.Username (@req.Requester.PhoneNumber)</span>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b last:border-none py-3">
+                <span class="font-medium text-gray-700">
+                    @req.Requester.Username (@req.Requester.PhoneNumber)
+                </span>
 
-                <div class="flex gap-2">
-                    <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg"
+                <div class="flex flex-wrap gap-2 w-full sm:w-auto justify-start sm:justify-end">
+                    <button class="bg-green-600 text-white px-3 py-1 rounded-lg flex-1 sm:flex-none text-sm"
                             @onclick="() => RespondToRequest(req.Requester.Id, RequestStatus.Accepted)">
                         Accepteren
                     </button>
 
-                    <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg"
+                    <button class="bg-red-600 text-white px-3 py-1 rounded-lg flex-1 sm:flex-none text-sm"
                             @onclick="() => RespondToRequest(req.Requester.Id, RequestStatus.Rejected)">
                         Afwijzen
                     </button>
 
-                    <button class="bg-red-700 hover:bg-red-800 text-white px-3 py-1 rounded-lg"
+                    <button class="bg-red-700 text-white px-3 py-1 rounded-lg flex-1 sm:flex-none text-sm"
                             @onclick="() => RespondToRequest(req.Requester.Id, RequestStatus.Blocked)">
                         Blokkeren
                     </button>
                 </div>
             </div>
         }
+
     }
 </div>
 

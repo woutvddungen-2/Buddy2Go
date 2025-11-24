@@ -115,12 +115,13 @@
     font-size: 1.0rem;
 }
 
+/* --- Back button styling --- */
 .back-button {
-    color: #004b6b;
-    border-color: #004b6b;
+    color: #7b2cbf;
+    border-color: #7b2cbf;
 }
 
     .back-button:hover {
-        background: #004b6b;
+        background: #7b2cbf;
         color: white;
     }

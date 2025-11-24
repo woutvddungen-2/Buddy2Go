@@ -1,0 +1,119 @@
+﻿/* ==========================
+   Rate Journey Page Styling
+   ========================== */
+
+/* Same container layout as finish journey */
+.journey-finish-container {
+    max-width: 700px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+    .journey-finish-container .journey-card {
+        margin-bottom: 0.5rem;
+    }
+
+/* Panel around rating UI */
+.finish-panel {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Smileys row */
+.rating-row {
+    display: flex;
+    justify-content: space-between;
+    margin: 0.5rem 0 0.75rem;
+}
+
+.rating-smiley {
+    font-size: 2rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: transform 0.15s ease, opacity 0.2s ease, background-color 0.2s ease;
+    border-radius: 50%;
+    padding: 6px;
+}
+
+    .rating-smiley:hover {
+        transform: scale(1.2);
+        opacity: 0.75;
+    }
+
+    .rating-smiley.selected {
+        opacity: 1;
+        transform: scale(1.25);
+        background: #e7d7ff;
+    }
+
+/* Notes textarea (same class name: finish-notes) */
+.finish-notes {
+    width: 100%;
+    min-height: 80px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    padding: 0.5rem;
+    font-size: 0.95rem;
+    resize: vertical;
+}
+
+/* Button row */
+.finish-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+/* Buttons */
+.btn-secondary {
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    background: #f3f3f3;
+    cursor: pointer;
+}
+
+.btn-primary {
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    border: none;
+    background: #5a189a;
+    color: white;
+    cursor: pointer;
+}
+
+/* Slightly softer accent for rating page (optional) */
+.journey-card {
+    border-right: 6px solid #c9b5ee;
+}
+
+    .journey-card strong,
+    .journey-card .date,
+    .journey-card .time {
+        color: #5a189a;
+    }
+
+.journey-finished-label {
+    color: #5a189a;
+}
+
+/* --- Back button styling --- */
+.back-button {
+    color: #7b2cbf;
+    border-color: #7b2cbf;
+}
+
+    .back-button:hover {
+        background: #7b2cbf;
+        color: white;
+    }

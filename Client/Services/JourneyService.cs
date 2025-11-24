@@ -190,6 +190,58 @@ namespace Client.Services
                 return ServiceResult.Fail(ex.Message);
             }
         }
+        public async Task<ServiceResult<RatingDto?>> GetMyRatingAsync(int journeyId)
+        {
+            try
+            {
+                HttpRequestMessage request = new(HttpMethod.Get, $"api/Journey/GetMyRating/{journeyId}");
+                request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
+
+                HttpResponseMessage response = await httpClient.SendAsync(request);
+
+                if (!response.IsSuccessStatusCode)
+                    return ServiceResult<RatingDto?>.Fail(await response.Content.ReadAsStringAsync());
+
+                RatingDto? data = await response.Content.ReadFromJsonAsync<RatingDto>();
+                return ServiceResult<RatingDto?>.Succes(data);
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<RatingDto?>.Fail(ex.Message);
+            }
+        }
+        public async Task<ServiceResult> RateJourneyAsync(int journeyId, int ratingValue, string? note)
+        {
+            try
+            {
+                RatingDto dto = new()
+                {
+                    RatingValue = ratingValue,
+                    Note = note
+                };
+
+                HttpRequestMessage request = new(HttpMethod.Post, $"api/Journey/RateJourney/{journeyId}")
+                {
+                    Content = JsonContent.Create(dto)
+                };
+                request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
+
+                HttpResponseMessage response = await httpClient.SendAsync(request);
+
+                if (!response.IsSuccessStatusCode)
+                    return ServiceResult.Fail(await response.Content.ReadAsStringAsync());
+
+                return ServiceResult.Succes();
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult.Fail(ex.Message);
+            }
+        }
+
+
+
+
 
         public async Task<ServiceResult<List<PlaceDto>>> GetPlacesAsync()
         {

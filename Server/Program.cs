@@ -170,30 +170,30 @@ DbConnectHelper.AddDatabase(builder.Services, builder.Configuration.GetSection("
 // -------------------- Build App --------------------
 WebApplication? app = builder.Build();
 
-// -------------------- Logging --------------------
-ILogger logger = app.Services.GetRequiredService<ILogger<Program>>();
-
 // -------------------- Seed Database -----------------
 
-for (int i = 0; i < 10; i++)
+using (var scope = app.Services.CreateScope())
 {
+    AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    ILogger logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
     try
     {
-        using IServiceScope scope = app.Services.CreateScope();
-        AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
 #if DEBUG
-        await DbInitializer.ResetDatabaseAsync(db);
+        logger.LogInformation("DEBUG mode: Resetting and seeding dev database...");
+        await DbInitializer.ResetAndSeedAsync(db);
+#else
+        logger.LogInformation("PRODUCTION mode: Applying migrations...");
+        await DbInitializer.ApplyMigrationsAsync(db);
 #endif
-        logger.LogInformation("Database connected succesfully");
-        break;
-    }
-    catch
-    {
-        logger.LogWarning("Database not Initialized, Connection attempt: {count}", i);
-        Thread.Sleep(3000);
-    }
 
+        logger.LogInformation("Database ready.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Database initialization failed!");
+        throw;
+    }
 }
 
 // -------------------- Middleware --------------------

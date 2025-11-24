@@ -55,10 +55,18 @@
         border: 1px solid #ddd;
     }
 
+    /* Journey owner / finished label base styling */
     .journey-card .owner {
         font-size: 0.9rem;
+        margin-top: 4px;
         color: #333;
     }
+
+    .journey-card  .journey-finished-label {
+        font-size: 0.95rem;
+        font-weight: 700;
+    }
+
 
 .buddies {
     display: flex;

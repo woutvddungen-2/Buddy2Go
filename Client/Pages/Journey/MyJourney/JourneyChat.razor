@@ -1,5 +1,6 @@
 ﻿@page "/JourneyChat/{JourneyId:int}"
 
+@implements IDisposable
 @inject ChatService ChatService
 @inject JourneyService JourneyService
 @inject UserService UserService
@@ -8,7 +9,7 @@
 
 <HeadContent>
     <link href="css/common/Header.css" rel="stylesheet" />
-    <link href="css/Journey/Chat.css" rel="stylesheet" />
+    <link href="css/Journey/MyJourneys/Chat.css" rel="stylesheet" />
 </HeadContent>
 
 <Header Title="@title" BackTo="/MyJourneys" />
@@ -172,5 +173,18 @@
         {
             // ignore refresh errors
         }
+    }
+    public void Dispose()
+    {
+        try
+        {
+            if (refreshTimer != null)
+            {
+                refreshTimer.Stop();
+                refreshTimer.Dispose();
+                refreshTimer = null;
+            }
+        }
+        catch { }
     }
 }
