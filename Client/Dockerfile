@@ -6,6 +6,8 @@ RUN dotnet publish "Client/Client.csproj" -c Release -o /app/publish
 
 # Stage 2: Nginx
 FROM nginx:alpine
+LABEL project="Buddy2Go.Client"
+LABEL maintainer="YourName"
 WORKDIR /usr/share/nginx/html
 
 COPY --from=build /app/publish/wwwroot .

@@ -6,6 +6,8 @@ RUN dotnet publish "Server/Server.csproj" -c Debug -o /app/publish
 
 # Stage 2: Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
+LABEL project="Buddy2Go.Server"
+LABEL maintainer="YourName"
 WORKDIR /app
 COPY --from=build /app/publish .
 
