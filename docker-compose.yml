@@ -4,15 +4,11 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: __xh8xq9KmE4E.CwpQDG
       MYSQL_DATABASE: Buddy2Go
-      MYSQL_ROOT_HOST: '%'
+      MYSQL_ROOT_HOST: "%"
     ports:
       - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-    healthcheck:
-        test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
-        interval: 5s
-        retries: 5
 
   server:
     build:
@@ -30,8 +26,7 @@ services:
     ports:
       - "5001:5001"
     depends_on:
-        mysql:
-            condition: service_healthy
+      - mysql
 
   client:
     build:
