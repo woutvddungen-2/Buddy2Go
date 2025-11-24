@@ -2,8 +2,8 @@
 using Server.Common;
 using Server.Data;
 using Server.Models;
-using Shared.Models;
 using Shared.Models.Dtos;
+using Shared.Models.enums;
 
 namespace Server.Services
 {

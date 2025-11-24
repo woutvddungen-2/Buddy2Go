@@ -1,7 +1,7 @@
 ﻿using Client.Common;
 using Microsoft.AspNetCore.Components.WebAssembly.Http;
-using Shared.Models;
 using Shared.Models.Dtos;
+using Shared.Models.enums;
 using System.Linq.Expressions;
 using System.Net.Http.Json;
 

@@ -1,4 +1,6 @@
-﻿namespace Shared.Models.Dtos
+﻿using Shared.Models.enums;
+
+namespace Shared.Models.Dtos
 {
     public class JourneyParticipantDto
     {
