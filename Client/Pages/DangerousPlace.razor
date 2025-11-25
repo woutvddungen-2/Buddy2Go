@@ -1,0 +1,132 @@
+﻿@page "/dangerous-places"
+@inject Client.Services.DangerousPlaceService DangerousPlaceService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<Header Title="Gevaarlijke plek melden" />
+
+
+<!-- CREATE REPORT SECTION -->
+<div class="flex flex-col gap-3 mb-8">
+    @if (gpsAvailable)
+    {
+        <select class="border p-2 rounded" @bind="newPlaceType">
+            @foreach (var type in Enum.GetValues<DangerousPlaceType>())
+            {
+                <option value="@type">@type</option>
+            }
+        </select>
+
+        <textarea class="border rounded p-2" placeholder="Beschrijving (optioneel)" @bind="newDescription"></textarea>
+        <input class="border rounded p-2" placeholder="GPS wordt geladen..." readonly @bind="gps" />
+        <button class="bg-purple-600 text-black py-2 rounded" @onclick="CreateReport">Meld gevaarlijke plek</button>
+    }
+    else
+    {
+        <div class="p-4 border rounded bg-red-50 text-red-700">
+            <p class="font-semibold">GPS niet beschikbaar</p>
+            <p class="text-sm">
+                Om een gevaarlijke plek te melden is locatie-toegang vereist.
+            </p>
+        </div>
+    }
+
+    <a href="tel:112" class="bg-red-600 text-white py-2 rounded text-center">📞 Bel 112 (Noodnummer)</a>
+</div>
+
+<!-- MY REPORTS -->
+@if (myReports == null)
+{
+    <p>Loading...</p>
+}
+else if (!myReports.Any())
+{
+    <p class="text-gray-500">Geen recente meldingen gevonden.</p>
+}
+else
+{
+    <h2 class="text-xl font-semibold mb-2">Mijn meldingen</h2>
+
+    @foreach (var report in myReports)
+    {
+        <div class="border p-3 rounded-lg flex flex-col gap-2 mb-3">
+
+            <p><strong>Type:</strong> @report.PlaceType</p>
+            <p><strong>Beschrijving:</strong> @report.Description</p>
+            <p><strong>GPS:</strong> @report.GPS</p>
+            <p class="text-sm text-gray-500">
+                @report.ReportedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")
+            </p>
+
+            @if (report.ReportedAt > DateTime.UtcNow.AddDays(-7))
+            {
+                <button class="bg-blue-600 text-white py-1 px-3 rounded" @onclick="() => NavigateToEdit(report.Id)">
+                    Bewerken
+                </button>
+            }
+            else
+            {
+                <p class="text-gray-400 text-sm">
+                    Kan niet meer aangepast worden (ouder dan 7 dagen).
+                </p>
+            }
+        </div>
+    }
+}
+
+@code {
+    private DangerousPlaceType newPlaceType = DangerousPlaceType.Other;
+    private string? newDescription;
+    private string gps = "";
+    private bool gpsAvailable = true;
+
+    private List<DangerousPlaceDto>? myReports;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadReports();
+        await LoadGps();
+    }
+
+    private async Task LoadGps()
+    {
+        try
+        {
+            var result = await JS.InvokeAsync<GpsCoords>("getLocation");
+            gps = $"{result.Latitude},{result.Longitude}";
+            gpsAvailable = true;
+        }
+        catch
+        {
+            gpsAvailable = false;
+            gps = "" ;
+        }
+    }
+
+    private async Task LoadReports()
+    {
+        var result = await DangerousPlaceService.GetMyReportsAsync();
+        if (result.IsSuccess)
+            myReports = result.Data;
+    }
+
+    private async Task CreateReport()
+    {
+        var result = await DangerousPlaceService.CreateReportAsync(newPlaceType, newDescription, gps);
+        if (result.IsSuccess)
+        {
+            newDescription = "";
+            await LoadReports();
+        }
+    }
+    private void NavigateToEdit(int reportId)
+    {
+        Nav.NavigateTo($"/dangerous-places/edit/{reportId}");
+    }
+
+    public class GpsCoords
+    {
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
+    }
+}

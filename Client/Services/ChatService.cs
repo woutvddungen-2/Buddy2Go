@@ -49,9 +49,7 @@ namespace Client.Services
         {
             try
             {
-                HttpRequestMessage request = new HttpRequestMessage(
-                    HttpMethod.Post,
-                    $"api/Chat/journey/{journeyId}")
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, $"api/Chat/journey/{journeyId}")
                 {
                     Content = JsonContent.Create(new JourneyMessageCreateDto { Content = content })
                 };

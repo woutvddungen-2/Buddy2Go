@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Server.Data;
 using Server.Models;
-using Shared.Models;
+using Shared.Models.enums;
 
 namespace Server.Helpers
 {

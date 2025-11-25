@@ -99,6 +99,7 @@ builder.Services.AddControllers();
 
 //-------------------- Services --------------------
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IDangerousPlaceService, DangerousPlaceService>();
 builder.Services.AddScoped<JourneyService>();
 builder.Services.AddScoped<BuddyService>();
 builder.Services.AddScoped<ChatService>();

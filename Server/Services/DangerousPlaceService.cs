@@ -11,7 +11,8 @@ namespace Server.Services
     {
         private readonly AppDbContext db;
         private ILogger logger;
-        public DangerousPlaceService(AppDbContext db, ILogger<UserService> logger)
+
+        public DangerousPlaceService(AppDbContext db, ILogger<DangerousPlaceService> logger)
         {
             this.db = db;
             this.logger = logger;
@@ -46,6 +47,9 @@ namespace Server.Services
             return ServiceResult<List<DangerousPlaceDto>>.Succes(reports);
         }
 
+        /// <summary>
+        /// Creates a Dangerous Place report
+        /// </summary>
         public async Task<ServiceResult> CreateReportAsync(int userId, DangerousPlaceCreateDto report)
         {
             if (!await db.Users.AnyAsync(u => u.Id == userId))
@@ -75,6 +79,10 @@ namespace Server.Services
             logger.LogInformation("Dangerous place {placeId} created by user {userId} at {gps}", report.Id, userId, report.GPS);
             return ServiceResult.Succes();
         }
+
+        /// <summary>
+        /// Updates an already existing Dangerous Place report
+        /// </summary>
         public async Task<ServiceResult> UpdateReportAsync(int userId, DangerousPlaceCreateDto report)
         {
             if (!await db.Users.AnyAsync(u => u.Id == userId))
