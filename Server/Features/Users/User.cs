@@ -1,4 +1,8 @@
-﻿namespace Server.Models
+﻿using Server.Features.Chats;
+using Server.Features.DangerousPlaces;
+using Server.Features.Journeys;
+
+namespace Server.Features.Users
 {
     public class User
     {

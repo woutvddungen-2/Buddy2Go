@@ -2,8 +2,10 @@
 @inject Client.Services.DangerousPlaceService DangerousPlaceService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
-
-<Header Title="Melding aanpassen" ShowBackButton="true" />
+<HeadContent>
+    <link href="css/common/Header.css" rel="stylesheet" />
+</HeadContent>
+<Header Title="Melding aanpassen" BackTo="/dangerous-places" />
 
 @if (loading)
 {

@@ -1,6 +1,7 @@
-﻿using Shared.Models.enums;
+﻿using Server.Features.Users;
+using Shared.Models.enums;
 
-namespace Server.Models
+namespace Server.Features.DangerousPlaces
 {
     public class DangerousPlace
     {

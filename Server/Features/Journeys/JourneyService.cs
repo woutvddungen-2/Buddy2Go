@@ -1,11 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Server.Common;
-using Server.Data;
-using Server.Models;
+using Server.Features.Buddies;
+using Server.Features.Users;
+using Server.Infrastructure.Data;
 using Shared.Models.Dtos;
 using Shared.Models.enums;
 
-namespace Server.Services
+namespace Server.Features.Journeys
 {
 
 

@@ -2,9 +2,13 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Server.Data;
-using Server.Helpers;
-using Server.Services;
+using Server.Features.Buddies;
+using Server.Features.Chats;
+using Server.Features.DangerousPlaces;
+using Server.Features.Journeys;
+using Server.Features.Users;
+using Server.Infrastructure.Data;
+using Server.Infrastructure.Database;
 using System.Text;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -135,11 +139,17 @@ builder.Services.AddSwaggerGen(c =>
 #endif
 
 //------------- Configure https for docker -------------------------------
-// Configure Kestrel for HTTP inside Docker
-builder.WebHost.ConfigureKestrel(options =>
+// Configure Kestrel for HTTPS inside Docker
+if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true")
 {
-    options.ListenAnyIP(5001);
-});
+    builder.WebHost.ConfigureKestrel(options =>
+    {
+        options.ListenAnyIP(5001, listenOptions =>
+        {
+            listenOptions.UseHttps("/https/aspnetapp.pfx", "MyPassword123");
+        });
+    });
+}
 
 
 // -------------------- CORS --------------------

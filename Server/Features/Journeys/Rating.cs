@@ -1,4 +1,6 @@
-﻿namespace Server.Models
+﻿using Server.Features.Users;
+
+namespace Server.Features.Journeys
 {
     public class Rating
     {

@@ -1,4 +1,4 @@
-﻿namespace Server.Models
+﻿namespace Server.Features.Journeys
 {
     public class Place
     {

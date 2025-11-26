@@ -1,4 +1,7 @@
-﻿namespace Server.Models
+﻿using Server.Features.Journeys;
+using Server.Features.Users;
+
+namespace Server.Features.Chats
 {
     public class JourneyMessage
     {

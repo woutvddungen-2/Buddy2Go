@@ -2,7 +2,9 @@
 @inject Client.Services.DangerousPlaceService DangerousPlaceService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
-
+<HeadContent>
+    <link href="css/common/Header.css" rel="stylesheet" />
+</HeadContent>
 <Header Title="Gevaarlijke plek melden" />
 
 
@@ -92,8 +94,8 @@ else
     {
         try
         {
-            var result = await JS.InvokeAsync<GpsCoords>("getLocation");
-            gps = $"{result.Latitude},{result.Longitude}";
+            var result = await JS.InvokeAsync<GeolocationResult>("geolocationFunctions.getCurrentPosition");
+            gps = $"{result.latitude},{result.longitude}";
             gpsAvailable = true;
         }
         catch
@@ -124,9 +126,12 @@ else
         Nav.NavigateTo($"/dangerous-places/edit/{reportId}");
     }
 
-    public class GpsCoords
+    private class GeolocationResult
     {
-        public double Latitude { get; set; }
-        public double Longitude { get; set; }
+        public double latitude { get; set; }
+        public double longitude { get; set; }
+        public double accuracy { get; set; }
+        public double? altitude { get; set; }          // nullable, because it may be null
+        public double? altitudeAccuracy { get; set; }
     }
 }

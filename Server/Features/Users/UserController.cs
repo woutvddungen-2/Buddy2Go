@@ -2,11 +2,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Server.Common;
-using Server.Services;
 using Shared.Models.Dtos;
 using System.Security.Claims;
 
-namespace Server.Controllers
+namespace Server.Features.Users
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -84,25 +83,31 @@ namespace Server.Controllers
         }
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        [HttpGet("Verify")]
-        public IActionResult Verify()
+        [HttpGet("ReturnJWT")]
+        public IActionResult ReturnJWT()
         {
-            string username = User.Identity?.Name ?? "Unknown";
-            string userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "Unknown";
-            if (!int.TryParse(userIdString, out int id))
+            string username;
+            int userId;
+            try
             {
-                logger.LogWarning("Invalid user ID in JWT: {userIdString}", userIdString);
-                return BadRequest("Invalid user ID");
+                username = HttpContext.GetUsername();
+                userId = HttpContext.GetUserId();
             }
-            logger.LogDebug("JWT verified for user {username} with ID {id}", username, id);
-            return Ok(new UserDto { Id = id, Username = username });
+            catch (Exception ex)
+            {
+                logger.LogWarning("Invalid user in JWT: {ex}", ex.Message);
+                return BadRequest($"Invalid user, {ex.Message}");
+            }
+
+            logger.LogDebug("JWT verified for user {username} with ID {id}", username, userId);
+            return Ok(new UserDto { Id = userId, Username = username });
         }
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet("GetUserInfo")]
         public async Task<IActionResult> GetUserInfo()
         {
-            int userId = GetUserIdFromJwt();
+            int userId = HttpContext.GetUserId();
             ServiceResult<UserDto> result = await service.GetUserInfo(userId);
 
             switch (result.Status)
@@ -126,7 +131,7 @@ namespace Server.Controllers
         [HttpPost("Logout")]
         public IActionResult Logout()
         {
-            int userId = GetUserIdFromJwt();
+            int userId = HttpContext.GetUserId();
             Response.Cookies.Delete("jwt");
             logger.LogInformation("User with User ID: {userId} logged out successfully", userId);
             return Ok("Logged out");
@@ -136,7 +141,7 @@ namespace Server.Controllers
         [HttpGet("FindbyPhonenumber/{number}")]
         public async Task<IActionResult> FindbyPhoneNumber(string number)
         {
-            int userId = GetUserIdFromJwt();
+            int userId = HttpContext.GetUserId();
             ServiceResult<UserDto> result = await service.FindUserbyPhone(number, userId);
 
             switch (result.Status)
@@ -157,7 +162,7 @@ namespace Server.Controllers
         [HttpDelete("Delete")]
         public async Task<IActionResult> DeleteUser()
         {
-            int userId = GetUserIdFromJwt();
+            int userId = HttpContext.GetUserId();
             ServiceResult result = await service.DeleteUserAsync(userId);
 
             switch (result.Status)
@@ -179,13 +184,6 @@ namespace Server.Controllers
                     logger.LogError("Delete User Failed, {message}", result.Message);
                     return StatusCode(500, "Unexpected error retrieving user info");
             }
-        }
-
-        // Helper method to extract user ID from JWT
-        private int GetUserIdFromJwt()
-        {
-            Claim? claim = User.FindFirst(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedAccessException();
-            return int.Parse(claim.Value);
         }
     }
 }

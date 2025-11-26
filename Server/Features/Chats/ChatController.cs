@@ -2,11 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Server.Common;
 using Server.Models;
-using Server.Services;
 using Shared.Models.Dtos;
 using System.Security.Claims;
 
-namespace Server.Controllers
+namespace Server.Features.Chats
 {
     [ApiController]
     [Route("api/[controller]")]
@@ -24,7 +23,7 @@ namespace Server.Controllers
         [HttpGet("journey/{journeyId}")]
         public async Task<IActionResult> GetMessages(int journeyId)
         {
-            int userId = GetUserIdFromJwt();
+            int userId = HttpContext.GetUserId();
             ServiceResult<List<JourneyMessageDto>> result = await chatService.GetMessages(journeyId, userId);
             switch (result.Status)
             {
@@ -43,7 +42,7 @@ namespace Server.Controllers
         [HttpPost("journey/{journeyId}")]
         public async Task<IActionResult> SendMessage(int journeyId, [FromBody] JourneyMessageCreateDto dto)
         {
-            int userId = GetUserIdFromJwt();
+            int userId = HttpContext.GetUserId();
             ServiceResult<JourneyMessageDto> result = await chatService.SendMessage(journeyId, userId, dto.Content);
             switch (result.Status)
             { 
@@ -59,13 +58,6 @@ namespace Server.Controllers
                     logger.LogError("Error in SendMessage for User:{User}, Journey:{journey}, Message:{message}", userId, journeyId, result.Message);
                     return StatusCode(500, "Error sending Journey Messages");
             }
-        }
-
-        // Helper method to extract user ID from JWT
-        private int GetUserIdFromJwt()
-        {
-            Claim? claim = User.FindFirst(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedAccessException();
-            return int.Parse(claim.Value);
         }
     }
 }

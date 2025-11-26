@@ -45,7 +45,7 @@ namespace Client.Services
         {
             try
             {
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, "api/User/Verify");
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, "api/User/ReturnJWT");
                 request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
                 HttpResponseMessage? response = await httpClient.SendAsync(request);
 
@@ -71,7 +71,7 @@ namespace Client.Services
         {
             try
             {
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, "api/User/Verify");
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, "api/User/GetUserInfo");
                 request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
 
                 HttpResponseMessage? response = await httpClient.SendAsync(request);

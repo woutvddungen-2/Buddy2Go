@@ -1,7 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Server.Models;
+using Server.Features.Buddies;
+using Server.Features.Chats;
+using Server.Features.DangerousPlaces;
+using Server.Features.Journeys;
+using Server.Features.Users;
 
-namespace Server.Data
+namespace Server.Infrastructure.Data
 {
     public class AppDbContext : DbContext
     {

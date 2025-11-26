@@ -12,4 +12,4 @@ WORKDIR /app
 COPY --from=build /app/publish .
 
 EXPOSE 5001
-CMD ["sh", "-c", "echo 'Waiting 10 seconds for DB...'; sleep 10; dotnet Server.dll --urls http://+:5001"]
+CMD ["sh", "-c", "echo 'Waiting 10 seconds for DB...'; sleep 10; dotnet Server.dll --urls https://+:5001"]

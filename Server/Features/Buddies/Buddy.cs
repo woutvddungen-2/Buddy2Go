@@ -1,5 +1,6 @@
-﻿using Shared.Models.enums;
-namespace Server.Models
+﻿using Server.Features.Users;
+using Shared.Models.enums;
+namespace Server.Features.Buddies
 {
     public class Buddy
     {

@@ -14,5 +14,5 @@ COPY --from=build /app/publish/wwwroot .
 COPY Client/nginx.conf /etc/nginx/nginx.conf
 COPY Client/wwwroot/build.appsettings.json /usr/share/nginx/html/appsettings.json
 
-EXPOSE 80
+EXPOSE 443
 CMD ["sh", "-c", "echo 'Waiting 10 seconds for server...'; sleep 10; nginx -g 'daemon off;'"]

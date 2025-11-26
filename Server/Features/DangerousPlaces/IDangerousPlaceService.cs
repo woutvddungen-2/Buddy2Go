@@ -1,7 +1,7 @@
 ﻿using Server.Common;
 using Shared.Models.Dtos;
 
-namespace Server.Services
+namespace Server.Features.DangerousPlaces
 {
     public interface IDangerousPlaceService
     {

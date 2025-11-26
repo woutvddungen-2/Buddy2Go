@@ -1,11 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Server.Common;
-using Server.Data;
-using Server.Models;
+using Server.Infrastructure.Data;
 using Shared.Models.Dtos;
 using Shared.Models.enums;
 
-namespace Server.Services
+namespace Server.Features.DangerousPlaces
 {
     public class DangerousPlaceService : IDangerousPlaceService
     {

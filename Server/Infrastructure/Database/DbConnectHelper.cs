@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Server.Data;
+using Server.Infrastructure.Data;
 
-namespace Server.Helpers
+namespace Server.Infrastructure.Database
 {
     public static class DbConnectHelper
     {

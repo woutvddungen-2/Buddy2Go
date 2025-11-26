@@ -1,8 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Server.Common;
-using Server.Data;
-using Server.Models;
+using Server.Features.Buddies;
+using Server.Features.Journeys;
+using Server.Infrastructure.Data;
 using Shared.Models.Dtos;
 using Shared.Models.enums;
 using System.IdentityModel.Tokens.Jwt;
@@ -10,7 +11,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Server.Services
+namespace Server.Features.Users
 {
     public class UserService: IUserService
     {

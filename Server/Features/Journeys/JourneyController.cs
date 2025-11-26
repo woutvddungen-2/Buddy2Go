@@ -3,11 +3,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Server.Common;
 using Server.Models;
-using Server.Services;
 using Shared.Models.Dtos;
 using System.Security.Claims;
 
-namespace Server.Controllers
+namespace Server.Features.Journeys
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("api/[controller]")]
@@ -25,7 +24,7 @@ namespace Server.Controllers
         [HttpGet("GetMyJourneys")]
         public async Task<IActionResult> GetMyJourneys()
         {
-            int userId = GetUserIdFromJwt();
+            int userId = HttpContext.GetUserId();
             ServiceResult<List<JourneyDto>> result = await service.GetJourneysByUserAsync(userId);
             switch (result.Status)
             {
@@ -42,7 +41,7 @@ namespace Server.Controllers
         [HttpGet("GetBuddyJourneys")]
         public async Task<IActionResult> GetBuddyJourneys()
         {
-            int userId = GetUserIdFromJwt();
+            int userId = HttpContext.GetUserId();
             ServiceResult<List<JourneyDto>> result = await service.GetBuddyJourneysAsync(userId);
 
             switch (result.Status)
@@ -61,7 +60,7 @@ namespace Server.Controllers
         [HttpGet("GetParticipants/{journeyId}")]
         public async Task<IActionResult> GetJourneyParticipants(int journeyId)
         {
-            int userId = GetUserIdFromJwt();
+            int userId = HttpContext.GetUserId();
             ServiceResult<List<JourneyParticipantDto>> result = await service.GetJourneyParticipantsAsync(journeyId, userId);
 
             switch (result.Status)
@@ -81,7 +80,7 @@ namespace Server.Controllers
         [HttpPost("SendJoinRequest/{journeyId}")]
         public async Task<IActionResult> SendJoinRequest(int journeyId)
         {
-            int userId = GetUserIdFromJwt();
+            int userId = HttpContext.GetUserId();
 
             ServiceResult result = await service.SendJoinJourneyRequest(userId, journeyId);
 
@@ -106,7 +105,7 @@ namespace Server.Controllers
         [HttpPatch("RespondToJoinRequest/{journeyId}")]
         public async Task<IActionResult> RespondToJoinRequest( [FromBody] RequestResponseDto response, int journeyId)
         {
-            int userId = GetUserIdFromJwt();
+            int userId = HttpContext.GetUserId();
 
             ServiceResult result = await service.RespondToJourneyRequest(userId, journeyId, response.RequesterId, response.Status);
 
@@ -136,7 +135,7 @@ namespace Server.Controllers
                 return BadRequest("Invalid journey data.");
             }
 
-            int userId = GetUserIdFromJwt();
+            int userId = HttpContext.GetUserId();
             ServiceResult result = await service.AddJourneyAsync(userId, dto.StartPlaceId, dto.EndPlaceId, dto.StartAt);
 
             switch (result.Status)
@@ -162,7 +161,7 @@ namespace Server.Controllers
                 return BadRequest("Invalid journey data.");
             }
 
-            int userId = GetUserIdFromJwt();
+            int userId = HttpContext.GetUserId();
             ServiceResult result = await service.UpdateJourneyGpsAsync(userId, JourneyId, dto.StartPlaceId, dto.EndPlaceId);
 
             switch (result.Status)
@@ -187,7 +186,7 @@ namespace Server.Controllers
         [HttpPatch("FinishJourney/{JourneyId}")]
         public async Task<IActionResult> FinishJourney(int JourneyId)
         {
-            int userId = GetUserIdFromJwt();
+            int userId = HttpContext.GetUserId();
             ServiceResult result = await service.FinishJourneyAsync(userId, JourneyId);
 
             switch (result.Status)
@@ -211,7 +210,7 @@ namespace Server.Controllers
         [HttpDelete("LeaveJourney/{JourneyId}")]
         public async Task<IActionResult> LeaveJourney(int JourneyId)
         {
-            int userId = GetUserIdFromJwt();
+            int userId = HttpContext.GetUserId();
             ServiceResult result = await service.LeaveJourneyAsync(userId, JourneyId);
 
             switch (result.Status)
@@ -233,7 +232,7 @@ namespace Server.Controllers
         [HttpPost("RateJourney/{journeyId}")]
         public async Task<IActionResult> RateJourney(int journeyId, [FromBody] RatingDto dto)
         {
-            int userId = GetUserIdFromJwt();
+            int userId = HttpContext.GetUserId();
 
             ServiceResult result = await service.RateJourneyAsync(userId, journeyId, dto.RatingValue, dto.Note);
 
@@ -256,7 +255,7 @@ namespace Server.Controllers
         [HttpGet("GetMyRating/{journeyId}")]
         public async Task<IActionResult> GetMyRating(int journeyId)
         {
-            int userId = GetUserIdFromJwt();
+            int userId = HttpContext.GetUserId();
 
             ServiceResult<RatingDto?> result = await service.GetMyRatingAsync(userId, journeyId);
 
@@ -291,15 +290,6 @@ namespace Server.Controllers
                     logger.LogError("GetPlaces unknown error, Message:{message}", result.Message);
                     return StatusCode(500, result.Message);
             }
-        }
-
-
-
-        // Helper method to extract user ID from JWT
-        private int GetUserIdFromJwt()
-        {
-            Claim? claim = User.FindFirst(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedAccessException();
-            return int.Parse(claim.Value);
         }
     }
 }

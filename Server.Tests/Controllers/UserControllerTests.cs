@@ -3,8 +3,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Server.Common;
-using Server.Controllers;
-using Server.Services;
+using Server.Features.Users;
 using Shared.Models.Dtos;
 
 namespace Server.Tests.Controllers

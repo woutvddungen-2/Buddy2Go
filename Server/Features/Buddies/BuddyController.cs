@@ -2,12 +2,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Server.Common;
-using Server.Services;
 using Shared.Models.Dtos;
-using System.Security.Claims;
-using System.Text;
 
-namespace Server.Controllers
+namespace Server.Features.Buddies
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -27,7 +24,7 @@ namespace Server.Controllers
         [HttpPost("Send/{addresseeId}")]
         public async Task<IActionResult> SendBuddyRequest(int addresseeId)
         {
-            int requesterId = GetUserIdFromJwt();
+            int requesterId = HttpContext.GetUserId();
             ServiceResult result = await service.SendBuddyRequest(requesterId, addresseeId);
             switch (result.Status)
             {
@@ -49,7 +46,7 @@ namespace Server.Controllers
         [HttpPatch("Respond")]
         public async Task<IActionResult> RespondToRequest([FromBody] RequestResponseDto request)
         {
-            int addresseeId = GetUserIdFromJwt();
+            int addresseeId = HttpContext.GetUserId();
             ServiceResult result = await service.RespondToBuddyRequest(request.RequesterId, addresseeId, request.Status);
             switch (result.Status)
             {
@@ -71,7 +68,7 @@ namespace Server.Controllers
         [HttpGet("List")]
         public async Task<IActionResult> GetBuddyList()
         {
-            int userId = GetUserIdFromJwt();
+            int userId = HttpContext.GetUserId();
             ServiceResult<List<BuddyDto>> result = await service.GetBuddies(userId);
             if (result.Status == ServiceResultStatus.UserNotFound)
             {
@@ -84,7 +81,7 @@ namespace Server.Controllers
         [HttpGet("Pending")]
         public async Task<IActionResult> GetPendingRequests()
         {
-            int userId = GetUserIdFromJwt();
+            int userId = HttpContext.GetUserId();
             ServiceResult<List<BuddyDto>> result = await service.GetPendingRequests(userId);
             if (result.Status == ServiceResultStatus.UserNotFound)
             {
@@ -97,7 +94,7 @@ namespace Server.Controllers
         [HttpGet("GetSend")]
         public async Task<IActionResult> GetSend()
         {
-            int userId = GetUserIdFromJwt();
+            int userId = HttpContext.GetUserId();
             ServiceResult<List<BuddyDto>> result = await service.GetSendRequests(userId);
             if (result.Status == ServiceResultStatus.UserNotFound)
             {
@@ -110,7 +107,7 @@ namespace Server.Controllers
         [HttpPatch("Block/{buddyId}")]
         public async Task<IActionResult> BlockBuddy(int buddyId)
         {
-            int userId = GetUserIdFromJwt();
+            int userId = HttpContext.GetUserId();
             ServiceResult result = await service.RemoveBuddy(userId, buddyId, true);
             switch (result.Status) {
                 case ServiceResultStatus.Success:
@@ -132,7 +129,7 @@ namespace Server.Controllers
         [HttpDelete("Delete/{buddyId}")]
         public async Task<IActionResult> DeleteBuddy(int buddyId)
         {
-            int userId = GetUserIdFromJwt();
+            int userId = HttpContext.GetUserId();
             ServiceResult result = await service.RemoveBuddy(userId, buddyId);
             switch (result.Status)
             {
@@ -150,16 +147,6 @@ namespace Server.Controllers
                     return StatusCode(500, "Unknown error occurred");
 
             }
-        }
-
-        //------------------------ Helpers ----------------------------
-        // Helper method to extract user ID from JWT
-        private int GetUserIdFromJwt()
-        {
-            Claim? claim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (claim == null)
-                throw new UnauthorizedAccessException("Invalid JWT String");
-            return int.Parse(claim.Value);
         }
     }
 }

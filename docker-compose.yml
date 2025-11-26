@@ -4,11 +4,15 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: __xh8xq9KmE4E.CwpQDG
       MYSQL_DATABASE: Buddy2Go
-      MYSQL_ROOT_HOST: "%"
+      MYSQL_ROOT_HOST: '%'
     ports:
       - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck:
+        test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+        interval: 5s
+        retries: 5
 
   server:
     build:
@@ -21,18 +25,25 @@ services:
       DbSettings__Password: __xh8xq9KmE4E.CwpQDG
       DbSettings__Port: 3306
       JwtSettings__Secret: "ThisIsASuperSecretKey12345678901"
-      AllowedOrigins: "http://app.buddy-2-go.nl;http://app.buddy-to-go.nl:5002;http://buddy2go-dev.nl;http://buddy2go-dev.nl:5002;https://app.buddy-2-go.nl;https://app.buddy-to-go.nl:5002;https://buddy2go-dev.nl;https://buddy2go-dev.nl:5002"
+      AllowedOrigins: "https://buddy2go-dev.nl;https://buddy2go-dev.nl:443;https://app.buddy-2-go.nl;https://app.buddy-2-go.nl:443"
       ASPNETCORE_ENVIRONMENT: Development
+    volumes:
+      - ./Server/certs/aspnetapp.pfx:/https/aspnetapp.pfx:ro
     ports:
       - "5001:5001"
     depends_on:
-      - mysql
+        mysql:
+            condition: service_healthy
 
   client:
     build:
       context: .
       dockerfile: Client/Dockerfile
+    volumes:
+    - ./Client/certs/client.crt:/etc/nginx/ssl/client.crt:ro
+    - ./Client/certs/client.key:/etc/nginx/ssl/client.key:ro
     ports:
+      - "443:443"
       - "80:80"
     depends_on:
       - server
