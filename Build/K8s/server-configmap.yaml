@@ -9,7 +9,7 @@ data:
   DbSettings__UserID: "root"
   DbSettings__Password: "__xh8xq9KmE4E.CwpQDG"
   DbSettings__Port: "3306"
-
+  SSL__Enabled: "false"
   JwtSettings__Secret: "ThisIsASuperSecretKey12345678901"
 
-  AllowedOrigins: "https://app.buddy-2-go.nl;https://buddy2go-dev.nl;https://buddy2go-dev.nl:443"
+  AllowedOrigins: "https://app.buddy-2-go.nl;https://prod.buddy-2-go.nl;https://buddy2go-dev.nl:443"

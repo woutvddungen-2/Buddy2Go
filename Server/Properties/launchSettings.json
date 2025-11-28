@@ -12,6 +12,7 @@
         "DbSettings__Password": "__xh8xq9KmE4E.CwpQDG",
         "DbSettings__Port": "3306",
         "JwtSettings__Secret": "ThisIsASuperSecretKey12345678901",
+        "SSL__Enabled": "true",
         "AllowedOrigins": "http://localhost;http://buddy2go-dev.nl:443;http://buddy2go-dev.nl;http://buddy2go-dev.nl:5002;https://localhost;https://buddy2go-dev.nl:443;https://buddy2go-dev.nl;https://buddy2go-dev.nl:5002"
       },
       "dotnetRunMessages": true,

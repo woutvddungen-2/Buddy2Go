@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Server.Features.Buddies;
@@ -14,11 +13,9 @@ using System.Text;
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // -------------------- Authentication --------------------
-string? jwtSecret = builder.Configuration["JwtSettings:Secret"];
-if (string.IsNullOrEmpty(jwtSecret))
-{
-    throw new Exception("JWT secret is missing. Set JwtSettings__Secret environment variable.");
-}
+
+string jwtSecret = builder.Configuration.GetRequiredSection("JwtSettings:Secret").Get<string>()!;
+bool sslEnabled = builder.Configuration.GetRequiredSection("SSL:Enabled").Get<bool>();
 
 builder.Services.AddAuthentication(options =>
 {
@@ -142,15 +139,24 @@ builder.Services.AddSwaggerGen(c =>
 // Configure Kestrel for HTTPS inside Docker
 if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true")
 {
-    builder.WebHost.ConfigureKestrel(options =>
+    if (sslEnabled)
     {
-        options.ListenAnyIP(5001, listenOptions =>
+        builder.WebHost.ConfigureKestrel(options =>
         {
-            listenOptions.UseHttps("/https/aspnetapp.pfx", "MyPassword123");
+            options.ListenAnyIP(5001, listenOptions =>
+            {
+                listenOptions.UseHttps("/https/aspnetapp.pfx", "MyPassword123");
+            });
         });
-    });
+    }
+    else
+    {
+        builder.WebHost.ConfigureKestrel(options =>
+        {
+            options.ListenAnyIP(5001);
+        });
+    }
 }
-
 
 // -------------------- CORS --------------------
 
@@ -205,6 +211,10 @@ for (int i = 0; i < 5; i++)
 app.UseCors("AllowBlazorWasm");
 app.UseAuthentication();
 app.UseAuthorization();
+if (sslEnabled)
+{
+    app.UseHttpsRedirection();
+}
 
 #if DEBUG
 {

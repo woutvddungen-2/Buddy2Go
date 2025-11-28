@@ -13,19 +13,13 @@ namespace Server.Features.Users
     {
         private readonly IUserService service;
         private readonly ILogger logger;
-        bool useSecureCookie;
+        bool sslEnabled;
 
-        public UserController(IUserService service, ILogger<UserController> logger, IHostEnvironment env)
+        public UserController(IUserService service, ILogger<UserController> logger, IHostEnvironment env, IConfiguration config)
         {
             this.service = service;
             this.logger = logger;
-            bool runningInDocker = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
-
-#if DEBUG
-            useSecureCookie = false;
-#else
-            useSecureCookie = !env.IsDevelopment();
-#endif
+            sslEnabled = config.GetRequiredSection("SSL:Enabled").Get<bool>();
         }
 
         [HttpPost("Register")]
@@ -64,7 +58,7 @@ namespace Server.Features.Users
             switch (result.Status)
             {
                 case ServiceResultStatus.Success:
-                    Response.Cookies.Append("jwt", result.Data!, new CookieOptions { HttpOnly = true, Secure = useSecureCookie, SameSite = SameSiteMode.Lax });
+                    Response.Cookies.Append("jwt", result.Data!, new CookieOptions { HttpOnly = true, Secure = sslEnabled, SameSite = SameSiteMode.Lax });
                     logger.LogInformation("User {Username} logged in successfully", login.Username);
                     return Ok(new { token = result.Data });
 
@@ -84,7 +78,7 @@ namespace Server.Features.Users
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet("ReturnJWT")]
-        public IActionResult ReturnJWT()
+        public IActionResult Verify()
         {
             string username;
             int userId;

@@ -1,9 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Server.Common;
-using Server.Models;
 using Shared.Models.Dtos;
-using System.Security.Claims;
 
 namespace Server.Features.Chats
 {

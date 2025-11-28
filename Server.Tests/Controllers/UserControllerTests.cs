@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -10,12 +11,17 @@ namespace Server.Tests.Controllers
 {
     public class UserControllerTests
     {
-        private UserController CreateController(Mock<IUserService> svcMock)
+        private UserController CreateController(Mock<IUserService> svcMock, bool ssl = false)
         {
             var logger = Mock.Of<ILogger<UserController>>();
             var env = Mock.Of<IHostEnvironment>();
 
-            return new UserController(svcMock.Object, logger, env);
+            return new UserController(
+                svcMock.Object,
+                logger,
+                env,
+                BuildConfig(ssl)
+            );
         }
 
         [Fact]
@@ -24,8 +30,7 @@ namespace Server.Tests.Controllers
             var serviceMock = new Mock<IUserService>();
             var controller = CreateController(serviceMock);
 
-            var result = await controller.Register(null!);
-
+            IActionResult result = await controller.Register(null!);
             Assert.IsType<BadRequestObjectResult>(result);
         }
 
@@ -37,9 +42,9 @@ namespace Server.Tests.Controllers
             serviceMock
                 .Setup(s => s.Register("john", "Pass1234!", "a@b.com", "0612345678"))
                 .ReturnsAsync(ServiceResult.Succes("ok"));
-            var controller = CreateController(serviceMock);
+            UserController controller = CreateController(serviceMock);
 
-            var dto = new RegisterDto
+            RegisterDto dto = new RegisterDto
             {
                 Username = "john",
                 Password = "Pass1234!",
@@ -48,10 +53,20 @@ namespace Server.Tests.Controllers
             };
 
             // Act
-            var result = await controller.Register(dto);
+            IActionResult result = await controller.Register(dto);
 
             // Assert
             Assert.IsType<OkObjectResult>(result);
         }
+
+        private IConfiguration BuildConfig(bool ssl)
+        {
+            Dictionary<string, string?> configValues = new()
+            {
+                { "SSL:Enabled", ssl ? "true" : "false" }
+            };
+            return new ConfigurationBuilder().AddInMemoryCollection(configValues).Build();
+        }
+            
     }
 }
