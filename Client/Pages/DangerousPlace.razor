@@ -162,4 +162,27 @@
     {
         Nav.NavigateTo($"/dangerous-places/edit/{reportId}");
     }
+    
+
+    //helpers:
+    private string[]? FormatPhoneNumbers(string[]? phoneNumbers)
+    {
+        if (phoneNumbers == null) return null;
+
+        // Process numbers
+        var formattedNumbers = phoneNumbers
+            .Select(s => s.Replace(" ", ""))
+            .Where(s => s.Length >= 9)
+            .Select(s => s.Substring(s.Length - 9))
+            .Distinct()
+            .ToArray();
+
+        return formattedNumbers;
+    }
+
+    public class Contact
+    {
+        public string[]? Name { get; set; }
+        public string[]? Tel { get; set; }
+    }
 }
