@@ -1,20 +1,21 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Server.Data;
-using Server.Helpers;
-using Server.Services;
+using Server.Features.Buddies;
+using Server.Features.Chats;
+using Server.Features.DangerousPlaces;
+using Server.Features.Journeys;
+using Server.Features.Users;
+using Server.Infrastructure.Data;
+using Server.Infrastructure.Database;
 using System.Text;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // -------------------- Authentication --------------------
-string? jwtSecret = builder.Configuration["JwtSettings:Secret"];
-if (string.IsNullOrEmpty(jwtSecret))
-{
-    throw new Exception("JWT secret is missing. Set JwtSettings__Secret environment variable.");
-}
+
+string jwtSecret = builder.Configuration.GetRequiredSection("JwtSettings:Secret").Get<string>()!;
+bool sslEnabled = builder.Configuration.GetRequiredSection("SSL:Enabled").Get<bool>();
 
 builder.Services.AddAuthentication(options =>
 {
@@ -62,7 +63,7 @@ builder.Services.AddAuthentication(options =>
         OnAuthenticationFailed = context =>
         {
 #if DEBUG
-            log.LogWarning(context.Exception, "JWT Authentication failed");
+            log.LogWarning(context.Exception.Message, "JWT Authentication failed");
 #endif
             return Task.CompletedTask;
         },
@@ -99,6 +100,7 @@ builder.Services.AddControllers();
 
 //-------------------- Services --------------------
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IDangerousPlaceService, DangerousPlaceService>();
 builder.Services.AddScoped<JourneyService>();
 builder.Services.AddScoped<BuddyService>();
 builder.Services.AddScoped<ChatService>();
@@ -134,12 +136,27 @@ builder.Services.AddSwaggerGen(c =>
 #endif
 
 //------------- Configure https for docker -------------------------------
-// Configure Kestrel for HTTP inside Docker
-builder.WebHost.ConfigureKestrel(options =>
+// Configure Kestrel for HTTPS inside Docker
+if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true")
 {
-    options.ListenAnyIP(5001);
-});
-
+    if (sslEnabled)
+    {
+        builder.WebHost.ConfigureKestrel(options =>
+        {
+            options.ListenAnyIP(5001, listenOptions =>
+            {
+                listenOptions.UseHttps("/https/aspnetapp.pfx", "MyPassword123");
+            });
+        });
+    }
+    else
+    {
+        builder.WebHost.ConfigureKestrel(options =>
+        {
+            options.ListenAnyIP(5001);
+        });
+    }
+}
 
 // -------------------- CORS --------------------
 
@@ -194,6 +211,10 @@ for (int i = 0; i < 5; i++)
 app.UseCors("AllowBlazorWasm");
 app.UseAuthentication();
 app.UseAuthorization();
+if (sslEnabled)
+{
+    app.UseHttpsRedirection();
+}
 
 #if DEBUG
 {

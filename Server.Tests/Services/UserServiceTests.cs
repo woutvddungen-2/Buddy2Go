@@ -3,12 +3,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Server.Common;
-using Server.Controllers;
-using Server.Data;
-using Server.Models;
-using Server.Services;
+using Server.Features.Users;
+using Server.Infrastructure.Data;
 using Server.Tests.TestUtilities;
-using Shared.Models.Dtos;
+using Shared.Models.Dtos.Users;
 
 namespace Server.Tests.Services
 {

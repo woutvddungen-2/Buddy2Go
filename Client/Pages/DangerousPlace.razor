@@ -1,0 +1,188 @@
+﻿@page "/dangerous-places"
+@using Shared.Models.Dtos.DangerousPlaces
+@using Shared.Extensions
+@inject Client.Services.DangerousPlaceService DangerousPlaceService
+@inject NavigationManager Nav
+@inject GPSService gpsService
+
+
+<HeadContent>
+    <link href="css/common/Header.css" rel="stylesheet" />
+</HeadContent>
+<Header Title="Gevaarlijke plek melden" />
+
+<div class="w-full max-w-[480px] p-5 border mx-auto px-4 shadow-md border-gray-300 rounded-xl bg-white">
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="text-center text-red-600">@message</div>
+    }
+    <!-- CREATE REPORT SECTION -->
+    <div class="flex flex-col gap-3 mb-8">
+        @if (gpsAvailable)
+        {
+            <select class="border p-2 rounded" @bind="newPlaceType">
+                <option selected disabled hidden value="">Selecteer een categorie…</option>
+
+                @foreach (var type in Enum.GetValues<DangerousPlaceType>())
+                {
+                    <option value="@type">@type.GetDisplayName()</option>
+                }
+            </select>
+
+            <textarea class="border rounded p-2" placeholder="Beschrijving (optioneel)" @bind="newDescription"></textarea>
+            <input class="border rounded p-2" placeholder="GPS wordt geladen..." readonly @bind="gps" />
+            <button class="bg-purple-600 text-black py-2 rounded" @onclick="CreateReport">Meld gevaarlijke plek</button>
+        }
+        else
+        {
+            <div class="p-4 border rounded bg-red-50 text-red-700">
+                <p class="font-semibold">GPS niet beschikbaar</p>
+                <p class="text-sm">
+                    Om een gevaarlijke plek te melden is locatie-toegang vereist.
+                </p>
+            </div>
+        }
+
+        <a href="tel:112" class="bg-red-600 text-white py-2 rounded text-center">📞 Bel 112 (Noodnummer)</a>
+    </div>    
+    <!-- MY REPORTS -->
+    @if (myReports == null)
+    {
+        <p>Loading...</p>
+    }
+    else if (!myReports.Any())
+    {
+        <p class="text-gray-500">Geen recente meldingen gevonden.</p>
+    }
+    else
+    {
+        <h2 class="text-xl font-semibold mb-2">Mijn meldingen</h2>
+
+        @foreach (var report in myReports)
+        {
+            <div class="border p-3 rounded-lg flex flex-col gap-2 mb-3">
+
+                <p><strong>Type:</strong> @report.PlaceType</p>
+                <p><strong>Beschrijving:</strong> @report.Description</p>
+                <p><strong>GPS:</strong> @report.GPS</p>
+                <p class="text-sm text-gray-500">
+                    @report.ReportedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")
+                </p>
+
+                @if (report.ReportedAt > DateTime.UtcNow.AddDays(-1))
+                {
+                    <button class="bg-blue-600 text-white py-1 px-3 rounded" @onclick="() => NavigateToEdit(report.Id)">
+                        Bewerken
+                    </button>
+                }
+                else
+                {
+                    <p class="text-gray-400 text-sm">
+                        Kan niet meer aangepast worden (ouder dan 7 dagen).
+                    </p>
+                }
+            </div>
+        }
+    }
+    
+</div>
+
+
+@code {
+    private DangerousPlaceType? newPlaceType = null;
+    private string? newDescription;
+    private string gps = "";
+    private bool gpsAvailable = true;
+
+    private string? message = null;
+
+    private List<DangerousPlaceDto>? myReports;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadReports();
+        await LoadGps();
+    }
+
+    private async Task LoadGps()
+    {
+        GeolocationResult? result = await gpsService.GetGPSAsync();
+        if (result != null)
+        {
+            gps = $"{result.latitude},{result.longitude}";
+            gpsAvailable = true;
+        }
+        else
+        {
+            gpsAvailable = false;
+            gps = "";
+        }
+    }
+
+    private async Task LoadReports()
+    {
+        var result = await DangerousPlaceService.GetMyReportsAsync();
+        if (result.IsSuccess)
+        {
+            message = null;
+            myReports = result.Data;            
+        }
+        else
+        {
+            message = result.Message;
+        }
+    }
+
+    private async Task CreateReport()
+    {
+        if (newPlaceType == null)
+        {
+            message = "Type Gevaarlijke plek dient gekozen te worden";
+            return;
+        }
+        if (newPlaceType == DangerousPlaceType.Other && string.IsNullOrEmpty(newDescription))
+        {
+            message = "Voor optie overig, dient de beschrijving verplicht ingevuld te worden";
+            return;
+        }
+        ServiceResult result = await DangerousPlaceService.CreateReportAsync(newPlaceType.Value, newDescription, gps);
+        if (result.IsSuccess)
+        {
+            message = null;
+            newDescription = "";
+            newPlaceType = null;
+            await LoadReports();
+        }
+        else
+        {
+            message = result.Message;
+        }
+    }
+    private void NavigateToEdit(int reportId)
+    {
+        Nav.NavigateTo($"/dangerous-places/edit/{reportId}");
+    }
+    
+
+    //helpers:
+    private string[]? FormatPhoneNumbers(string[]? phoneNumbers)
+    {
+        if (phoneNumbers == null) return null;
+
+        // Process numbers
+        var formattedNumbers = phoneNumbers
+            .Select(s => s.Replace(" ", ""))
+            .Where(s => s.Length >= 9)
+            .Select(s => s.Substring(s.Length - 9))
+            .Distinct()
+            .ToArray();
+
+        return formattedNumbers;
+    }
+
+    public class Contact
+    {
+        public string[]? Name { get; set; }
+        public string[]? Tel { get; set; }
+    }
+}

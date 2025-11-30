@@ -11,6 +11,9 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<JourneyService>();
 builder.Services.AddScoped<BuddyService>();
 builder.Services.AddScoped<ChatService>();
+builder.Services.AddScoped<DangerousPlaceService>();
+builder.Services.AddScoped<GPSService>();
+
 
 var config = builder.Configuration;
 string apiBase = config["ApiBaseUrl"] ?? throw new Exception("No BASE URL loaded");

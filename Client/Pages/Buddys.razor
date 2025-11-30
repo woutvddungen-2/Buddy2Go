@@ -1,9 +1,84 @@
 ﻿@page "/buddys"
+@using Shared.Models.Dtos.Buddies
+@using Shared.Models.Dtos.Users
+@using Shared.Models.enums
 @inject BuddyService BuddyService
 @inject UserService UserService
+@inject IJSRuntime JS
 
-<!-- PAGE TITLE -->
 <h3 class="text-2xl font-bold mb-6 text-purple-600">Buddy's</h3>
+
+<!-- PICK CONTACTS -->
+<div class="p-5 bg-gray-100 rounded-2xl shadow-sm border border-gray-200 mb-6">
+    <h4 class="text-lg font-semibold mb-3 text-gray-800">Buddy's toevoegen uit contacten</h4>
+
+    @if (!contactApiSupported)
+    {
+        <p class="text-red-600">❌ Contact Picker API wordt niet ondersteund op dit apparaat.</p>
+    }
+    else if (!isAndroidChrome)
+    {
+        <p class="text-orange-600">⚠️ Best ondersteund op Chrome voor Android.</p>
+    }
+    else
+    {
+        <button @onclick="PickContacts" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow disabled:opacity-50">
+            @(isPicking ? "Contacten openen…" : "Kies uit contacten")
+        </button>
+
+        @if (!string.IsNullOrEmpty(contactStatus))
+        {
+            <p class="mt-3 text-sm text-gray-700">@contactStatus</p>
+        }
+    }
+</div>
+
+<!-- DISPLAY CONTACT RESULTS -->
+@if (processedContacts.Count > 0)
+{
+    <div class="mt-6 p-5 bg-white rounded-2xl shadow-sm border border-gray-200 mb-6">
+        <h4 class="text-lg font-semibold mb-4 text-gray-800">Geselecteerde contacten</h4>
+        @foreach (var contact in processedContacts)
+        {
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between py-3 border-b last:border-none">
+
+                <div>
+                    <p class="font-medium text-gray-800">@contact.Name</p>
+                    <p class="text-gray-600">+31 @contact.Phone</p>
+                </div>
+                <div class="mt-2 sm:mt-0">
+                    @switch (contact)
+                    {
+                        //TODO: add function to send text with invite to join app
+                        case { Status: null }:
+                            <span class="text-red-600 font-semibold text-sm">Niet gevonden</span>
+                            break;
+                        case { Status: RequestStatus.Accepted }:
+                            <span class="text-green-700 font-semibold text-sm">Al buddy's</span>
+                            break;
+                        case { Status: RequestStatus.Pending }:
+                            <button disabled class="bg-gray-300 text-gray-600 px-3 py-1 rounded-lg text-sm cursor-not-allowed">
+                                Verzoek verstuurd
+                            </button>
+                            break;
+                        case { Status: RequestStatus.Blocked }:
+                            <span class="text-red-700 font-semibold text-sm">Geblokkeerd</span>
+                            break;
+                        case { Status: RequestStatus.Rejected }:
+                            <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm"
+                                    @onclick="() => SendRequest(contact.UserId)">
+                                Buddyverzoek versturen
+                            </button>
+                            break;
+                        default:
+                            <span class="text-gray-500">Onbekende status</span>
+                            break;
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
 
 <!-- FIND USER BY PHONE -->
 <div class="p-5 bg-gray-100 rounded-2xl shadow-sm border border-gray-200 mb-6">
@@ -39,7 +114,7 @@
     }
 </div>
 
-<!-- PENDING REQUESTS -->
+<!-- PENDING RECEIVED -->
 <div class="p-5 bg-gray-100 rounded-2xl shadow-sm border border-gray-200 mb-6">
     <h4 class="text-lg font-semibold mb-3 text-gray-800">Openstaande buddyverzoeken</h4>
 
@@ -74,7 +149,6 @@
                 </div>
             </div>
         }
-
     }
 </div>
 
@@ -117,7 +191,7 @@
 </div>
 
 <!-- BUDDY LIST -->
-<div class="p-5 bg-gray-100 rounded-2xl shadow-sm border border-gray-200">
+<div class="p-5 bg-gray-100 rounded-2xl shadow-sm border border-gray-200 mb-10">
     <h4 class="text-lg font-semibold mb-3 text-gray-800">Jouw Buddies</h4>
 
     @if (buddies.Count == 0)
@@ -134,7 +208,7 @@
                     @(buddy.Requester.Id == currentUserId
                                 ? buddy.Addressee.Username
                                 : buddy.Requester.Username)
-        </span>
+                </span>
 
                 <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg"
                         @onclick="() => RemoveBuddy(buddy.Requester.Id, buddy.Addressee.Id)">
@@ -144,6 +218,7 @@
         }
     }
 </div>
+
 @code {
     private string searchPhone = string.Empty;
     private UserDto? searchResult;
@@ -154,12 +229,216 @@
     private List<BuddyDto> pendingRequests = new();
     private List<BuddyDto> sentRequests = new();
 
+    // contact picker
+    private bool contactApiSupported = false;
+    private bool isAndroidChrome = false;
+    private bool isPicking = false;
+    private string contactStatus = "";
+    private List<ContactDisplayItem> processedContacts = new();
+
+
     protected override async Task OnInitializedAsync()
     {
+        contactApiSupported = await JS.InvokeAsync<bool>("contactsFunctions.isSupported");
+        isAndroidChrome = await JS.InvokeAsync<bool>("contactsFunctions.isAndroidChrome");
+
         var userIdResult = await UserService.GetUserId();
         if (userIdResult.IsSuccess)
             currentUserId = userIdResult.Data;
 
+        await ReloadAll();
+    }
+
+    private async Task PickContacts()
+    {
+        isPicking = true;
+        contactStatus = "Contacten openen…";
+        processedContacts.Clear();
+        StateHasChanged();
+
+        try
+        {
+            var picked = await JS.InvokeAsync<List<ContactResult>>(
+                "contactsFunctions.pickContacts",
+                new[] { "name", "tel" },
+                new { multiple = true }
+            );
+
+            if (picked == null || picked.Count == 0)
+            {
+                contactStatus = "Geen contacten geselecteerd.";
+                return;
+            }
+
+            foreach (var c in picked)
+            {
+                if (c.Tel == null) continue;
+
+                string[] formattedPhones = FormatPhoneNumbers(c.Tel);
+
+                foreach (var number in formattedPhones)
+                {
+                    var item = new ContactDisplayItem
+                    {
+                        Name = c.Name != null ? string.Join(" ", c.Name) : "(Naam onbekend)",
+                        Phone = number
+                    };
+                    var lookup = await UserService.FindUserbyPhone(number);
+
+                    if (!lookup.IsSuccess || lookup.Data == null)
+                    {
+                        item.Status = null;
+                        processedContacts.Add(item);
+                        continue;
+                    }
+
+                    item.UserId = lookup.Data.Id;
+                    int targetId = item.UserId;
+
+                    if (buddies.Any(b =>
+                        (b.Requester.Id == currentUserId && b.Addressee.Id == targetId) ||
+                        (b.Addressee.Id == currentUserId && b.Requester.Id == targetId)))
+                    {
+                        item.Status = RequestStatus.Accepted;
+                        processedContacts.Add(item);
+                        continue;
+                    }
+
+                    if (pendingRequests.Any(p => p.Requester.Id == targetId))
+                    {
+                        item.Status = RequestStatus.Pending;
+                        processedContacts.Add(item);
+                        continue;
+                    }
+
+                    if (sentRequests.Any(s => s.Addressee.Id == targetId && s.Status == RequestStatus.Pending))
+                    {
+                        item.Status = RequestStatus.Pending;
+                        processedContacts.Add(item);
+                        continue;
+                    }
+
+                    if (sentRequests.Any(s => s.Addressee.Id == targetId && s.Status == RequestStatus.Blocked))
+                    {
+                        item.Status = RequestStatus.Blocked;
+                        processedContacts.Add(item);
+                        continue;
+                    }
+
+                    item.Status = RequestStatus.Rejected;
+
+                    processedContacts.Add(item);
+                }
+            }
+
+            contactStatus = "Selectie verwerkt!";
+        }
+        catch (Exception ex)
+        {
+            contactStatus = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isPicking = false;
+            StateHasChanged();
+        }
+    }
+
+    /* ===========================
+     * HELPERS
+     * =========================== */
+
+    //todo: make this international
+    private string[] FormatPhoneNumbers(string[] phoneNumbers)
+    {
+        var formattedNumbers = phoneNumbers
+            .Select(s => s.Replace(" ", ""))
+            .Where(s => s.Length >= 9)
+            .Select(s => s.Substring(s.Length - 9))
+            .Distinct()
+            .ToArray();
+
+        return formattedNumbers;
+    }
+
+    private async Task FindUserByPhone()
+    {
+        searchResult = null;
+        message = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(searchPhone))
+        {
+            message = "Vul een telefoonnummer in.";
+            return;
+        }
+
+        var result = await UserService.FindUserbyPhone(searchPhone);
+
+        if (!result.IsSuccess || result.Data == null)
+        {
+            message = "Geen gebruiker gevonden met dit nummer.";
+            return;
+        }
+
+        if (result.Data.Id == currentUserId)
+        {
+            message = "Je kunt jezelf niet als buddy toevoegen";
+            searchResult = null;
+            return;
+        }
+
+        searchResult = result.Data;
+        message = "Gebruiker gevonden!";
+    }
+
+    private async Task SendRequest(int userId)
+    {
+        var result = await BuddyService.SendBuddyRequest(userId);
+
+        if (result.IsSuccess)
+        {
+            message = "Buddy request sent!";
+
+            var contact = processedContacts.FirstOrDefault(c => c.Status != null && c.UserId == userId);
+            if (contact != null)
+            {
+                contact.Status = RequestStatus.Pending;
+            }
+        }
+        else
+        {
+            message = $"Buddy request failed: {result.Message}";
+        }
+
+        await ReloadAll();
+        StateHasChanged();
+    }
+
+
+    private async Task RespondToRequest(int requesterId, RequestStatus status)
+    {
+        var result = await BuddyService.RespondToBuddyRequest(requesterId, status);
+        if (result.IsSuccess)
+            await ReloadAll();
+    }
+
+    private async Task RemoveBuddy(int requesterId, int addresseeId, bool block = false)
+    {
+        ServiceResult result;
+
+        if (requesterId == currentUserId)
+            result = await BuddyService.RemoveBuddy(addresseeId, block);
+        else
+            result = await BuddyService.RemoveBuddy(requesterId, block);
+
+        message = result.IsSuccess ? "Buddy succesvol verwijderd" : $"Verwijderen mislukt: {result.Message}";
+        await ReloadAll();
+    }
+
+    private async Task ResendRequest(int addresseeId)
+    {
+        var result = await BuddyService.SendBuddyRequest(addresseeId);
+        message = result.IsSuccess ? "Buddyverzoek opnieuw verstuurd!" : $"Mislukt: {result.Message}";
         await ReloadAll();
     }
 
@@ -177,75 +456,6 @@
             pendingRequests = result.Data;
     }
 
-    private async Task FindUserByPhone()
-    {
-        searchResult = null;
-        message = string.Empty;
-
-        if (string.IsNullOrWhiteSpace(searchPhone))
-        {
-            message = "Vul een telefoonnummer in.";
-            StateHasChanged();
-            return;
-        }
-
-        var result = await UserService.FindUserbyPhone(searchPhone);
-
-        if (!result.IsSuccess || result.Data == null)
-        {
-            message = "Geen gebruiker gevonden met dit nummer.";
-            StateHasChanged();
-            return;
-        }
-
-        if (result.Data.Id == currentUserId)
-        {
-            message = "Je kunt jezelf niet als buddy toevoegen";
-            searchResult = null;
-            StateHasChanged();
-            return;
-        }
-
-        // Otherwise it's a valid user
-        searchResult = result.Data;
-        message = "Gebruiker gevonden!";
-        StateHasChanged();
-    }
-
-    private async Task SendRequest(int userId)
-    {
-        var result = await BuddyService.SendBuddyRequest(userId);
-        if (result.IsSuccess)
-            message = "Buddy request sent!";
-        else
-            message = $"Buddy request Failed!, {result.Message}";
-        await ReloadAll();
-    }
-
-    private async Task RespondToRequest(int requesterId, RequestStatus status)
-    {
-        var result = await BuddyService.RespondToBuddyRequest(requesterId, status);
-        if (result.IsSuccess)
-        {
-            await ReloadAll();
-        }
-    }
-
-    private async Task RemoveBuddy(int requesterId, int addresseeId, bool block = false)
-    {
-        ServiceResult result;
-        if (requesterId == currentUserId)
-            result = await BuddyService.RemoveBuddy(addresseeId, block);
-        else
-            result = await BuddyService.RemoveBuddy(requesterId, block);
-
-        if (result.IsSuccess)
-            message = "Buddy succesfully removed";
-        else
-            message = $"Delete failed, {result.Message}";
-        await ReloadAll();
-    }
-
     private async Task LoadSentRequests()
     {
         var result = await BuddyService.GetSendRequests();
@@ -253,22 +463,26 @@
             sentRequests = result.Data;
     }
 
-    // Resend buddy request for rejected
-    private async Task ResendRequest(int addresseeId)
-    {
-        var result = await BuddyService.SendBuddyRequest(addresseeId);
-        if (result.IsSuccess)
-            message = "Buddy request re-sent!";
-        else
-            message = $"Failed to resend request: {result.Message}";
-
-        await ReloadAll();
-    }
     private async Task ReloadAll()
     {
         await LoadBuddies();
         await LoadPendingRequests();
         await LoadSentRequests();
         StateHasChanged();
+    }
+
+    //models
+    public class ContactDisplayItem
+    {
+        public string Name { get; set; } = "";
+        public string Phone { get; set; } = "";
+        public int UserId { get; set; }
+        public RequestStatus? Status { get; set; } = null;
+    }
+
+    public class ContactResult
+    {
+        public string[]? Name { get; set; }
+        public string[]? Tel { get; set; }
     }
 }

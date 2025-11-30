@@ -1,0 +1,84 @@
+﻿@page "/LeaveJourney/{JourneyId:int}"
+@using Shared.Models.Dtos.Journeys
+
+@inject JourneyService JourneyService
+@inject NavigationManager Nav
+
+<HeadContent>
+    <link href="css/common/Header.css" rel="stylesheet" />
+    <link href="css/Journey/JourneyCard.css" rel="stylesheet" />
+    <link href="css/Journey/MyJourneys/LeaveJourney.css" rel="stylesheet" />
+</HeadContent>
+
+<Header Title="Reis afronden" OnBack="GoBack" BackTo="/MyJourneys" />
+
+@if (isLoading)
+{
+    <p class="text-center text-gray-600">Reis laden...</p>
+}
+else if (Journey == null)
+{
+    <p class="text-center text-red-600">Reis niet gevonden.</p>
+}
+else
+{
+    <div class="max-w-lg mx-auto mt-4 flex flex-col gap-4">
+
+        <div class="journey-card journey-highlight">
+            <JourneyCard Journey="@Journey" CurrentUserId="Journey.OwnerId" />
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-xl shadow-lg p-5 flex flex-col gap-4 relative leave-panel">
+            <div class="absolute top-0 right-0 h-full w-2 bg-purple-300 rounded-r-xl"></div>
+
+            <h3 class="text-lg font-semibold text-gray-900">
+                Weet je zeker dat je deze reis wilt verlaten?
+            </h3>
+            <p class="text-sm text-gray-600">
+                Als je deze reis verlaat, worden je gegevens verwijderd.
+            </p>
+            <div class="flex justify-end gap-3 pt-2">
+                <button class="btn-secondary" @onclick="GoBack">
+                    Annuleren
+                </button>
+
+                <button class="btn-leave" @onclick="SubmitLeave">
+                    Reis verlaten
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int JourneyId { get; set; }
+
+    private JourneyDto? Journey;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadJourney();
+    }
+
+    private async Task LoadJourney()
+    {
+        var result = await JourneyService.GetMyJourneysAsync();
+        if (result.IsSuccess)
+            Journey = result.Data?.FirstOrDefault(j => j.Id == JourneyId);
+
+        isLoading = false;
+    }
+
+    private async Task SubmitLeave()
+    {
+        var result = await JourneyService.LeaveJourneyAsync(JourneyId);
+        if (result.IsSuccess)
+            Nav.NavigateTo("/MyJourneys");
+    }
+
+    private void GoBack()
+    {
+        Nav.NavigateTo("/MyJourneys");
+    }
+}

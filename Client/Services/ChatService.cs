@@ -1,6 +1,6 @@
 ﻿using Client.Common;
 using Microsoft.AspNetCore.Components.WebAssembly.Http;
-using Shared.Models.Dtos;
+using Shared.Models.Dtos.Chats;
 using System.Net.Http.Json;
 
 namespace Client.Services
@@ -49,11 +49,9 @@ namespace Client.Services
         {
             try
             {
-                HttpRequestMessage request = new HttpRequestMessage(
-                    HttpMethod.Post,
-                    $"api/Chat/journey/{journeyId}")
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, $"api/Chat/journey/{journeyId}")
                 {
-                    Content = JsonContent.Create(new JourneyMessageCreateDto { Content = content })
+                    Content = JsonContent.Create(new MessageCreateDto { Content = content })
                 };
 
                 request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);

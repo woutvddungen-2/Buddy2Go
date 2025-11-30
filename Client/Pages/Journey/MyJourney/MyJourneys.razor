@@ -1,4 +1,6 @@
 ﻿@page "/MyJourneys"
+@using Shared.Models.Dtos.Journeys
+@using Shared.Models.enums
 
 @inject JourneyService JourneyService
 @inject UserService UserService
@@ -59,14 +61,14 @@ else
 
                     @if (journey.OwnerId == CurrentUserId && journey.FinishedAt == null)
                     {
-                            <button class="card-button btn-finish" @onclick="@(() => GoToFinishJourney(journey.Id))">Reis afronden</button>
+                        <button class="card-button btn-finish" @onclick="@(() => GoToFinishJourney(journey.Id))">Reis afronden</button>
                     }
                     else
                     {
                         <button class="card-button btn-edit-rating" @onclick="@(() => GoToRateJourney(journey.Id))">Reis beoordelen</button>
                     }
 
-                    <button class="card-button btn-leave" @onclick="(() => LeaveJourney(journey.Id))">Reis verlaten</button>
+                    <button class="card-button btn-leave" @onclick="(() => GoToLeaveJourney(journey.Id))">Reis verlaten</button>
                 </JourneyCardButtons>
             </JourneyCard>
         }
@@ -107,16 +109,6 @@ else
             await LoadJourneys();
     }
 
-    private async Task LeaveJourney(int journeyId)
-    {
-        ServiceResult result = await JourneyService.LeaveJourneyAsync(journeyId);
-        if (result.IsSuccess)
-            await LoadJourneys();
-        else
-            Console.WriteLine("Error leaving journey: " + result.Message);
-    }
-
-
     //navigation methods
     private void GoToChat(int journeyId)
     {
@@ -131,5 +123,10 @@ else
     private void GoToFinishJourney(int journeyId)
     {
         Nav.NavigateTo($"/FinishJourney/{journeyId}");
+    }
+
+    private void GoToLeaveJourney(int journeyId)
+    {
+        Nav.NavigateTo($"/LeaveJourney/{journeyId}");
     }
 }

@@ -1,0 +1,64 @@
+﻿@page "/dangerous-places/edit/{Id:int}"
+@using Shared.Models.Dtos.DangerousPlaces
+@inject Client.Services.DangerousPlaceService DangerousPlaceService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+<HeadContent>
+    <link href="css/common/Header.css" rel="stylesheet" />
+</HeadContent>
+<Header Title="Melding aanpassen" BackTo="/dangerous-places" />
+<div class="w-full max-w-[480px] p-5 border mx-auto px-4 shadow-md border-gray-300 rounded-xl bg-white">
+@if (loading)
+{
+    <p>Loading...</p>
+}
+else if (report == null)
+{
+    <p class="text-red-600">Melding niet gevonden.</p>
+}
+else
+{
+    <div class="flex flex-col gap-4 mt-4">
+
+        <select class="border p-2 rounded" @bind="report.PlaceType">
+            @foreach (var type in Enum.GetValues<DangerousPlaceType>())
+            {
+                <option value="@type">@type</option>
+            }
+        </select>
+
+        <textarea class="border rounded p-2" rows="4" @bind="report.Description"></textarea>
+        <input type="text" class="border rounded p-2" readonly @bind="report.GPS" />
+        <button class="bg-blue-600 text-white py-2 rounded" @onclick="Save">Opslaan</button>
+    </div>
+}
+</div>
+@code {
+    [Parameter] public int Id { get; set; }
+
+    DangerousPlaceDto? report;
+    bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var myReports = await DangerousPlaceService.GetMyReportsAsync();
+        report = myReports.Data?.FirstOrDefault(r => r.Id == Id);
+
+        loading = false;
+    }
+
+    private async Task Save()
+    {
+        if (report == null) return;
+
+        var result = await DangerousPlaceService.UpdateReportAsync(
+            report.Id,
+            report.PlaceType,
+            report.Description,
+            report.GPS
+        );
+
+        if (result.IsSuccess)
+            Nav.NavigateTo("/dangerous-places");
+    }
+}

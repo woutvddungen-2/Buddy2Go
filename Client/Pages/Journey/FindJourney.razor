@@ -4,6 +4,8 @@
 @inject NavigationManager Nav
 
 @using Client.Components
+@using Shared.Models.Dtos.Journeys
+@using Shared.Models.enums
 
 <HeadContent>
     <link href="css/common/Header.css" rel="stylesheet" />
@@ -11,7 +13,7 @@
     <link href="css/Journey/FindJourney.css" rel="stylesheet" />    
 </HeadContent>
 
-<Header Title="Ik Zoek een Reisbuddy" BackTo="/JourneyHome" />
+<Header Title="Ik ga met je mee" BackTo="/JourneyHome" />
 
 @if (isLoading)
 {

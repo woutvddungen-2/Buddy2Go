@@ -1,0 +1,84 @@
+﻿/* Additional styling specific to LeaveJourney page */
+
+/* Journey Card highlight stripe */
+.journey-highlight {
+    position: relative;
+}
+
+    .journey-highlight::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 5px;
+        height: 100%;
+        background: #7b2cbf;
+        border-radius: 0 12px 12px 0;
+    }
+
+/* Back button in header */
+.back-button {
+    color: #7b2cbf !important;
+    border-color: #7b2cbf !important;
+    background: white !important;
+}
+
+    .back-button:hover {
+        background: #7b2cbf !important;
+        color: white !important;
+    }
+
+/* Confirmation panel extra polish */
+.leave-panel {
+    transition: 0.2s ease-in-out;
+}
+
+    .leave-panel:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+
+/* Buttons */
+.btn-secondary {
+    padding: 0.5rem 1.1rem;
+    border-radius: 10px;
+    background: #f3f3f3;
+    border: 1px solid #d0d0d0;
+    font-weight: 500;
+    transition: 0.15s ease-in-out;
+}
+
+    .btn-secondary:hover {
+        background: #e2e2e2;
+    }
+
+.btn-leave {
+    background: #fff0f4;
+    color: #c62828;
+    border: 2px solid #c62828;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.15s ease-in-out;
+}
+
+    .btn-leave:hover {
+        background: #ffe5e9;
+    }
+
+    /* improve contrast on small screens */
+    .btn-leave:active {
+        background: #ffdce1;
+    }
+
+    /* optional: tiny lift */
+    .btn-leave:hover {
+        transform: translateY(-1px);
+    }
+
+/* optional: better alignment with primary button style spacing */
+.btn-leave {
+    min-width: 130px;
+    text-align: center;
+}
