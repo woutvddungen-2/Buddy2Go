@@ -58,7 +58,7 @@ namespace Server.Features.DangerousPlaces
             }
         }
 
-        [HttpPatch("UpdateReport")]
+        [HttpPut("UpdateReport")]
         public async Task<IActionResult> UpdateReport([FromBody] DangerousPlaceCreateDto request)
         {
             int userId = HttpContext.GetUserId();

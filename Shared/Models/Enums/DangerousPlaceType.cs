@@ -1,11 +1,19 @@
-﻿namespace Shared.Models.enums
+﻿using System.ComponentModel.DataAnnotations;
+
+public enum DangerousPlaceType
 {
-    public enum DangerousPlaceType
-    {
-        AccidentProne = 0,
-        CrimeSpot= 1,
-        Trash = 2,
-        PoorLighting = 3,
-        Other = 4
-    }
+    [Display(Name = "Gevaarlijke weg/kruising")]
+    AccidentProne = 0,
+
+    [Display(Name = "Criminaliteit")]
+    CrimeSpot = 1,
+
+    [Display(Name = "Vuilnis / zwerfafval")]
+    Trash = 2,
+
+    [Display(Name = "Slechte verlichting")]
+    PoorLighting = 3,
+
+    [Display(Name = "Overig")]
+    Other = 4
 }

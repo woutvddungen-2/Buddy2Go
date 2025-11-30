@@ -7,7 +7,7 @@
     <link href="css/common/Header.css" rel="stylesheet" />
 </HeadContent>
 <Header Title="Melding aanpassen" BackTo="/dangerous-places" />
-
+<div class="w-full max-w-[480px] p-5 border mx-auto px-4 shadow-md border-gray-300 rounded-xl bg-white">
 @if (loading)
 {
     <p>Loading...</p>
@@ -32,7 +32,7 @@ else
         <button class="bg-blue-600 text-white py-2 rounded" @onclick="Save">Opslaan</button>
     </div>
 }
-
+</div>
 @code {
     [Parameter] public int Id { get; set; }
 

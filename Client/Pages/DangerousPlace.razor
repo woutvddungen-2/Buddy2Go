@@ -1,87 +1,100 @@
 ﻿@page "/dangerous-places"
 @using Shared.Models.Dtos.DangerousPlaces
+@using Shared.Extensions
 @inject Client.Services.DangerousPlaceService DangerousPlaceService
 @inject NavigationManager Nav
-@inject IJSRuntime JS
+@inject GPSService gpsService
+
+
 <HeadContent>
     <link href="css/common/Header.css" rel="stylesheet" />
 </HeadContent>
 <Header Title="Gevaarlijke plek melden" />
 
-
-<!-- CREATE REPORT SECTION -->
-<div class="flex flex-col gap-3 mb-8">
-    @if (gpsAvailable)
+<div class="w-full max-w-[480px] p-5 border mx-auto px-4 shadow-md border-gray-300 rounded-xl bg-white">
+    @if (!string.IsNullOrEmpty(message))
     {
-        <select class="border p-2 rounded" @bind="newPlaceType">
-            @foreach (var type in Enum.GetValues<DangerousPlaceType>())
-            {
-                <option value="@type">@type</option>
-            }
-        </select>
+        <div class="text-center text-red-600">@message</div>
+    }
+    <!-- CREATE REPORT SECTION -->
+    <div class="flex flex-col gap-3 mb-8">
+        @if (gpsAvailable)
+        {
+            <select class="border p-2 rounded" @bind="newPlaceType">
+                <option selected disabled hidden value="">Selecteer een categorie…</option>
 
-        <textarea class="border rounded p-2" placeholder="Beschrijving (optioneel)" @bind="newDescription"></textarea>
-        <input class="border rounded p-2" placeholder="GPS wordt geladen..." readonly @bind="gps" />
-        <button class="bg-purple-600 text-black py-2 rounded" @onclick="CreateReport">Meld gevaarlijke plek</button>
+                @foreach (var type in Enum.GetValues<DangerousPlaceType>())
+                {
+                    <option value="@type">@type.GetDisplayName()</option>
+                }
+            </select>
+
+            <textarea class="border rounded p-2" placeholder="Beschrijving (optioneel)" @bind="newDescription"></textarea>
+            <input class="border rounded p-2" placeholder="GPS wordt geladen..." readonly @bind="gps" />
+            <button class="bg-purple-600 text-black py-2 rounded" @onclick="CreateReport">Meld gevaarlijke plek</button>
+        }
+        else
+        {
+            <div class="p-4 border rounded bg-red-50 text-red-700">
+                <p class="font-semibold">GPS niet beschikbaar</p>
+                <p class="text-sm">
+                    Om een gevaarlijke plek te melden is locatie-toegang vereist.
+                </p>
+            </div>
+        }
+
+        <a href="tel:112" class="bg-red-600 text-white py-2 rounded text-center">📞 Bel 112 (Noodnummer)</a>
+    </div>    
+    <!-- MY REPORTS -->
+    @if (myReports == null)
+    {
+        <p>Loading...</p>
+    }
+    else if (!myReports.Any())
+    {
+        <p class="text-gray-500">Geen recente meldingen gevonden.</p>
     }
     else
     {
-        <div class="p-4 border rounded bg-red-50 text-red-700">
-            <p class="font-semibold">GPS niet beschikbaar</p>
-            <p class="text-sm">
-                Om een gevaarlijke plek te melden is locatie-toegang vereist.
-            </p>
-        </div>
-    }
+        <h2 class="text-xl font-semibold mb-2">Mijn meldingen</h2>
 
-    <a href="tel:112" class="bg-red-600 text-white py-2 rounded text-center">📞 Bel 112 (Noodnummer)</a>
+        @foreach (var report in myReports)
+        {
+            <div class="border p-3 rounded-lg flex flex-col gap-2 mb-3">
+
+                <p><strong>Type:</strong> @report.PlaceType</p>
+                <p><strong>Beschrijving:</strong> @report.Description</p>
+                <p><strong>GPS:</strong> @report.GPS</p>
+                <p class="text-sm text-gray-500">
+                    @report.ReportedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")
+                </p>
+
+                @if (report.ReportedAt > DateTime.UtcNow.AddDays(-1))
+                {
+                    <button class="bg-blue-600 text-white py-1 px-3 rounded" @onclick="() => NavigateToEdit(report.Id)">
+                        Bewerken
+                    </button>
+                }
+                else
+                {
+                    <p class="text-gray-400 text-sm">
+                        Kan niet meer aangepast worden (ouder dan 7 dagen).
+                    </p>
+                }
+            </div>
+        }
+    }
+    
 </div>
 
-<!-- MY REPORTS -->
-@if (myReports == null)
-{
-    <p>Loading...</p>
-}
-else if (!myReports.Any())
-{
-    <p class="text-gray-500">Geen recente meldingen gevonden.</p>
-}
-else
-{
-    <h2 class="text-xl font-semibold mb-2">Mijn meldingen</h2>
-
-    @foreach (var report in myReports)
-    {
-        <div class="border p-3 rounded-lg flex flex-col gap-2 mb-3">
-
-            <p><strong>Type:</strong> @report.PlaceType</p>
-            <p><strong>Beschrijving:</strong> @report.Description</p>
-            <p><strong>GPS:</strong> @report.GPS</p>
-            <p class="text-sm text-gray-500">
-                @report.ReportedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")
-            </p>
-
-            @if (report.ReportedAt > DateTime.UtcNow.AddDays(-7))
-            {
-                <button class="bg-blue-600 text-white py-1 px-3 rounded" @onclick="() => NavigateToEdit(report.Id)">
-                    Bewerken
-                </button>
-            }
-            else
-            {
-                <p class="text-gray-400 text-sm">
-                    Kan niet meer aangepast worden (ouder dan 7 dagen).
-                </p>
-            }
-        </div>
-    }
-}
 
 @code {
-    private DangerousPlaceType newPlaceType = DangerousPlaceType.Other;
+    private DangerousPlaceType? newPlaceType = null;
     private string? newDescription;
     private string gps = "";
     private bool gpsAvailable = true;
+
+    private string? message = null;
 
     private List<DangerousPlaceDto>? myReports;
 
@@ -93,16 +106,16 @@ else
 
     private async Task LoadGps()
     {
-        try
+        GeolocationResult? result = await gpsService.GetGPSAsync();
+        if (result != null)
         {
-            var result = await JS.InvokeAsync<GeolocationResult>("geolocationFunctions.getCurrentPosition");
             gps = $"{result.latitude},{result.longitude}";
             gpsAvailable = true;
         }
-        catch
+        else
         {
             gpsAvailable = false;
-            gps = "" ;
+            gps = "";
         }
     }
 
@@ -110,29 +123,43 @@ else
     {
         var result = await DangerousPlaceService.GetMyReportsAsync();
         if (result.IsSuccess)
-            myReports = result.Data;
+        {
+            message = null;
+            myReports = result.Data;            
+        }
+        else
+        {
+            message = result.Message;
+        }
     }
 
     private async Task CreateReport()
     {
-        var result = await DangerousPlaceService.CreateReportAsync(newPlaceType, newDescription, gps);
+        if (newPlaceType == null)
+        {
+            message = "Type Gevaarlijke plek dient gekozen te worden";
+            return;
+        }
+        if (newPlaceType == DangerousPlaceType.Other && string.IsNullOrEmpty(newDescription))
+        {
+            message = "Voor optie overig, dient de beschrijving verplicht ingevuld te worden";
+            return;
+        }
+        ServiceResult result = await DangerousPlaceService.CreateReportAsync(newPlaceType.Value, newDescription, gps);
         if (result.IsSuccess)
         {
+            message = null;
             newDescription = "";
+            newPlaceType = null;
             await LoadReports();
+        }
+        else
+        {
+            message = result.Message;
         }
     }
     private void NavigateToEdit(int reportId)
     {
         Nav.NavigateTo($"/dangerous-places/edit/{reportId}");
-    }
-
-    private class GeolocationResult
-    {
-        public double latitude { get; set; }
-        public double longitude { get; set; }
-        public double accuracy { get; set; }
-        public double? altitude { get; set; }          // nullable, because it may be null
-        public double? altitudeAccuracy { get; set; }
     }
 }

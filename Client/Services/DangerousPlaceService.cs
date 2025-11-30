@@ -74,7 +74,7 @@ namespace Client.Services
                 description = null;
             try
             {
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, $"api/DangerousPlace/UpdateReport")
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Put, $"api/DangerousPlace/UpdateReport")
                 {
                     Content = JsonContent.Create(new DangerousPlaceCreateDto { Id = id, PlaceType = placeType, Description = description, GPS = gps })
                 };

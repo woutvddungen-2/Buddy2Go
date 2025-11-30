@@ -29,7 +29,7 @@ namespace Server.Features.DangerousPlaces
             }
 
             List<DangerousPlaceDto> reports = await db.DangerousPlaces
-                .Where(u => u.ReportedById == userId && u.ReportedAt > DateTime.UtcNow.AddDays(-7))
+                .Where(u => u.ReportedById == userId && u.ReportedAt > DateTime.UtcNow.AddDays(-1))
                 .OrderByDescending(p => p.ReportedAt)
                 .Select(p => new DangerousPlaceDto
                 {
@@ -110,22 +110,10 @@ namespace Server.Features.DangerousPlaces
             }
 
             existing.PlaceType = report.PlaceType;
-            existing.GPS = report.GPS.Trim();
-            if (!string.IsNullOrEmpty(existing.Description))
-                existing.Description = existing.Description.Trim();
+            if (!string.IsNullOrEmpty(report.Description))
+                existing.Description = report.Description.Trim();
             else
                 existing.Description = null;
-
-            DangerousPlace place = new DangerousPlace
-            {
-                ReportedById = userId,
-                PlaceType = report.PlaceType,
-                Description = report.Description?.Trim() ?? string.Empty,
-                GPS = report.GPS.Trim(),
-                ReportedAt = DateTime.UtcNow
-            };
-
-            db.DangerousPlaces.Add(place);
             await db.SaveChangesAsync();
 
             logger.LogInformation("Dangerous place {placeId} created by user {userId} at {gps}", report.Id, userId, report.GPS);
