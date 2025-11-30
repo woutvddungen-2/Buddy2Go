@@ -19,7 +19,7 @@ WORKDIR /usr/share/nginx/html
 
 COPY --from=build /app/publish/wwwroot .
 
-COPY Client/wwwroot/appsettings.json /usr/share/nginx/html/appsettings.json
+COPY Client/Build/appsettings/appsettings.json /usr/share/nginx/html/appsettings.json
 
 COPY Client/Build/nginx/nginx.http.conf  /etc/nginx/templates/nginx.http.conf
 COPY Client/Build/nginx/nginx.https.conf /etc/nginx/templates/nginx.https.conf

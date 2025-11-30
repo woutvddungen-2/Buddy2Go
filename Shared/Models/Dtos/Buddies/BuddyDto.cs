@@ -1,6 +1,7 @@
-﻿using Shared.Models.enums;
+﻿using Shared.Models.Dtos.Users;
+using Shared.Models.enums;
 
-namespace Shared.Models.Dtos
+namespace Shared.Models.Dtos.Buddies
 {
     public class BuddyDto
     {

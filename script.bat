@@ -112,14 +112,14 @@ REM ----------------- AppSettings Selection ------------------
 if "%MODE_ENV%"=="local" (
     if "%SSL_FLAG%"=="true" (
         echo Using LOCAL HTTPS appsettings.json...
-        copy /Y Client\Build\appsettings\appsettings.https.local.json Client\wwwroot\appsettings.json >nul
+        copy /Y Client\Build\appsettings\appsettings.https.local.json Client\Build\appsettings\appsettings.json >nul
     ) else (
         echo Using LOCAL HTTP appsettings.json...
-        copy /Y Client\Build\appsettings\appsettings.http.local.json Client\wwwroot\appsettings.json >nul
+        copy /Y Client\Build\appsettings\appsettings.http.local.json Client\Build\appsettings\appsettings.json >nul
     )
 ) else (
     echo Using DEPLOY appsettings.json...
-    copy /Y Client\Build\appsettings\appsettings.https.deploy.json Client\wwwroot\appsettings.json >nul
+    copy /Y Client\Build\appsettings\appsettings.https.deploy.json Client\Build\appsettings\appsettings.json >nul
     
 )
 echo.
@@ -186,7 +186,7 @@ echo Selecting docker-compose file...
 if "%MODE_ENV%"=="local" (
     if "%SSL_FLAG%"=="true" (
         echo Using LOCAL HTTPS docker-compose file...
-        copy /Y "Build/compose/docker-compose.https.yml" "%DEPLOY_FOLDER%\docker-compose.yml" >nul
+        copy /Y "Build\compose\docker-compose.https.yml" "%DEPLOY_FOLDER%\docker-compose.yml" >nul
 
         echo Copying certificates for LOCAL HTTPS...
         mkdir "%DEPLOY_FOLDER%\certs" 2>nul
@@ -196,7 +196,7 @@ if "%MODE_ENV%"=="local" (
 
     ) else (
         echo Using LOCAL HTTP docker-compose file...
-        copy /Y "Build/compose/docker-compose.http.yml" "%DEPLOY_FOLDER%\docker-compose.yml" >nul
+        copy /Y "Build\compose\docker-compose.http.yml" "%DEPLOY_FOLDER%\docker-compose.yml" >nul
 
         echo SSL disabled — no certs copied.
     )
@@ -232,7 +232,7 @@ copy /Y "%TAR_NAME%" "%OUTPUT_PACKAGE%" >nul
 REM Cleanup
 del /Q "%TAR_NAME%" >nul
 rd /s /q "%DEPLOY_FOLDER%"
-del /Q Client\wwwroot\appsettings.json >nul
+del /Q Client\Build\appsettings\appsettings.json >nul
 
 echo.
 echo ===============================================

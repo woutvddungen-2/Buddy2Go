@@ -1,7 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Server.Common;
 using Server.Infrastructure.Data;
-using Shared.Models.Dtos;
+using Shared.Models.Dtos.Users;
+using Shared.Models.Dtos.Buddies;
 using Shared.Models.enums;
 
 namespace Server.Features.Buddies

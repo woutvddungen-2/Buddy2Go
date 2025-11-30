@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Server.Common;
 using Server.Infrastructure.Data;
-using Shared.Models.Dtos;
+using Shared.Models.Dtos.DangerousPlaces;
 using Shared.Models.enums;
 
 namespace Server.Features.DangerousPlaces

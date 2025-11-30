@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Server.Common;
-using Shared.Models.Dtos;
+using Shared.Models.Dtos.Chats;
 
 namespace Server.Features.Chats
 {
@@ -38,7 +38,7 @@ namespace Server.Features.Chats
         }
 
         [HttpPost("journey/{journeyId}")]
-        public async Task<IActionResult> SendMessage(int journeyId, [FromBody] JourneyMessageCreateDto dto)
+        public async Task<IActionResult> SendMessage(int journeyId, [FromBody] MessageCreateDto dto)
         {
             int userId = HttpContext.GetUserId();
             ServiceResult<JourneyMessageDto> result = await chatService.SendMessage(journeyId, userId, dto.Content);

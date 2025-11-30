@@ -1,6 +1,6 @@
-﻿namespace Shared.Models.Dtos
+﻿namespace Shared.Models.Dtos.Chats
 {
-    public class JourneyMessageCreateDto
+    public class MessageCreateDto
     {
         public string Content { get; set; } = string.Empty;
     }

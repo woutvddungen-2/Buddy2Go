@@ -3,7 +3,7 @@ using Server.Common;
 using Server.Features.Journeys;
 using Server.Features.Users;
 using Server.Infrastructure.Data;
-using Shared.Models.Dtos;
+using Shared.Models.Dtos.Chats;
 using Shared.Models.enums;
 
 namespace Server.Features.Chats

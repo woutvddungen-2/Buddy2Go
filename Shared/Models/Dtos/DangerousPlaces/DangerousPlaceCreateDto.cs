@@ -1,6 +1,6 @@
 ﻿using Shared.Models.enums;
 
-namespace Shared.Models.Dtos
+namespace Shared.Models.Dtos.DangerousPlaces
 {
     public class DangerousPlaceCreateDto
     {

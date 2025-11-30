@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Models.Dtos;
 using System.Security.Claims;
 using Server.Common;
+using Shared.Models.Dtos.DangerousPlaces;
 
 namespace Server.Features.DangerousPlaces
 {

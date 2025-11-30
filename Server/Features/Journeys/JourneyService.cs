@@ -3,7 +3,8 @@ using Server.Common;
 using Server.Features.Buddies;
 using Server.Features.Users;
 using Server.Infrastructure.Data;
-using Shared.Models.Dtos;
+using Shared.Models.Dtos.Buddies;
+using Shared.Models.Dtos.Journeys;
 using Shared.Models.enums;
 
 namespace Server.Features.Journeys

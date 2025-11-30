@@ -1,4 +1,4 @@
-﻿@page "/FinishJourney/{JourneyId:int}"
+﻿@page "/LeaveJourney/{JourneyId:int}"
 @using Shared.Models.Dtos.Journeys
 
 @inject JourneyService JourneyService
@@ -7,36 +7,43 @@
 <HeadContent>
     <link href="css/common/Header.css" rel="stylesheet" />
     <link href="css/Journey/JourneyCard.css" rel="stylesheet" />
-    <link href="css/Journey/MyJourneys/FinishJourney.css" rel="stylesheet" />
+    <link href="css/Journey/MyJourneys/LeaveJourney.css" rel="stylesheet" />
 </HeadContent>
 
 <Header Title="Reis afronden" OnBack="GoBack" BackTo="/MyJourneys" />
 
 @if (isLoading)
 {
-    <p>Reis laden...</p>
+    <p class="text-center text-gray-600">Reis laden...</p>
 }
 else if (Journey == null)
 {
-    <p>Reis niet gevonden.</p>
+    <p class="text-center text-red-600">Reis niet gevonden.</p>
 }
 else
 {
-    <div class="journey-finish-container">
+    <div class="max-w-lg mx-auto mt-4 flex flex-col gap-4">
 
-        <JourneyCard Journey="@Journey" CurrentUserId="Journey.OwnerId" />
+        <div class="journey-card journey-highlight">
+            <JourneyCard Journey="@Journey" CurrentUserId="Journey.OwnerId" />
+        </div>
 
-        <div class="finish-panel">
-            <h3>Weet je zeker dat je deze reis wilt afronden?</h3>
-            <p>Na het afronden kan je de reis niet meer wijzigen.</p>
+        <div class="bg-white border border-gray-200 rounded-xl shadow-lg p-5 flex flex-col gap-4 relative leave-panel">
+            <div class="absolute top-0 right-0 h-full w-2 bg-purple-300 rounded-r-xl"></div>
 
-            <div class="finish-actions">
+            <h3 class="text-lg font-semibold text-gray-900">
+                Weet je zeker dat je deze reis wilt verlaten?
+            </h3>
+            <p class="text-sm text-gray-600">
+                Als je deze reis verlaat, worden je gegevens verwijderd.
+            </p>
+            <div class="flex justify-end gap-3 pt-2">
                 <button class="btn-secondary" @onclick="GoBack">
                     Annuleren
                 </button>
 
-                <button class="btn-primary" @onclick="SubmitFinish">
-                    Reis afronden
+                <button class="btn-leave" @onclick="SubmitLeave">
+                    Reis verlaten
                 </button>
             </div>
         </div>
@@ -63,9 +70,9 @@ else
         isLoading = false;
     }
 
-    private async Task SubmitFinish()
+    private async Task SubmitLeave()
     {
-        var result = await JourneyService.FinishJourney(JourneyId);
+        var result = await JourneyService.LeaveJourneyAsync(JourneyId);
         if (result.IsSuccess)
             Nav.NavigateTo("/MyJourneys");
     }

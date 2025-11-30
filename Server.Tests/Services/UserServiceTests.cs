@@ -6,7 +6,7 @@ using Server.Common;
 using Server.Features.Users;
 using Server.Infrastructure.Data;
 using Server.Tests.TestUtilities;
-using Shared.Models.Dtos;
+using Shared.Models.Dtos.Users;
 
 namespace Server.Tests.Services
 {

@@ -1,6 +1,6 @@
 ﻿using Client.Common;
 using Microsoft.AspNetCore.Components.WebAssembly.Http;
-using Shared.Models.Dtos;
+using Shared.Models.Dtos.DangerousPlaces;
 using Shared.Models.enums;
 using System.Net.Http.Json;
 

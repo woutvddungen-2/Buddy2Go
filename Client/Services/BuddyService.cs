@@ -1,6 +1,7 @@
 ﻿using Client.Common;
 using Microsoft.AspNetCore.Components.WebAssembly.Http;
-using Shared.Models.Dtos;
+using Shared.Models.Dtos.Shared;
+using Shared.Models.Dtos.Buddies;
 using Shared.Models.enums;
 using System.Net.Http.Json;
 

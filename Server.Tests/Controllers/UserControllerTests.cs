@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Server.Common;
 using Server.Features.Users;
-using Shared.Models.Dtos;
+using Shared.Models.Dtos.Users;
 
 namespace Server.Tests.Controllers
 {

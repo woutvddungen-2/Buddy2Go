@@ -4,7 +4,7 @@ using Server.Common;
 using Server.Features.Buddies;
 using Server.Features.Journeys;
 using Server.Infrastructure.Data;
-using Shared.Models.Dtos;
+using Shared.Models.Dtos.Users;
 using Shared.Models.enums;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -25,14 +25,6 @@ namespace Server.Features.Users
             jwtSecret = config["JwtSettings:Secret"] ?? throw new Exception("JWT secret missing");
         }
 
-        /// <summary>
-        /// Registers a new user with the specified credentials and contact information.
-        /// </summary>
-        /// <param name="username">The username for the new user.</param>
-        /// <param name="password">The password for the new user.</param>
-        /// <param name="email">The email address for the new user.</param>
-        /// <param name="phoneNumber">The phone number for the new user.</param>
-        /// <returns> A <see cref="ServiceResult"/> indicating the success or failure of the registration process.</returns>
         public async Task<ServiceResult> Register(string username, string password, string email, string phoneNumber)
         {
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(phoneNumber))
@@ -58,13 +50,6 @@ namespace Server.Features.Users
 
             return ServiceResult.Succes("User registered successfully");
         }
-
-        /// <summary>
-        /// Authenticates a user based on the provided username and password.
-        /// </summary>
-        /// <param name="username">The username of the user attempting to log in</param>
-        /// <param name="password">The password of the user attempting to log in</param>
-        /// <returns> A <see cref="ServiceResult{T}"/> containing a JWT token if authentication is successful; otherwise, an error message.</returns>
         public async Task<ServiceResult<string>> Login(string username, string password)
         {
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
@@ -77,13 +62,6 @@ namespace Server.Features.Users
             string token = GenerateJwtToken(user.Id, user.Username);
             return ServiceResult<string>.Succes(token);
         }
-
-
-        /// <summary>
-        /// Retrieves user information based on the specified user ID.
-        /// </summary>
-        /// <param name="Id">The unique identifier of the user to retrieve.</param>
-        /// <returns> A <see cref="ServiceResult{T}"/> containing a <see cref="UserDto"/> with user information if found; otherwise, an error message.</returns>
         public async Task<ServiceResult<UserDto>> GetUserInfo(int id)
         {
             User? user = await db.Users.FindAsync(id);
@@ -99,7 +77,6 @@ namespace Server.Features.Users
                 CreatedAt = user.CreatedAt
             });
         }
-
         public async Task<ServiceResult<UserDto>> FindUserbyPhone(string number, int userId)
         {
             //todo: add more robust check for correct number
@@ -152,6 +129,117 @@ namespace Server.Features.Users
                 PhoneNumber = user.Phonenumber,
                 CreatedAt = user.CreatedAt
             });
+        }
+        public async Task<ServiceResult> UpdatePhoneNumberAsync(int userId, string newPhoneNumber)
+        {
+            if (string.IsNullOrWhiteSpace(newPhoneNumber))
+            {
+                logger.LogWarning("UpdatePhoneNumber Failed, no phone number provided for user {userId}", userId);
+                return ServiceResult.Fail(ServiceResultStatus.ValidationError, "Phone number is required");
+            }
+
+            string digits = new string(newPhoneNumber.Where(char.IsDigit).ToArray());
+            if (digits.Length < 8)
+            {
+                logger.LogInformation("UpdatePhoneNumber failed for user {userId}, number too short: {digits}", userId, digits);
+                return ServiceResult.Fail(ServiceResultStatus.ValidationError, "Invalid phone number");
+            }
+
+            User? user = await db.Users.FindAsync(userId);
+            if (user == null)
+            {
+                logger.LogWarning("UpdatePhoneNumber failed, User {userId} not found", userId);
+                return ServiceResult.Fail(ServiceResultStatus.UserNotFound, "User not found");
+            }
+
+            if (user.Phonenumber == newPhoneNumber)
+            {
+                logger.LogInformation("UpdatePhoneNumber failed for user {userId}, new number same as old", userId);
+                return ServiceResult.Fail(ServiceResultStatus.ValidationError, "New number must be different");
+            }
+
+            if (await db.Users.AnyAsync(u => u.Phonenumber == newPhoneNumber && u.Id != userId))
+            {
+                logger.LogInformation("UpdatePhoneNumber failed for user {userId}, number {number} already used", userId, newPhoneNumber);
+                return ServiceResult.Fail(ServiceResultStatus.ValidationError, "Phone number already in use");
+            }
+
+            user.Phonenumber = newPhoneNumber;
+            await db.SaveChangesAsync();
+
+            logger.LogInformation("User {userId} successfully updated phone number", userId);
+            return ServiceResult.Succes("Phone number updated successfully");
+        }
+        public async Task<ServiceResult> UpdateEmailAsync(int userId, string newEmail)
+        {
+            if (string.IsNullOrWhiteSpace(newEmail))
+            {
+                logger.LogWarning("UpdateEmail Failed, no email provided for user {userId}", userId);
+                return ServiceResult.Fail(ServiceResultStatus.ValidationError, "Email is required");
+            }
+
+            User? user = await db.Users.FindAsync(userId);
+            if (user == null)
+            {
+                logger.LogWarning("UpdateEmail Failed, User {userId} not found", userId);
+                return ServiceResult.Fail(ServiceResultStatus.UserNotFound, "User not found");
+            }
+
+            if (user.Email == newEmail)
+            {
+                logger.LogInformation("UpdateEmail failed for user {userId}, email cannot be the same", userId);
+                return ServiceResult.Fail(ServiceResultStatus.ValidationError, "New email must be different");
+            }
+
+            if (await db.Users.AnyAsync(u => u.Email == newEmail && u.Id != userId))
+            {
+                logger.LogInformation("UpdateEmail failed for user {userId}, email {email} already exists", userId, newEmail);
+                return ServiceResult.Fail(ServiceResultStatus.ValidationError, "Email is already in use");
+            }
+
+            user.Email = newEmail;
+            await db.SaveChangesAsync();
+
+            logger.LogInformation("User {userId} successfully changed email to {email}", userId, newEmail);
+            return ServiceResult.Succes("Email updated successfully");
+        }
+        public async Task<ServiceResult> UpdatePasswordAsync(int userId, string oldPassword, string newPassword)
+        {
+            if (string.IsNullOrWhiteSpace(oldPassword) || string.IsNullOrWhiteSpace(newPassword))
+            {
+                logger.LogWarning("ChangePassword Failed, no data in old and/or new password for user {userId}", userId);
+                return ServiceResult.Fail(ServiceResultStatus.ValidationError, "Old and new password are required");
+            }
+                
+            User? user = await db.Users.FindAsync(userId);
+            if (user == null)
+            {
+                logger.LogWarning("ChangePassword Failed, User: {user} not found", userId);
+                return ServiceResult.Fail(ServiceResultStatus.UserNotFound, "User not found");
+            }
+                
+            if (!VerifyPassword(oldPassword, user.PasswordHash))
+            {
+                logger.LogWarning("ChangePassword Failed for user {user}, Current password is incorrect", userId);
+                return ServiceResult.Fail(ServiceResultStatus.Unauthorized, "Current password is incorrect");
+            }
+
+            if (!IsPasswordStrong(newPassword))
+            {
+                logger.LogInformation("ChangePassword failed for user {userId}, new password is too weak", userId);
+                return ServiceResult.Fail(ServiceResultStatus.ValidationError, "New password is too weak");
+            }
+            if (VerifyPassword(newPassword, user.PasswordHash))
+            {
+                logger.LogInformation("ChangePassword failed for user {userId}, new password cannot be the same as old password", userId);
+                return ServiceResult.Fail(ServiceResultStatus.ValidationError, "New password must be different than old password");
+            }
+                
+            user.PasswordHash = HashPassword(newPassword);
+            await db.SaveChangesAsync();
+
+            logger.LogInformation("User {UserId} successfully changed password", userId);
+            return ServiceResult.Succes("Password changed successfully");
         }
         public async Task<ServiceResult> DeleteUserAsync(int userId)
         {
@@ -237,8 +325,8 @@ namespace Server.Features.Users
             return tokenHandler.WriteToken(token);
         }
 
-        //----------------------- Password Helpers ----------------------
 
+        //----------------------- Password Helpers ----------------------
         /// <summary>
         /// Determines whether the specified password meets the criteria for being considered strong.
         /// </summary>

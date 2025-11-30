@@ -2,8 +2,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Server.Common;
-using Shared.Models.Dtos;
+using Shared.Models.Dtos.Users;
 using System.Security.Claims;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Server.Features.Users
 {
@@ -48,7 +49,6 @@ namespace Server.Features.Users
                     return StatusCode(500, "Unknown registration error");
             }
         }
-
 
         [HttpPost("Login")]
         public async Task<IActionResult> Login([FromBody] LoginDto login)
@@ -120,7 +120,6 @@ namespace Server.Features.Users
             }
         }
 
-
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost("Logout")]
         public IActionResult Logout()
@@ -153,6 +152,67 @@ namespace Server.Features.Users
         }
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpPatch("UpdateEmail/{email}")]
+        public async Task<IActionResult> UpdateEmail(string email)
+        {
+            int userId = HttpContext.GetUserId();
+            ServiceResult result = await service.UpdateEmailAsync(userId, email);
+            switch (result.Status) {
+                case ServiceResultStatus.Success:
+                    return Ok(result.Message);
+                case ServiceResultStatus.ValidationError:
+                    return BadRequest(result.Message);
+                case ServiceResultStatus.UserNotFound:
+                    return NotFound(result.Message);
+                default:
+                    logger.LogError("UpdateEmail, user: {userId}, error: {message}, Email: {Email}", userId, result.Message, email);
+                    return StatusCode(500, "Unexpected error changing user info");
+            }
+        }
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpPatch("UpdatePhoneNumber/{number}")]
+        public async Task<IActionResult> UpdatePhoneNumber(string number)
+        {
+            int userId = HttpContext.GetUserId();
+            ServiceResult result = await service.UpdatePhoneNumberAsync(userId, number);
+            switch (result.Status)
+            {
+                case ServiceResultStatus.Success:
+                    return Ok(result.Message);
+                case ServiceResultStatus.ValidationError:
+                    return BadRequest(result.Message);
+                case ServiceResultStatus.UserNotFound:
+                    return NotFound(result.Message);
+                default:
+                    logger.LogError("UpdatePhoneNumber, user: {userId}, error: {message}, Number: {PhoneNumber}", userId, result.Message, number);
+                    return StatusCode(500, "Unexpected error changing user info");
+            }
+        }
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpPost("UpdatePassword")]
+        public async Task<IActionResult> UpdatePassword([FromBody] ChangePasswordDto dto)
+        {
+            int userId = HttpContext.GetUserId();
+            ServiceResult result = await service.UpdatePasswordAsync(userId, dto.OldPassword, dto.NewPassword);
+            switch (result.Status)
+            {
+                case ServiceResultStatus.Success:
+                    return Ok(result.Message);
+                case ServiceResultStatus.ValidationError:
+                    return BadRequest(result.Message);
+                case ServiceResultStatus.UserNotFound:
+                    return NotFound(result.Message);
+                case ServiceResultStatus.Unauthorized:
+                    return Unauthorized(result.Message);
+                default:
+                    logger.LogError("UpdatePassword, user: {userId}, error: {message}", userId, result.Message);
+                    return StatusCode(500, "Unexpected error changing user info");
+            }
+        }
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpDelete("Delete")]
         public async Task<IActionResult> DeleteUser()
         {
@@ -163,7 +223,6 @@ namespace Server.Features.Users
             {
                 case ServiceResultStatus.Success:
                     logger.LogInformation("Delete User Succesful, Message: {message}", result.Message);
-                    Logout();
                     return Ok();
                 case ServiceResultStatus.UserNotFound:
                     logger.LogInformation("Delete User Failed, : {message}", result.Message);

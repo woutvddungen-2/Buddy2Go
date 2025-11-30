@@ -1,4 +1,4 @@
-﻿namespace Shared.Models.Dtos
+﻿namespace Shared.Models.Dtos.Chats
 {
     public class JourneyMessageDto
     {

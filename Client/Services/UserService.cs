@@ -1,6 +1,6 @@
 ﻿using Client.Common;
 using Microsoft.AspNetCore.Components.WebAssembly.Http;
-using Shared.Models.Dtos;
+using Shared.Models.Dtos.Users;
 using System.Net.Http.Json;
 
 namespace Client.Services
@@ -137,6 +137,85 @@ namespace Client.Services
             catch (Exception ex)
             {
                 return ServiceResult<UserDto>.Fail(ex.Message);
+            }
+        }
+
+        public async Task<ServiceResult> UpdateEmail(string email)
+        {
+            try
+            {
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Patch, $"api/User/UpdateEmail/{email}");
+                request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
+                HttpResponseMessage? response = await httpClient.SendAsync(request);
+
+                if (!response.IsSuccessStatusCode)
+                    return ServiceResult.Fail(await response.Content.ReadAsStringAsync());
+
+                return ServiceResult.Succes();
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult.Fail(ex.Message);
+            }
+        }
+
+        public async Task<ServiceResult> UpdatePhonenumber(string phoneNumber)
+        {
+            try
+            {
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Patch, $"api/User/UpdatePhoneNumber/{phoneNumber}");
+                request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
+                HttpResponseMessage? response = await httpClient.SendAsync(request);
+
+                if (!response.IsSuccessStatusCode)
+                    return ServiceResult.Fail(await response.Content.ReadAsStringAsync());
+
+                return ServiceResult.Succes();
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult.Fail(ex.Message);
+            }
+        }
+
+        public async Task<ServiceResult> UpdatePassword(string oldPassword, string newPassword)
+        {
+            try
+            {
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, $"api/User/UpdatePassword")
+                {
+                    Content = JsonContent.Create(new ChangePasswordDto { OldPassword = oldPassword, NewPassword = newPassword})
+                };
+                request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
+                HttpResponseMessage? response = await httpClient.SendAsync(request);
+
+                if (!response.IsSuccessStatusCode)
+                    return ServiceResult.Fail(await response.Content.ReadAsStringAsync());
+
+                return ServiceResult.Succes();
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult.Fail(ex.Message);
+            }
+        }
+        public async Task<ServiceResult> DeleteUser()
+        {
+            try
+            {
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Delete, $"api/User/Delete");
+                request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
+                HttpResponseMessage? response = await httpClient.SendAsync(request);
+
+                if (!response.IsSuccessStatusCode)
+                    return ServiceResult.Fail(await response.Content.ReadAsStringAsync());
+
+                await LogoutAsync();
+                return ServiceResult.Succes();
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult.Fail(ex.Message);
             }
         }
     }

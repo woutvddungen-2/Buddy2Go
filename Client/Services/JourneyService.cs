@@ -1,8 +1,8 @@
 ﻿using Client.Common;
 using Microsoft.AspNetCore.Components.WebAssembly.Http;
-using Shared.Models.Dtos;
+using Shared.Models.Dtos.Shared;
+using Shared.Models.Dtos.Journeys;
 using Shared.Models.enums;
-using System.Linq.Expressions;
 using System.Net.Http.Json;
 
 namespace Client.Services

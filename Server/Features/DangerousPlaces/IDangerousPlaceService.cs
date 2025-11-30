@@ -1,5 +1,5 @@
 ﻿using Server.Common;
-using Shared.Models.Dtos;
+using Shared.Models.Dtos.DangerousPlaces;
 
 namespace Server.Features.DangerousPlaces
 {

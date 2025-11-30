@@ -2,7 +2,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Server.Common;
-using Shared.Models.Dtos;
+using Shared.Models.Dtos.Journeys;
+using Shared.Models.Dtos.Shared;
 
 namespace Server.Features.Journeys
 {

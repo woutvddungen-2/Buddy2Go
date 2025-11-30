@@ -1,0 +1,232 @@
+﻿@page "/settings"
+@inject Client.Services.UserService UserService
+@inject NavigationManager Nav
+<HeadContent>
+    <link href="css/common/Header.css" rel="stylesheet" />
+</HeadContent>
+<Header Title="Instellingen" />
+
+@if (isLoading)
+{
+    <div class="text-center text-gray-600">Laden...</div>
+}
+else if (user == null)
+{
+    <div class="text-center text-red-600">Kon gebruiker niet laden.</div>
+}
+else
+{
+    <div class="flex flex-col gap-8 max-w-md mx-auto">
+
+        <!-- USER OVERVIEW -->
+        <div class="p-5 border border-gray-300 rounded-xl shadow-md bg-white relative">
+            <div class="absolute top-0 right-0 h-full w-2 rounded-r-xl bg-purple-300"></div>
+            <h2 class="font-semibold mb-2 text-gray-800">Huidige gegevens</h2>
+            <p><strong>Gebruikersnaam:</strong> @user.Username</p>
+            <p><strong>Email:</strong> @user.Email</p>
+            <p><strong>Telefoonnummer:</strong> @user.PhoneNumber</p>
+        </div>
+
+        <!-- UPDATE EMAIL -->
+        <div class="p-5 border border-gray-300 rounded-xl shadow-md bg-white relative">
+            <div class="absolute top-0 right-0 h-full w-2 rounded-r-xl bg-purple-300"></div>
+            <h2 class="font-semibold mb-3 text-gray-800">Email wijzigen</h2>
+
+            <input class="border rounded p-2 w-full mb-3"
+                   placeholder="Nieuwe email"
+                   @bind="newEmail" />
+
+            <button class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg w-full"
+                    @onclick="UpdateEmailAsync">
+                Wijzig email
+            </button>
+
+            @if (!string.IsNullOrEmpty(emailMessage))
+            {
+                <p class="mt-2 text-sm @(emailSuccess ? "text-green-600" : "text-red-600")">@emailMessage</p>
+            }
+        </div>
+
+        <!-- UPDATE PHONE -->
+        <div class="p-5 border border-gray-300 rounded-xl shadow-md bg-white relative">
+            <div class="absolute top-0 right-0 h-full w-2 rounded-r-xl bg-purple-300"></div>
+
+            <h2 class="font-semibold mb-3 text-gray-800">Telefoonnummer wijzigen</h2>
+
+            <input class="border rounded p-2 w-full mb-3"
+                   placeholder="Nieuw telefoonnummer"
+                   @bind="newPhone" />
+
+            <button class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg w-full"
+                    @onclick="UpdatePhoneAsync">
+                Wijzig telefoonnummer
+            </button>
+
+            @if (!string.IsNullOrEmpty(phoneMessage))
+            {
+                <p class="mt-2 text-sm @(phoneSuccess ? "text-green-600" : "text-red-600")">@phoneMessage</p>
+            }
+        </div>
+
+        <!-- UPDATE PASSWORD -->
+        <div class="p-5 border border-gray-300 rounded-xl shadow-md bg-white relative">
+            <div class="absolute top-0 right-0 h-full w-2 rounded-r-xl bg-purple-300"></div>
+
+            <h2 class="font-semibold mb-3 text-gray-800">Wachtwoord wijzigen</h2>
+
+            <input type="password" class="border rounded p-2 w-full mb-2"
+                   placeholder="Huidig wachtwoord"
+                   @bind="oldPassword" />
+
+            <input type="password" class="border rounded p-2 w-full mb-3"
+                   placeholder="Nieuw wachtwoord"
+                   @bind="newPassword" />
+
+            <button class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg w-full"
+                    @onclick="UpdatePasswordAsync">
+                Wijzig wachtwoord
+            </button>
+
+            @if (!string.IsNullOrEmpty(passwordMessage))
+            {
+                <p class="mt-2 text-sm @(passwordSuccess ? "text-green-600" : "text-red-600")">@passwordMessage</p>
+            }
+        </div>
+
+        <!-- DELETE ACCOUNT -->
+        <div class="p-5 border border-red-400 bg-red-50 rounded-xl shadow-md">
+            <h2 class="font-semibold text-red-700">Account verwijderen</h2>
+            <p class="text-sm text-red-600 mb-3">
+                Dit kan niet ongedaan worden gemaakt.
+            </p>
+
+            <button class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg w-full"
+                    @onclick="() => showDeleteConfirm = true">
+                Verwijder mijn account
+            </button>
+
+            @if (!string.IsNullOrEmpty(deleteMessage))
+            {
+                <p class="mt-2 text-sm @(deleteSuccess ? "text-green-600" : "text-red-600")">@deleteMessage</p>
+            }
+        </div>
+    </div>
+}
+
+<!-- DELETE CONFIRMATION MODAL -->
+@if (showDeleteConfirm)
+{
+    <div class="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-xl shadow-xl max-w-sm w-full">
+            <h2 class="text-lg font-bold text-red-700 mb-4">Weet je het zeker?</h2>
+            <p class="text-gray-700 mb-6">
+                Je account wordt permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.
+            </p>
+
+            <div class="flex gap-3">
+                <button class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg"
+                        @onclick="() => showDeleteConfirm = false">
+                    Annuleren
+                </button>
+
+                <button class="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg"
+                        @onclick="DeleteUserConfirmedAsync">
+                    Verwijderen
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private UserDto? user;
+
+    private bool isLoading = true;
+
+    // UI states
+    private bool showDeleteConfirm = false;
+
+    private string newEmail = "";
+    private string emailMessage = "";
+    private bool emailSuccess;
+
+    private string newPhone = "";
+    private string phoneMessage = "";
+    private bool phoneSuccess;
+
+    private string oldPassword = "";
+    private string newPassword = "";
+    private string passwordMessage = "";
+    private bool passwordSuccess;
+
+    private string deleteMessage = "";
+    private bool deleteSuccess;
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await UserService.GetCurrentUserAsync();
+        if (result.IsSuccess)
+            user = result.Data;
+
+        isLoading = false;
+    }
+
+
+    private async Task UpdateEmailAsync()
+    {
+        var result = await UserService.UpdateEmail(newEmail);
+
+        emailSuccess = result.IsSuccess;
+        emailMessage = result.Message ?? "";
+
+        if (result.IsSuccess)
+        {
+            user!.Email = newEmail;
+            newEmail = "";
+        }
+    }
+
+    private async Task UpdatePhoneAsync()
+    {
+        var result = await UserService.UpdatePhonenumber(newPhone);
+
+        phoneSuccess = result.IsSuccess;
+        phoneMessage = result.Message ?? "";
+
+        if (result.IsSuccess)
+        {
+            user!.PhoneNumber = newPhone;
+            newPhone = "";
+        }
+    }
+
+    private async Task UpdatePasswordAsync()
+    {
+        var result = await UserService.UpdatePassword(oldPassword, newPassword);
+
+        passwordSuccess = result.IsSuccess;
+        passwordMessage = result.Message ?? "";
+
+        if (result.IsSuccess)
+        {
+            oldPassword = "";
+            newPassword = "";
+        }
+    }
+
+    private async Task DeleteUserConfirmedAsync()
+    {
+        showDeleteConfirm = false;
+
+        var result = await UserService.DeleteUser();
+        deleteSuccess = result.IsSuccess;
+        deleteMessage = result.Message ?? "";
+
+        if (result.IsSuccess)
+        {
+            Nav.NavigateTo("/login", true);
+        }
+    }
+}
