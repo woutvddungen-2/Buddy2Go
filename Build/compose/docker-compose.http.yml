@@ -22,7 +22,7 @@ services:
       DbSettings__Port: 3306
       JwtSettings__Secret: "ThisIsASuperSecretKey12345678901"
       SSL__Enabled: "false"
-      AllowedOrigins: "https://app.buddy-2-go.nl;https://app.buddy-2-go.nl:443;https://app.buddy-to-go.nl:5002;https://buddy2go-dev.nl;https://buddy2go-dev.nl:443;https://buddy2go-dev.nl:5002"
+      AllowedOrigins: "http://app.buddy-2-go.nl;http://www.app.buddy-2-go.nl;http://buddy2go-dev.nl;http://www.buddy2go-dev.nl;http://prod.buddy-2-go.nl.nl;http://www.prod.buddy-2-go.nl"
       ASPNETCORE_ENVIRONMENT: Development
     ports:
       - "5001:5001"
