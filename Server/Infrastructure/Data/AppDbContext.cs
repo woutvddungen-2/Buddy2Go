@@ -19,7 +19,7 @@ namespace Server.Infrastructure.Data
         public DbSet<Buddy> Buddys { get; set; }
         public DbSet<Place> Places { get; set; }
         public DbSet<Rating> Ratings { get; set; }
-
+        public DbSet<UserVerification> UserVerifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -50,6 +50,12 @@ namespace Server.Infrastructure.Data
                 .HasOne(jp => jp.Journey)
                 .WithMany(j => j.Participants)
                 .HasForeignKey(jp => jp.JourneyId);
+
+            modelBuilder.Entity<UserVerification>()
+                .HasOne<User>()
+                .WithMany()
+                .HasForeignKey(uv => uv.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<JourneyMessage>()
                 .HasOne(m => m.Sender)

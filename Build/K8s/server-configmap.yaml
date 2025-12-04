@@ -11,5 +11,8 @@ data:
   DbSettings__Port: "3306"
   SSL__Enabled: "false"
   JwtSettings__Secret: "ThisIsASuperSecretKey12345678901"
+  Twilio__AccountSid: "AC6b0a611e20b549b88bf966b2a1639b17"
+  Twilio__AuthToken: "a8b90cc1504fdad720712155964c4cff"
+  Twilio__FromNumber: "+19706666723"
 
   AllowedOrigins: "https://app.buddy-2-go.nl;https://prod.buddy-2-go.nl;https://buddy2go-dev.nl:443"

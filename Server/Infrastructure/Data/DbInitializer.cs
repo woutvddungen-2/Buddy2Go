@@ -36,11 +36,11 @@ namespace Server.Infrastructure.Data
             // ----------- Users -----------
             var users = new List<User>
             {
-                new User { Id = 1, Username = "Alice", Email = "alice@test.com", Phonenumber = "0600000000", PasswordHash = "Btd5kOga0bCQboFgEC27wQXmHO/7+ycka95ivGi4EXXAEOj303ehnFqmaGr3+rHi", CreatedAt = DateTime.UtcNow },
-                new User { Id = 2, Username = "Bob", Email = "bob@test.com", Phonenumber = "0611111111", PasswordHash = "DbjdjPrHA2CdSDtuDrpWqWbAcxPQIoxHxNz73a0P8CFWd/Sg55yo/+FTDbdsxtdL", CreatedAt = DateTime.UtcNow },
-                new User { Id = 3, Username = "Charlie", Email = "charlie@test.com", Phonenumber = "0622222222", PasswordHash = "JULrd1HVJ17woc2HEqrjpsOx6Ac+z60MWP0lmhPlKB7HupLEX7ANdCZeqTABaBOO", CreatedAt = DateTime.UtcNow },
-                new User { Id = 4, Username = "Joseph", Email = "Joseph@test.com", Phonenumber = "0633333333", PasswordHash = "JULrd1HVJ17woc2HEqrjpsOx6Ac+z60MWP0lmhPlKB7HupLEX7ANdCZeqTABaBOO", CreatedAt = DateTime.UtcNow },
-                new User { Id = 5, Username = "Diana", Email = "Diana@test.com", Phonenumber = "0644444444", PasswordHash = "JULrd1HVJ17woc2HEqrjpsOx6Ac+z60MWP0lmhPlKB7HupLEX7ANdCZeqTABaBOO", CreatedAt = DateTime.UtcNow }
+                new User { Id = 1, Username = "Alice", Email = "alice@test.com", Phonenumber = "+31600000000", PasswordHash = "Btd5kOga0bCQboFgEC27wQXmHO/7+ycka95ivGi4EXXAEOj303ehnFqmaGr3+rHi", CreatedAt = DateTime.UtcNow },
+                new User { Id = 2, Username = "Bob", Email = "bob@test.com", Phonenumber = "+31611111111", PasswordHash = "DbjdjPrHA2CdSDtuDrpWqWbAcxPQIoxHxNz73a0P8CFWd/Sg55yo/+FTDbdsxtdL", CreatedAt = DateTime.UtcNow },
+                new User { Id = 3, Username = "Charlie", Email = "charlie@test.com", Phonenumber = "+31622222222", PasswordHash = "JULrd1HVJ17woc2HEqrjpsOx6Ac+z60MWP0lmhPlKB7HupLEX7ANdCZeqTABaBOO", CreatedAt = DateTime.UtcNow },
+                new User { Id = 4, Username = "Joseph", Email = "Joseph@test.com", Phonenumber = "+31633333333", PasswordHash = "JULrd1HVJ17woc2HEqrjpsOx6Ac+z60MWP0lmhPlKB7HupLEX7ANdCZeqTABaBOO", CreatedAt = DateTime.UtcNow },
+                new User { Id = 5, Username = "Diana", Email = "Diana@test.com", Phonenumber = "+31644444444", PasswordHash = "JULrd1HVJ17woc2HEqrjpsOx6Ac+z60MWP0lmhPlKB7HupLEX7ANdCZeqTABaBOO", CreatedAt = DateTime.UtcNow }
             };
             await context.Users.AddRangeAsync(users);
             await context.SaveChangesAsync();

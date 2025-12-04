@@ -8,6 +8,7 @@ using Server.Features.Journeys;
 using Server.Features.Users;
 using Server.Infrastructure.Data;
 using Server.Infrastructure.Database;
+using Server.Services;
 using System.Text;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -104,6 +105,9 @@ builder.Services.AddScoped<IDangerousPlaceService, DangerousPlaceService>();
 builder.Services.AddScoped<JourneyService>();
 builder.Services.AddScoped<BuddyService>();
 builder.Services.AddScoped<ChatService>();
+
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<SmsService>();
 
 // -------------------- Swagger --------------------
 #if DEBUG
