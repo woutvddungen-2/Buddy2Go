@@ -8,7 +8,7 @@ using Server.Tests.TestUtilities;
 using Shared.Models.Dtos.Users;
 using Shared.Models.Enums;
 
-namespace Server.Tests.Services
+namespace Server.Tests.Users
 {
     public class UserServiceTests
     {
