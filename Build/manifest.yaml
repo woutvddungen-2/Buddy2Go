@@ -1,0 +1,270 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: buddy2go
+---
+# ============================================================
+# MySQL Secret
+# ============================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+  namespace: buddy2go
+type: Opaque
+stringData:
+  MYSQL_ROOT_PASSWORD: "__xh8xq9KmE4E.CwpQDG"
+  MYSQL_DATABASE: "Buddy2Go"
+  MYSQL_ROOT_HOST: "%"
+---
+# ============================================================
+# MySQL PVC
+# ============================================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+  namespace: buddy2go
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+# ============================================================
+# MySQL Service (headless)
+# ============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: buddy2go
+spec:
+  clusterIP: None
+  selector:
+    app: mysql
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306
+---
+# ============================================================
+# MySQL StatefulSet
+# ============================================================
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: buddy2go
+spec:
+  serviceName: mysql
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      imagePullSecrets:
+        - name: ghcr-cred
+      containers:
+        - name: mysql
+          image: ghcr.io/apmoek/buddy2go-mysql:8.0
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_ROOT_PASSWORD
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_DATABASE
+            - name: MYSQL_ROOT_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_ROOT_HOST
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "300Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+      volumes:
+        - name: mysql-data
+          persistentVolumeClaim:
+            claimName: mysql-pvc
+---
+# ============================================================
+# Buddy2Go SERVER Deployment
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: buddy2go-server
+  namespace: buddy2go
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: buddy2go-server
+  template:
+    metadata:
+      labels:
+        app: buddy2go-server
+    spec:
+      imagePullSecrets:
+        - name: ghcr-cred
+      containers:
+        - name: server
+          image: ghcr.io/apmoek/buddy2go-server:v0.3.1.2
+          ports:
+            - containerPort: 5001
+          env:
+            - name: PORT
+              value: "5001"
+            - name: DbSettings__Ip
+              value: "mysql"
+            - name: DbSettings__DbName
+              value: "Buddy2Go"
+            - name: DbSettings__UserID
+              value: "root"
+            - name: DbSettings__Password
+              value: "__xh8xq9KmE4E.CwpQDG"
+            - name: DbSettings__Port
+              value: "3306"
+            - name: JwtSettings__Secret
+              value: "ThisIsASuperSecretKey12345678901"
+            - name: AllowedOrigins
+              value: "https://prod.buddy-2-go.nl;https://www.prod.buddy-2-go.nl;https://api.buddy-2-go.nl;https://www.api.buddy-2-go.nl"
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: SSL__Enabled
+              value: "false"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+# ============================================================
+# Server Service
+# ============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: buddy2go-server
+  namespace: buddy2go
+spec:
+  selector:
+    app: buddy2go-server
+  ports:
+    - name: http
+      port: 5001
+      targetPort: 5001
+  type: ClusterIP
+---
+# ============================================================
+# Buddy2Go CLIENT Deployment
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: buddy2go-client
+  namespace: buddy2go
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: buddy2go-client
+  template:
+    metadata:
+      labels:
+        app: buddy2go-client
+    spec:
+      imagePullSecrets:
+        - name: ghcr-cred
+      containers:
+        - name: client
+          image: ghcr.io/apmoek/buddy2go-client:v0.3.1.2
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "300m"
+              memory: "256Mi"
+---
+# ============================================================
+# Client Service
+# ============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: buddy2go-client
+  namespace: buddy2go
+spec:
+  selector:
+    app: buddy2go-client
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+---
+# ============================================================
+# Ingress (Traefik + HTTPS)
+# ============================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: buddy2go-ingress
+  namespace: buddy2go
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  tls:
+    - hosts:
+        - prod.buddy-2-go.nl
+        - api.buddy-2-go.nl
+      secretName: buddy2go-tls
+  rules:
+    - host: prod.buddy-2-go.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: buddy2go-client
+                port:
+                  number: 80
+
+    - host: api.buddy-2-go.nl
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: buddy2go-server
+                port:
+                  number: 5001
+ 

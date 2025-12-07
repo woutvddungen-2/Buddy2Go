@@ -1,7 +1,7 @@
 ﻿@page "/register"
 @layout NoLayout
 
-@inject UserService loginService
+@inject UserService userService
 @inject NavigationManager Navigation
 @using System.ComponentModel.DataAnnotations
 
@@ -12,127 +12,196 @@
 
 <Header Title="Maak een Account" BackTo="/" />
 
-@if (isLoading)
-{
-    <p>Registreren...</p>
-}
-else
-{
-    <div class="register-page">
-        <div class="register-card">
-            @if (isLoading)
-            {
-                <p class="loading-text">Registreren...</p>
-            }
-            else
-            {
-                <EditForm Model="@registerModel" OnValidSubmit="HandleRegister">
-                    <DataAnnotationsValidator />
-                    <ValidationSummary />
+<div class="register-page">
+    <div class="register-card">
 
-                    <div class="input-group">
-                        <label>Gebruikersnaam</label>
-                        <InputText @bind-Value="registerModel.Username" class="input-field" />
-                    </div>
+        @if (step == RegisterStep.EnterDetails)
+        {
+            <EditForm Model="@registerModel" OnValidSubmit="StartRegistration">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
 
-                    <div class="input-group">
-                        <label>Email</label>
-                        <InputText @bind-Value="registerModel.Email" type="email" class="input-field" />
-                    </div>
+                <div class="input-group">
+                    <label>Gebruikersnaam</label>
+                    <InputText @bind-Value="registerModel.Username" class="input-field" />
+                </div>
 
-                    <div class="input-group">
-                        <label>Telefoonnummer</label>
-                        <InputText @bind-Value="registerModel.PhoneNumber" type="text" class="input-field" />
-                    </div>
+                <div class="input-group">
+                    <label>Email</label>
+                    <InputText @bind-Value="registerModel.Email" type="email" class="input-field" />
+                </div>
 
-                    <div class="input-group">
-                        <label>Wachtwoord</label>
-                        <InputText @bind-Value="registerModel.Password" type="password" class="input-field" />
-                    </div>
+                <div class="input-group">
+                    <label>Telefoonnummer</label>
+                    <InputText @bind-Value="registerModel.PhoneNumber" class="input-field" />
+                </div>
 
-                    <div class="input-group">
-                        <label>Wachtwoord bevestigen</label>
-                        <InputText @bind-Value="registerModel.ConfirmPassword" type="password" class="input-field" />
-                    </div>
+                <div class="input-group">
+                    <label>Wachtwoord</label>
+                    <InputText @bind-Value="registerModel.Password" type="password" class="input-field" />
+                </div>
 
-                    <button type="submit" class="register-btn">Registreren</button>
+                <div class="input-group">
+                    <label>Bevestig wachtwoord</label>
+                    <InputText @bind-Value="registerModel.ConfirmPassword" type="password" class="input-field" />
+                </div>
 
-                    @if (!string.IsNullOrEmpty(errorMessage))
-                    {
-                        <p class="error-message">@errorMessage</p>
-                    }
+                <button type="submit" class="register-btn" disabled="@isLoading">
+                    @(isLoading ? "Bezig..." : "Volgende")
+                </button>
 
-                    @if (!string.IsNullOrEmpty(successMessage))
-                    {
-                        <p class="success-message">@successMessage</p>
-                    }
-                </EditForm>
-            }
-        </div>
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <p class="error-message">@errorMessage</p>
+                }
+            </EditForm>
+        }
+
+        @if (step == RegisterStep.EnterCode)
+        {
+            <EditForm Model="@verifyModel" OnValidSubmit="VerifyCode">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <p class="info-message">
+                    Er is een verificatiecode verzonden naar <b>@registerModel.PhoneNumber</b>.
+                </p>
+
+                <div class="input-group">
+                    <label>Verificatiecode</label>
+                    <InputText @bind-Value="verifyModel.Code" maxlength="6" class="input-field" />
+                </div>
+
+                <button type="submit" class="register-btn" disabled="@isLoading">
+                    @(isLoading ? "Controleren..." : "Account aanmaken")
+                </button>
+
+                <button type="button" class="resend-btn" @onclick="ResendCode" disabled="@isLoading">
+                    Opnieuw verzenden
+                </button>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <p class="error-message">@errorMessage</p>
+                }
+
+                @if (!string.IsNullOrEmpty(successMessage))
+                {
+                    <p class="success-message">@successMessage</p>
+                }
+            </EditForm>
+        }
+
+
     </div>
-}
+</div>
 
 @code {
     private RegisterModel registerModel = new();
+    private VerifyModel verifyModel = new();
+
     private bool isLoading = false;
     private string? errorMessage;
     private string? successMessage;
 
-    private async Task HandleRegister()
+    private RegisterStep step = RegisterStep.EnterDetails;
+
+    private enum RegisterStep
     {
-        isLoading = true;
-        errorMessage = null;
-        successMessage = null;
-
-        if (registerModel.Password != registerModel.ConfirmPassword)
-        {
-            errorMessage = "Passwords do not match.";
-            isLoading = false;
-            return;
-        }
-
-        try
-        {
-            ServiceResult? result = await loginService.RegisterAsync(registerModel.Username, registerModel.Password, registerModel.Email, registerModel.PhoneNumber);
-
-            if (result.IsSuccess)
-            {
-                successMessage = "Registration successful! You can now log in.";
-                registerModel = new RegisterModel(); // clear form
-                Navigation.NavigateTo("/");
-            }
-            else
-            {
-                errorMessage = result.Message;
-            }
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Registration failed: {ex.Message}";
-        }
-        finally
-        {
-            isLoading = false;
-        }
+        EnterDetails,
+        EnterCode
     }
 
-    //TODO: add better verification of password strenght, email correct format and phonenumber correct format
-    //      add conformation checks using sms and/or email messages (server side?)
+    private async Task StartRegistration()
+    {
+        errorMessage = null;
+        successMessage = null;
+        if (registerModel.Password != registerModel.ConfirmPassword)
+        {
+            errorMessage = "Wachtwoorden komen niet overeen.";
+            return;
+        }
+        isLoading = true;
+
+        ServiceResult result = await userService.StartRegistrationAsync
+            (registerModel.Username, 
+            registerModel.Password, 
+            registerModel.Email, 
+            registerModel.PhoneNumber);
+
+        if (result.IsSuccess)
+        {
+            step = RegisterStep.EnterCode;
+            successMessage = "Verificatiecode verzonden!";
+        }
+        else
+        {
+            errorMessage = result.Message;
+        }
+
+        isLoading = false;
+    }
+
+    private async Task VerifyCode()
+    {
+        errorMessage = null;
+        successMessage = null;
+        isLoading = true;
+
+        ServiceResult result = await userService.VerifyRegistrationAsync(registerModel.PhoneNumber, verifyModel.Code);
+
+        if (result.IsSuccess)
+        {
+            successMessage = "Account succesvol aangemaakt!";
+            await Task.Delay(800);
+            Navigation.NavigateTo("/login", true);
+        }
+        else
+        {
+            errorMessage = result.Message;
+        }
+
+        isLoading = false;
+    }
+
+    private async Task ResendCode()
+    {
+        errorMessage = null;
+        successMessage = null;
+        isLoading = true;
+
+        ServiceResult result = await userService.StartRegistrationAsync
+            (registerModel.Username,
+            registerModel.Password,
+            registerModel.Email,
+            registerModel.PhoneNumber);
+
+        if (result.IsSuccess)
+            successMessage = "Code opnieuw verzonden!";
+        else
+            errorMessage = result.Message;
+
+        isLoading = false;
+    }
+
     public class RegisterModel
     {
         [Required]
         public string Username { get; set; } = string.Empty;
-
         [Required, EmailAddress]
         public string Email { get; set; } = string.Empty;
-
-        [Phone(ErrorMessage = "Please enter a valid phone number.")]
+        [Required]
         public string PhoneNumber { get; set; } = string.Empty;
-
         [Required, MinLength(8)]
         public string Password { get; set; } = string.Empty;
-
         [Required]
         public string ConfirmPassword { get; set; } = string.Empty;
     }
+
+    public class VerifyModel
+    {
+        [Required]
+        public string Code { get; set; } = string.Empty;
+    }
+
 }

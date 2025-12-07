@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Server.Common;
 using Server.Features.Buddies;
 using Server.Features.Chats;
 using Server.Features.DangerousPlaces;
@@ -8,14 +9,35 @@ using Server.Features.Journeys;
 using Server.Features.Users;
 using Server.Infrastructure.Data;
 using Server.Infrastructure.Database;
+using Server.Services;
 using System.Text;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddEnvironmentVariables();
+
+//load variables:
+string jwtSecret = builder.Configuration.GetRequiredSection("JwtSettings:Secret").Get<string>()!;
+bool sslEnabled = builder.Configuration.GetValue<bool>("SSL:Enabled", false);
+int kestrelPort = builder.Configuration.GetValue<int>("PORT", 5001);
+
+// -------------------- Logging --------------------------
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+
+builder.Logging.AddFilter("Server", LogLevel.Information);
+
+builder.Logging.AddFilter("Microsoft.Hosting.Lifetime", LogLevel.Information);
+builder.Logging.AddFilter("Microsoft", LogLevel.Warning);
+builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning);
+builder.Logging.AddFilter("Microsoft.AspNetCore", LogLevel.Warning);
+builder.Logging.AddFilter("Microsoft.Hosting", LogLevel.Warning);
+builder.Logging.AddFilter("Microsoft.AspNetCore.Mvc", LogLevel.Warning);
+builder.Logging.AddFilter("Microsoft.AspNetCore.Routing", LogLevel.Warning);
+builder.Logging.AddFilter("Microsoft.AspNetCore.Server.Kestrel", LogLevel.Warning);
+builder.Logging.AddFilter("System", LogLevel.Warning);
+builder.Logging.AddFilter("Microsoft.AspNetCore.Watch", LogLevel.Warning);
 
 // -------------------- Authentication --------------------
-
-string jwtSecret = builder.Configuration.GetRequiredSection("JwtSettings:Secret").Get<string>()!;
-bool sslEnabled = builder.Configuration.GetRequiredSection("SSL:Enabled").Get<bool>();
 
 builder.Services.AddAuthentication(options =>
 {
@@ -39,54 +61,14 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecret)),
         ClockSkew = TimeSpan.Zero
     };
-
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
         {
-            string? token = null;
-            if (context.Request.Cookies.TryGetValue("jwt", out string? jwtCookie))
+            if (context.Request.Cookies.TryGetValue("jwt", out string? token))
             {
-                token = jwtCookie;
-            }
-
-            // Assign token to the context so middleware can validate it
             context.Token = token;
-#if DEBUG
-            if (!string.IsNullOrEmpty(token))
-            {
-                log.LogDebug("JWT cookie received: {Snippet}...", token[..Math.Min(token.Length, 20)]);
-            }
-#endif
-            return Task.CompletedTask;
-        },
-        OnAuthenticationFailed = context =>
-        {
-#if DEBUG
-            log.LogWarning(context.Exception.Message, "JWT Authentication failed");
-#endif
-            return Task.CompletedTask;
-        },
-        OnTokenValidated = context =>
-        {
-#if DEBUG
-            if (context.Principal != null)
-            {
-                string idClaim = context.Principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "unknown";
-                string nameClaim = context.Principal.Identity?.Name ?? "unknown";
-
-                string? expClaim = context.Principal.FindFirst("exp")?.Value;
-                string expText = "unknown";
-                if (expClaim != null && long.TryParse(expClaim, out Int64 expSeconds))
-                {
-                    DateTime expDate = DateTimeOffset.FromUnixTimeSeconds(expSeconds).UtcDateTime;
-                    expText = expDate.ToString("yyyy-MM-dd HH:mm:ss UTC");
                 }
-
-                log.LogDebug("JWT Validated: UserId={UserId}, Username={Username}, ExpiresAt={Expiration}",
-                    idClaim, nameClaim, expText);
-            }
-#endif
             return Task.CompletedTask;
         }
     };
@@ -105,57 +87,41 @@ builder.Services.AddScoped<JourneyService>();
 builder.Services.AddScoped<BuddyService>();
 builder.Services.AddScoped<ChatService>();
 
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<ISmsService, SmsService>();
+
 // -------------------- Swagger --------------------
 #if DEBUG
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
-    {
-        c.SwaggerDoc("v1", new OpenApiInfo { Title = "Buddy2Go", Version = "v0.1" });
-
-        c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-        {
-            Name = "Authorization",
-            In = ParameterLocation.Header,
-            Type = SecuritySchemeType.Http,
-            Scheme = "bearer",
-            BearerFormat = "JWT",
-            Description = "JWT Authorization header using the Bearer scheme. Example: \"Bearer {token}\""
-        });
-
-        c.AddSecurityRequirement(new OpenApiSecurityRequirement
-        {
-            {
-                new OpenApiSecurityScheme
-                {
-                    Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
-                },
-                Array.Empty<string>()
-            }
-        });
-    });
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Buddy2Go", Version = "v0.8" });
+});
 #endif
 
 //------------- Configure https for docker -------------------------------
 // Configure Kestrel for HTTPS inside Docker
-if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true")
+const string certPath = "/https/aspnetapp.pfx";
+const string certPassword = "MyPassword123";
+
+if (!builder.Environment.IsDevelopment())
 {
-    if (sslEnabled)
+    builder.WebHost.ConfigureKestrel(options =>
     {
-        builder.WebHost.ConfigureKestrel(options =>
+        if (sslEnabled && File.Exists(certPath))
         {
-            options.ListenAnyIP(5001, listenOptions =>
+            Console.WriteLine($"[Kestrel] HTTPS enabled on port {kestrelPort}");
+            options.ListenAnyIP(kestrelPort, listenOptions =>
             {
-                listenOptions.UseHttps("/https/aspnetapp.pfx", "MyPassword123");
+                listenOptions.UseHttps(certPath, certPassword);
             });
-        });
-    }
-    else
-    {
-        builder.WebHost.ConfigureKestrel(options =>
+        }
+        else
         {
-            options.ListenAnyIP(5001);
-        });
-    }
+            Console.WriteLine($"[Kestrel] HTTP enabled on port {kestrelPort}");
+            options.ListenAnyIP(kestrelPort);
+        }
+    });
 }
 
 // -------------------- CORS --------------------
@@ -227,6 +193,7 @@ if (sslEnabled)
     Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
 }
 #endif
+app.MapGet("/", () => "Buddy2Go API is running");
 
 app.MapControllers();
 app.Run();

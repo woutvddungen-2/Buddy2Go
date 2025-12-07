@@ -29,12 +29,20 @@ else
         <div class="finish-panel">
             <h3>Hoe was deze reis?</h3>
 
-            <div class="rating-row">
+            <div class="rating-grid">
+
                 <button class="rating-smiley @(RatingValue == 1 ? "selected" : "")" @onclick="(() => SetRating(1))">😡</button>
                 <button class="rating-smiley @(RatingValue == 2 ? "selected" : "")" @onclick="(() => SetRating(2))">😕</button>
                 <button class="rating-smiley @(RatingValue == 3 ? "selected" : "")" @onclick="(() => SetRating(3))">😐</button>
                 <button class="rating-smiley @(RatingValue == 4 ? "selected" : "")" @onclick="(() => SetRating(4))">🙂</button>
                 <button class="rating-smiley @(RatingValue == 5 ? "selected" : "")" @onclick="(() => SetRating(5))">😄</button>
+
+                <span class="rating-label">Zeer slecht</span>
+                <span class="rating-label">Slecht</span>
+                <span class="rating-label">Oké</span>
+                <span class="rating-label">Goed</span>
+                <span class="rating-label">Uitstekend</span>
+
             </div>
 
             <textarea class="finish-notes"

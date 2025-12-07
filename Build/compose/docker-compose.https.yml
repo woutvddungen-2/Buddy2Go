@@ -1,4 +1,4 @@
-version: "3.9"
+version: "3.11"
 
 services:
   mysql:
@@ -22,8 +22,10 @@ services:
       DbSettings__Port: 3306
       JwtSettings__Secret: "ThisIsASuperSecretKey12345678901"
       SSL__Enabled: "true"
-      AllowedOrigins: "https://app.buddy-2-go.nl;https://app.buddy-2-go.nl:443;https://app.buddy-to-go.nl:5002;https://buddy2go-dev.nl;https://buddy2go-dev.nl:443;https://buddy2go-dev.nl:5002"
-      ASPNETCORE_ENVIRONMENT: Development
+      AllowedOrigins: "https://buddy2go-dev.nl;https://www.buddy2go-dev.nl;"
+      Twilio__AccountSid: "AC6b0a611e20b549b88bf966b2a1639b17"
+      Twilio__AuthToken: "a8b90cc1504fdad720712155964c4cff"
+      Twilio__FromNumber: "+19706666723"
     ports:
       - "5001:5001"
     depends_on:

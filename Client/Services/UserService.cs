@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Components.WebAssembly.Http;
 using Shared.Models.Dtos.Users;
 using System.Net.Http.Json;
+using static Client.Pages.Register;
 
 namespace Client.Services
 {
@@ -106,18 +107,48 @@ namespace Client.Services
             }
         }
 
-        public async Task<ServiceResult> RegisterAsync(string username, string password, string email, string phonenumber)
+        public async Task<ServiceResult> StartRegistrationAsync(string username, string password, string email, string phoneNumber)
         {
-            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, "api/User/register")
+            try
             {
-                Content = JsonContent.Create(new RegisterDto { Username = username, Password = password, Email = email, PhoneNumber = phonenumber })
-            };
-            request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
-            HttpResponseMessage? response = await httpClient.SendAsync(request);
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, "api/User/StartRegister")
+                {
+                    Content = JsonContent.Create(new RegisterDto { Username = username, Password = password, Email = email, PhoneNumber = phoneNumber})
+                };
+                request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
+                HttpResponseMessage? response = await httpClient.SendAsync(request);
 
-            if (response.IsSuccessStatusCode)
-                return ServiceResult.Succes();
-            return ServiceResult.Fail(await response.Content.ReadAsStringAsync());
+                if (response.IsSuccessStatusCode)
+                    return ServiceResult.Succes();
+
+                return ServiceResult.Fail(await response.Content.ReadAsStringAsync());
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult.Fail(ex.Message);
+            }
+        }
+
+        public async Task<ServiceResult> VerifyRegistrationAsync(string phoneNumber, string code)
+        {
+            try
+            {
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, "api/User/VerifyRegister")
+                {
+                    Content = JsonContent.Create(new VerifyUserDto{ PhoneNumber = phoneNumber, Code = code})
+                };
+                request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
+                HttpResponseMessage? response = await httpClient.SendAsync(request);
+
+                if (response.IsSuccessStatusCode)
+                    return ServiceResult.Succes();
+
+                return ServiceResult.Fail(await response.Content.ReadAsStringAsync());
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult.Fail(ex.Message);
+            }
         }
 
         public async Task<ServiceResult<UserDto>> FindUserbyPhone(string phoneNumber)

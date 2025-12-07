@@ -3,8 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Server.Common;
 using Shared.Models.Dtos.Users;
-using System.Security.Claims;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Server.Features.Users
 {
@@ -23,8 +21,8 @@ namespace Server.Features.Users
             sslEnabled = config.GetRequiredSection("SSL:Enabled").Get<bool>();
         }
 
-        [HttpPost("Register")]
-        public async Task<IActionResult> Register([FromBody] RegisterDto register)
+        [HttpPost("StartRegister")]
+        public async Task<IActionResult> StartRegister([FromBody] RegisterDto register)
         {
             if (register == null)
             {
@@ -32,18 +30,42 @@ namespace Server.Features.Users
                 return BadRequest("Required data missing");
             }
 
-            ServiceResult result = await service.Register(register.Username, register.Password, register.Email, register.PhoneNumber);
+            ServiceResult result = await service.StartRegistrationAsync(register.Username, register.Password, register.Email, NormalizePhoneNumber(register.PhoneNumber));
 
             switch (result.Status)
             {
                 case ServiceResultStatus.Success:
-                    logger.LogInformation("User {Username} registered successfully", register.Username);
                     return Ok($"User {register.Username} registered successfully");
-
                 case ServiceResultStatus.ValidationError:
-                    logger.LogWarning("Registration failed: {Message}", result.Message);
                     return BadRequest(result.Message);
+                case ServiceResultStatus.Error:
+                    return StatusCode(500, $"Error in sms module: {result.Message}");
+                default:
+                    logger.LogError("Unknown registration error: {Message}", result.Message);
+                    return StatusCode(500, "Unknown registration error");
+            }
+        }
 
+        [HttpPost("VerifyRegister")]
+        public async Task<IActionResult> VerifyRegister([FromBody] VerifyUserDto verify)
+        {
+            if (verify == null)
+            {
+                logger.LogWarning("Register request body is null");
+                return BadRequest("Required data missing");
+            }
+
+            ServiceResult result = await service.CompleteRegistrationAsync(NormalizePhoneNumber(verify.PhoneNumber), verify.Code);
+
+            switch (result.Status)
+            {
+                case ServiceResultStatus.Success:
+                    return Ok(result.Message);
+                case ServiceResultStatus.ResourceNotFound:
+                case ServiceResultStatus.ValidationError:
+                    return BadRequest(result.Message);
+                case ServiceResultStatus.Unauthorized:
+                    return Unauthorized(result.Message);
                 default:
                     logger.LogError("Unknown registration error: {Message}", result.Message);
                     return StatusCode(500, "Unknown registration error");
@@ -53,6 +75,12 @@ namespace Server.Features.Users
         [HttpPost("Login")]
         public async Task<IActionResult> Login([FromBody] LoginDto login)
         {
+            if (login == null)
+            {
+                logger.LogWarning("Login request body is null");
+                return BadRequest("Login data missing");
+            }
+
             ServiceResult<string> result = await service.Login(login.Username, login.Password);
 
             switch (result.Status)
@@ -135,7 +163,7 @@ namespace Server.Features.Users
         public async Task<IActionResult> FindbyPhoneNumber(string number)
         {
             int userId = HttpContext.GetUserId();
-            ServiceResult<UserDto> result = await service.FindUserbyPhone(number, userId);
+            ServiceResult<UserDto> result = await service.FindUserbyPhone(NormalizePhoneNumber(number), userId);
 
             switch (result.Status)
             {
@@ -175,7 +203,7 @@ namespace Server.Features.Users
         public async Task<IActionResult> UpdatePhoneNumber(string number)
         {
             int userId = HttpContext.GetUserId();
-            ServiceResult result = await service.UpdatePhoneNumberAsync(userId, number);
+            ServiceResult result = await service.UpdatePhoneNumberAsync(userId, NormalizePhoneNumber(number));
             switch (result.Status)
             {
                 case ServiceResultStatus.Success:
@@ -194,6 +222,11 @@ namespace Server.Features.Users
         [HttpPost("UpdatePassword")]
         public async Task<IActionResult> UpdatePassword([FromBody] ChangePasswordDto dto)
         {
+            if (dto == null)
+            {
+                logger.LogWarning("ChangePassword dto is null");
+                return BadRequest("ChangePassword dto data missing");
+            }
             int userId = HttpContext.GetUserId();
             ServiceResult result = await service.UpdatePasswordAsync(userId, dto.OldPassword, dto.NewPassword);
             switch (result.Status)
@@ -223,7 +256,7 @@ namespace Server.Features.Users
             {
                 case ServiceResultStatus.Success:
                     logger.LogInformation("Delete User Succesful, Message: {message}", result.Message);
-                    return Ok();
+                    return Ok(result.Message);
                 case ServiceResultStatus.UserNotFound:
                     logger.LogInformation("Delete User Failed, : {message}", result.Message);
                     return NotFound(result.Message);
@@ -237,6 +270,59 @@ namespace Server.Features.Users
                     logger.LogError("Delete User Failed, {message}", result.Message);
                     return StatusCode(500, "Unexpected error retrieving user info");
             }
+        }
+
+        /// <summary>
+        /// Normalizes Phoen Numbers, so users can use different style of input
+        /// </summary>
+        /// <param name="input">Phone Number</param>
+        /// <returns>Normalizes phone number, to +31[Rest of phonenumber]</returns>
+        private string NormalizePhoneNumber(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return string.Empty;
+
+            // Remove all whitespace
+            string cleaned = input.Replace(" ", "").Trim();
+
+            // Case 1 — Already in +31 format
+            if (cleaned.StartsWith("+31"))
+            {
+                // keep only digits after +31
+                string rest = new string(cleaned.Substring(3).Where(char.IsDigit).ToArray());
+                return $"+31{rest}";
+            }
+
+            // Case 2 — 0031 international format
+            if (cleaned.StartsWith("0031"))
+            {
+                string rest = new string(cleaned.Substring(4).Where(char.IsDigit).ToArray());
+                return $"+31{rest}";
+            }
+
+            // Remove everything except digits
+            string digits = new string(cleaned.Where(char.IsDigit).ToArray());
+
+            // Case 3 — Starts with 31 (mobile number without +)
+            if (digits.StartsWith("31"))
+            {
+                string rest = digits.Substring(2); // remove 31
+                return $"+31{rest}";
+            }
+
+            // Case 4 — Dutch "06..." mobile numbers
+            if (digits.StartsWith("06"))
+            {
+                digits = digits.Substring(1); // remove only the first '0'
+            }
+            else if (digits.StartsWith("6"))
+            {
+                // handle "612345678" (missing leading 0)
+                // nothing to strip
+            }
+
+            // Always return in +31 format
+            return $"+31{digits}";
         }
     }
 }
