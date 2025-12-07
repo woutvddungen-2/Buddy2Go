@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Win32;
 using Server.Common;
 using Shared.Models.Dtos.Users;
 using System.Security.Claims;
@@ -77,6 +78,12 @@ namespace Server.Features.Users
         [HttpPost("Login")]
         public async Task<IActionResult> Login([FromBody] LoginDto login)
         {
+            if (login == null)
+            {
+                logger.LogWarning("Login request body is null");
+                return BadRequest("Login data missing");
+            }
+
             ServiceResult<string> result = await service.Login(login.Username, login.Password);
 
             switch (result.Status)
@@ -218,6 +225,11 @@ namespace Server.Features.Users
         [HttpPost("UpdatePassword")]
         public async Task<IActionResult> UpdatePassword([FromBody] ChangePasswordDto dto)
         {
+            if (dto == null)
+            {
+                logger.LogWarning("ChangePassword dto is null");
+                return BadRequest("ChangePassword dto data missing");
+            }
             int userId = HttpContext.GetUserId();
             ServiceResult result = await service.UpdatePasswordAsync(userId, dto.OldPassword, dto.NewPassword);
             switch (result.Status)
@@ -247,7 +259,7 @@ namespace Server.Features.Users
             {
                 case ServiceResultStatus.Success:
                     logger.LogInformation("Delete User Succesful, Message: {message}", result.Message);
-                    return Ok();
+                    return Ok(result.Message);
                 case ServiceResultStatus.UserNotFound:
                     logger.LogInformation("Delete User Failed, : {message}", result.Message);
                     return NotFound(result.Message);
@@ -273,14 +285,46 @@ namespace Server.Features.Users
             if (string.IsNullOrWhiteSpace(input))
                 return string.Empty;
 
+            // Remove all whitespace
+            string cleaned = input.Replace(" ", "").Trim();
+
+            // Case 1 — Already in +31 format
+            if (cleaned.StartsWith("+31"))
+            {
+                // keep only digits after +31
+                string rest = new string(cleaned.Substring(3).Where(char.IsDigit).ToArray());
+                return $"+31{rest}";
+            }
+
+            // Case 2 — 0031 international format
+            if (cleaned.StartsWith("0031"))
+            {
+                string rest = new string(cleaned.Substring(4).Where(char.IsDigit).ToArray());
+                return $"+31{rest}";
+            }
+
             // Remove everything except digits
-            string digits = new string(input.Where(char.IsDigit).ToArray());
+            string digits = new string(cleaned.Where(char.IsDigit).ToArray());
 
-            // Remove leading 0 if present (Dutch style "06...")
-            if (digits.StartsWith("0"))
-                digits = digits.Substring(1);
+            // Case 3 — Starts with 31 (mobile number without +)
+            if (digits.StartsWith("31"))
+            {
+                string rest = digits.Substring(2); // remove 31
+                return $"+31{rest}";
+            }
 
-            // Prepend country code (Netherlands default +31)
+            // Case 4 — Dutch "06..." mobile numbers
+            if (digits.StartsWith("06"))
+            {
+                digits = digits.Substring(1); // remove only the first '0'
+            }
+            else if (digits.StartsWith("6"))
+            {
+                // handle "612345678" (missing leading 0)
+                // nothing to strip
+            }
+
+            // Always return in +31 format
             return $"+31{digits}";
         }
     }

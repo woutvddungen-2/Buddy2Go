@@ -1,10 +1,12 @@
-﻿using System.Net.Http.Headers;
+﻿using Server.Common;
+using Server.Features.Users;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 
 namespace Server.Services
 {
-    public class SmsService
+    public class SmsService: ISmsService
     {
         private readonly HttpClient client;
         private readonly string sid;

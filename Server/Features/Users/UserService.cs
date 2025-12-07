@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.Win32;
 using Server.Common;
 using Server.Features.Buddies;
 using Server.Features.Journeys;
@@ -22,8 +21,8 @@ namespace Server.Features.Users
         private readonly AppDbContext db;
         private readonly string jwtSecret;
         private ILogger logger;
-        private SmsService smsService;
-        public UserService(AppDbContext db, ILogger<UserService> logger, IConfiguration config, SmsService smsService)
+        private ISmsService smsService;
+        public UserService(AppDbContext db, ILogger<UserService> logger, IConfiguration config, ISmsService smsService)
         {            
             this.db = db;
             this.logger = logger;
@@ -122,7 +121,6 @@ namespace Server.Features.Users
                 PasswordHash = entry.PasswordHash!,
                 Email = entry.Email!,
                 Phonenumber = entry.PhoneNumber,
-                IsVerified = true,
                 CreatedAt = DateTime.UtcNow
             };
 
