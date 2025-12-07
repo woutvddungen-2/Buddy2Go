@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: client-config
-  namespace: buddy2go
-data:
-  ApiBaseUrl: "https://app.buddy-2-go.nl:5001"

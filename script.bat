@@ -112,14 +112,14 @@ REM ----------------- AppSettings Selection ------------------
 if "%MODE_ENV%"=="local" (
     if "%SSL_FLAG%"=="true" (
         echo Using LOCAL HTTPS appsettings.json...
-        copy /Y Client\Build\appsettings\appsettings.https.local.json Client\Build\appsettings\appsettings.json >nul
+        copy /Y Client\Build\appsettings\appsettings.local.https.json Client\Build\appsettings\appsettings.json >nul
     ) else (
         echo Using LOCAL HTTP appsettings.json...
-        copy /Y Client\Build\appsettings\appsettings.http.local.json Client\Build\appsettings\appsettings.json >nul
+        copy /Y Client\Build\appsettings\appsettings.local.http.json Client\Build\appsettings\appsettings.json >nul
     )
 ) else (
     echo Using DEPLOY appsettings.json...
-    copy /Y Client\Build\appsettings\appsettings.https.deploy.json Client\Build\appsettings\appsettings.json >nul
+    copy /Y Client\Build\appsettings\appsettings.deploy.json Client\Build\appsettings\appsettings.json >nul
     
 )
 echo.
@@ -201,26 +201,93 @@ if "%MODE_ENV%"=="local" (
         echo SSL disabled — no certs copied.
     )
 ) else (
-    echo DEPLOY MODE — No docker-compose.yml needed.
-    echo Kubernetes manifests will be used.
+    echo DEPLOY MODE — Using single Kubernetes manifest...
+
+    if exist "Build\manifest.yaml" (
+        echo Copying manifest.yaml...
+        copy /Y "Build\manifest.yaml" "%DEPLOY_FOLDER%\manifest.yaml" >nul
+    ) else (
+        echo [WARN] Build\k8s\manifest.yaml NOT FOUND — no Kubernetes manifest added!
+    )
 )
 
 REM =================================================
-if "%MODE_ENV%"=="local" (
-    echo Writing README.RUN.txt...
+echo Writing README.RUN.txt...
+
+if /I "%MODE_ENV%"=="local" (
+
+    if /I "%SSL_FLAG%"=="true" (
+        (
+        echo Buddy2Go LOCAL Package %NEW_VERSION%
+        echo ============================================
+        echo SSL Enabled: %SSL_FLAG%
+        echo DotNet Config: %DOTNET_CONFIG%
+        echo.
+        echo --- LOAD IMAGES ---
+        echo docker load -i images/server_%NEW_VERSION%.tar
+        echo docker load -i images/client_%NEW_VERSION%.tar
+        echo docker load -i images/mysql_8_0.tar
+        echo.
+        echo --- START LOCAL DOCKER ^(HTTPS^) ---
+        echo docker compose up -d
+        echo.
+        echo Your app will run on:
+        echo   Client: https://localhost
+        echo   Server API: https://localhost:5001
+        echo.
+        echo ^(Self-signed certs are used; your browser may show a warning.^)
+        ) > "%DEPLOY_FOLDER%\README.RUN.txt"
+    ) else (
+        (
+        echo Buddy2Go LOCAL Package %NEW_VERSION%
+        echo ============================================
+        echo SSL Enabled: %SSL_FLAG%
+        echo DotNet Config: %DOTNET_CONFIG%
+        echo.
+        echo --- LOAD IMAGES ---
+        echo docker load -i images/server_%NEW_VERSION%.tar
+        echo docker load -i images/client_%NEW_VERSION%.tar
+        echo docker load -i images/mysql_8_0.tar
+        echo.
+        echo --- START LOCAL DOCKER ^(HTTP^) ---
+        echo docker compose up -d
+        echo.
+        echo Your app will run on:
+        echo   Client: http://localhost
+        echo   Server API: http://localhost:5001
+        ) > "%DEPLOY_FOLDER%\README.RUN.txt"
+    )
+
+) else (
+
     (
-    echo Buddy2Go %MODE_ENV% Package %NEW_VERSION%
-    echo ---------------------------------------------
+    echo Buddy2Go DEPLOY Package %NEW_VERSION%
+    echo ============================================
     echo SSL Enabled: %SSL_FLAG%
+    echo DotNet Config: %DOTNET_CONFIG%
     echo.
+    echo --- LOAD IMAGES ---
     echo docker load -i images/server_%NEW_VERSION%.tar
     echo docker load -i images/client_%NEW_VERSION%.tar
     echo docker load -i images/mysql_8_0.tar
     echo.
-    echo Start containers:
-    echo    docker compose up -d
+    echo --- KUBERNETES DEPLOYMENT ---
+    echo Apply the manifest in this package:
+    echo   kubectl apply -f manifest.yaml
+    echo.
+    echo Verify rollout:
+    echo   kubectl get pods -n buddy2go
+    echo   kubectl get svc -n buddy2go
+    echo   kubectl get ingress -n buddy2go
+    echo.
+    echo The cluster will expose:
+    echo   Client → https://prod.buddy-2-go.nl
+    echo   Server → https://api.buddy-2-go.nl
     ) > "%DEPLOY_FOLDER%\README.RUN.txt"
+
 )
+
+
 
 REM =================================================
 echo Creating TAR.GZ package...
