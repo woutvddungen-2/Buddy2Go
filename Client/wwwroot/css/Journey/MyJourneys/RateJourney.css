@@ -26,34 +26,52 @@
     gap: 0.75rem;
 }
 
-/* Smileys row */
-.rating-row {
-    display: flex;
-    justify-content: space-between;
-    margin: 0.5rem 0 0.75rem;
+/* Rating grid */
+.rating-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    text-align: center;
+    justify-items: center;
+    margin-bottom: 15px;
 }
 
-.rating-smiley {
-    font-size: 2rem;
-    border: none;
-    background: none;
-    cursor: pointer;
-    opacity: 0.5;
-    transition: transform 0.15s ease, opacity 0.2s ease, background-color 0.2s ease;
-    border-radius: 50%;
-    padding: 6px;
-}
+    /* Emojis */
+    .rating-grid .rating-smiley {
+        width: 48px; /* force square width */
+        height: 48px; /* force square height */
+        line-height: 48px; /* centers emoji perfectly */
+        display: flex;
+        align-items: center;
+        justify-content: center;
 
-    .rating-smiley:hover {
-        transform: scale(1.2);
-        opacity: 0.75;
+        font-size: 2rem;
+        background: none;
+        border: none;
+        cursor: pointer;
+        opacity: 0.5;
+        transition: transform 0.15s ease, opacity 0.2s ease, background-color 0.2s ease;
+        border-radius: 50%;
+        padding: 6px;
+    }
+        .rating-grid .rating-smiley:hover {
+            transform: scale(1.2);
+            opacity: 0.75;
+        }
+        .rating-grid .rating-smiley.selected {
+            opacity: 1;
+            transform: scale(1.25);
+            background: #e7d7ff;
+            border-radius: 50%;
+        }
+
+    /* Labels below emojis */
+    .rating-grid .rating-label {
+        font-size: 0.8rem;
+        color: #555;
+        margin-top: -6px;
     }
 
-    .rating-smiley.selected {
-        opacity: 1;
-        transform: scale(1.25);
-        background: #e7d7ff;
-    }
 
 /* Notes textarea (same class name: finish-notes) */
 .finish-notes {

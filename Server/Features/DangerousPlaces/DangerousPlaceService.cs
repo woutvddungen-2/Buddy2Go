@@ -56,18 +56,22 @@ namespace Server.Features.DangerousPlaces
                 logger.LogWarning("CreateReportAsync Failed, User: {user} not found", userId);
                 return ServiceResult.Fail(ServiceResultStatus.UserNotFound, "User not found");
             }
-
             if (string.IsNullOrWhiteSpace(report.GPS))
             {
                 logger.LogWarning("CreateReportAsync Failed, GPS location empty.}");
                 return ServiceResult.Fail(ServiceResultStatus.ValidationError, "GPS location is required.");
+            }
+            if (string.IsNullOrWhiteSpace(report.Description) && report.PlaceType == DangerousPlaceType.Other)
+            {
+                logger.LogWarning("CreateReportAsync Failed, Description is empty for a Type Other location.");
+                return ServiceResult.Fail(ServiceResultStatus.ValidationError, "Description cannot be empty for placetype other");
             }
 
             DangerousPlace place = new DangerousPlace
             {
                 ReportedById = userId,
                 PlaceType = report.PlaceType,
-                Description = report.Description?.Trim() ?? string.Empty,
+                Description = report.Description?.Trim() ?? null,
                 GPS = report.GPS.Trim(),
                 ReportedAt = DateTime.UtcNow
             };
@@ -107,6 +111,11 @@ namespace Server.Features.DangerousPlaces
             {
                 logger.LogWarning("UpdateReportAsync: report {id} cannot be edited anymore (older than 7 days).", report.Id);
                 return ServiceResult.Fail(ServiceResultStatus.ValidationError, "Report can only be edited within 7 days.");
+            }
+            if (string.IsNullOrWhiteSpace(report.Description) && report.PlaceType == DangerousPlaceType.Other)
+            {
+                logger.LogWarning("UpdateReportAsync Failed, Description is empty for a Type Other location.}");
+                return ServiceResult.Fail(ServiceResultStatus.ValidationError, "Description cannot be empty for placetype other");
             }
 
             existing.PlaceType = report.PlaceType;
