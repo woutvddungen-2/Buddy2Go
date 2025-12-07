@@ -1,5 +1,4 @@
-﻿using Castle.Core.Logging;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Server.Common;
@@ -7,31 +6,32 @@ using Server.Features.Users;
 using Server.Infrastructure.Data;
 using Server.Tests.TestUtilities;
 using Shared.Models.Dtos.Users;
+using Shared.Models.Enums;
 
 namespace Server.Tests.Services
 {
     public class UserServiceTests
     {
-        //--------------- Register --------------------------
+        //--------------- StartRegister --------------------------
 
         [Fact]
         public async Task Register_ShouldFail_WhenMissingFields()
         {
             UserService? service = CreateService();
 
-            ServiceResult? result = await service.Register("", "Password1234!", "Test@Test.com", "06-12121212");
+            ServiceResult? result = await service.StartRegistrationAsync("", "Password1234!", "Test@Test.com", "06-12121212");
             Assert.False(result.IsSuccess);
             Assert.Equal(ServiceResultStatus.ValidationError, result.Status);
 
-            result = await service.Register("Test", "", "Test@Test.com", "06-12121212");
+            result = await service.StartRegistrationAsync("Test", "", "Test@Test.com", "06-12121212");
             Assert.False(result.IsSuccess);
             Assert.Equal(ServiceResultStatus.ValidationError, result.Status);
 
-            result = await service.Register("Test", "Password1234!", "", "06-12121212");
+            result = await service.StartRegistrationAsync("Test", "Password1234!", "", "06-12121212");
             Assert.False(result.IsSuccess);
             Assert.Equal(ServiceResultStatus.ValidationError, result.Status);
 
-            result = await service.Register("Test", "Password1234!", "Test@Test.com", "");
+            result = await service.StartRegistrationAsync("Test", "Password1234!", "Test@Test.com", "");
             Assert.False(result.IsSuccess);
             Assert.Equal(ServiceResultStatus.ValidationError, result.Status);
         }
@@ -41,17 +41,91 @@ namespace Server.Tests.Services
         {
             UserService? service = CreateService();
 
-            ServiceResult? result = await service.Register("Test", "Password1234", "Test@Test.com", "06-12121212");
+            ServiceResult? result = await service.StartRegistrationAsync("Test", "Password1234", "Test@Test.com", "06-12121212");
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ServiceResultStatus.ValidationError, result.Status);
+        }
+
+        //--------------- CompleteRegister --------------------------
+        [Fact]
+        public async Task CompleteRegistration_ShouldFail_WhenCodeNotFound()
+        {
+            UserService service = CreateService();
+
+            var result = await service.CompleteRegistrationAsync("+31612345678", "000000");
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ServiceResultStatus.ResourceNotFound, result.Status);
+        }
+
+        [Fact]
+        public async Task CompleteRegistration_ShouldFail_WhenCodeExpired()
+        {
+            UserService service = CreateService(out AppDbContext db);
+
+            db.UserVerifications.Add(new UserVerification
+            {
+                PhoneNumber = "+31612345678",
+                Code = "123456",
+                ExpiresAt = DateTime.UtcNow.AddMinutes(-1), // expired
+                Type = VerificationType.Registration
+            });
+
+            db.SaveChanges();
+
+            var result = await service.CompleteRegistrationAsync("+31612345678", "123456");
+
+            Assert.False(result.IsSuccess);
             Assert.Equal(ServiceResultStatus.ValidationError, result.Status);
         }
 
         [Fact]
-        public async Task Register_ShouldSucceed()
+        public async Task CompleteRegistration_ShouldFail_WhenCodeIncorrect()
         {
-            UserService? service = CreateService();
+            UserService service = CreateService(out AppDbContext db);
 
-            ServiceResult? result = await service.Register("Test", "Password1234!", "Test@Test.com", "06-12121212");
+            db.UserVerifications.Add(new UserVerification
+            {
+                PhoneNumber = "+31612345678",
+                Code = "123456",
+                ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+                Type = VerificationType.Registration
+            });
+
+            db.SaveChanges();
+
+            var result = await service.CompleteRegistrationAsync("+31612345678", "999999");
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal(ServiceResultStatus.Unauthorized, result.Status);
+        }
+
+        [Fact]
+        public async Task CompleteRegistration_ShouldSucceed()
+        {
+            UserService service = CreateService(out AppDbContext db);
+
+            db.UserVerifications.Add(new UserVerification
+            {
+                PhoneNumber = "+31612345678",
+                Username = "Test",
+                PasswordHash = UserService.HashPassword("Password1234!"),
+                Email = "test@test.com",
+                Code = "123456",
+                ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+                Type = VerificationType.Registration
+            });
+
+            db.SaveChanges();
+
+            var result = await service.CompleteRegistrationAsync("+31612345678", "123456");
+
             Assert.True(result.IsSuccess);
+
+            var user = db.Users.FirstOrDefault();
+            Assert.NotNull(user);
+            Assert.Equal("Test", user!.Username);
         }
 
         //--------------- Login --------------------------
@@ -66,7 +140,7 @@ namespace Server.Tests.Services
             Assert.Equal(ServiceResultStatus.Unauthorized, result.Status);
         }
 
-        
+
         [Fact]
         public async Task Login_ShouldFail_WhenIncorrectCredentials()
         {
@@ -113,7 +187,7 @@ namespace Server.Tests.Services
         public async Task GetuserInfo_ShouldSucceed()
         {
             UserService service = CreateService(out AppDbContext db);
-            await AddTestUser(db, id: 1);            
+            await AddTestUser(db, id: 1);
 
             ServiceResult<UserDto> result = await service.GetUserInfo(1);
             Assert.True(result.IsSuccess);
@@ -142,7 +216,7 @@ namespace Server.Tests.Services
             Assert.False(result.IsSuccess);
             Assert.Equal(ServiceResultStatus.ValidationError, result.Status);
 
-            result = await service.FindUserbyPhone("06-1234",1);
+            result = await service.FindUserbyPhone("06-1234", 1);
             Assert.False(result.IsSuccess);
             Assert.Equal(ServiceResultStatus.ValidationError, result.Status);
         }
@@ -168,16 +242,21 @@ namespace Server.Tests.Services
         private static UserService CreateService(out AppDbContext db)
         {
             db = InMemoryDbContextFactory.Create(Guid.NewGuid().ToString());
+
             IConfiguration config = CreateConfig();
+
             var logger = Mock.Of<ILogger<UserService>>();
-            return new UserService(db, logger, config);
+
+            var smsMock = new Mock<ISmsService>();
+            smsMock.Setup(s => s.SendSmsAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync("OK");
+            return new UserService(db, logger, config, smsMock.Object);
         }
         private static IConfiguration CreateConfig()
         {
             return new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string?>
                 {
-            { "JwtSettings:Secret", "ThisIsASuperSecretKey12345678901" }
+                    { "JwtSettings:Secret", "ThisIsASuperSecretKey12345678901" }
                 })
                 .Build();
         }

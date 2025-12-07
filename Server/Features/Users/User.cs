@@ -17,7 +17,6 @@ namespace Server.Features.Users
         public ICollection<JourneyParticipant> JourneyParticipations { get; set; } = null!;
         public ICollection<JourneyMessage> SentMessages { get; set; } = null!;
         public ICollection<DangerousPlace> Reports { get; set; } = null!;
-        public ICollection<Journey> OwnedJourneys { get; set; } = null!;
 
     }
 }

@@ -1,5 +1,7 @@
 ﻿using Server.Common;
 using Shared.Models.Dtos.Users;
+using Shared.Models.enums;
+using Shared.Models.Enums;
 
 namespace Server.Features.Users
 {
@@ -12,8 +14,16 @@ namespace Server.Features.Users
         /// <param name="password">The password for the new user.</param>
         /// <param name="email">The email address for the new user.</param>
         /// <param name="phoneNumber">The phone number for the new user.</param>
-        /// <returns> A <see cref="ServiceResult"/> indicating the success or failure of the registration process.</returns>
-        Task<ServiceResult> Register(string username, string password, string email, string phoneNumber);
+        /// <returns> A <see cref="ServiceResult"/> indicating the success or failure of the sms sending process.</returns>
+        Task<ServiceResult> StartRegistrationAsync(string username, string password, string email, string phoneNumber);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="phoneNumber">The phone number for the new user.</param>
+        /// <param name="code">The Code that the user has send in for verification </param>
+        /// <returns>A <see cref="ServiceResult"/> indicating the success or failure of the registration process.</returns>
+        Task<ServiceResult> CompleteRegistrationAsync(string phoneNumber, string code);
 
         /// <summary>
         /// Authenticates a user based on the provided username and password.

@@ -14,6 +14,9 @@
         "JwtSettings__Secret": "ThisIsASuperSecretKey12345678901",
         "SSL__Enabled": "true",
         "AllowedOrigins": "http://buddy2go-dev.nl;https://buddy2go-dev.nl;http://www.buddy2go-dev.nl;https://www.buddy2go-dev.nl",
+        "Twilio__AccountSid": "AC6b0a611e20b549b88bf966b2a1639b17",
+        "Twilio__AuthToken": "a8b90cc1504fdad720712155964c4cff",
+        "Twilio__FromNumber": "+19706666723"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:5001;https://buddy2go-dev.nl:5001"

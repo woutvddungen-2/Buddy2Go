@@ -19,7 +19,7 @@ namespace Server.Migrations
                 .HasAnnotation("ProductVersion", "8.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
-            modelBuilder.Entity("Server.Models.Buddy", b =>
+            modelBuilder.Entity("Server.Features.Buddies.Buddy", b =>
                 {
                     b.Property<int>("RequesterId")
                         .HasColumnType("int");
@@ -40,72 +40,7 @@ namespace Server.Migrations
                     b.ToTable("Buddys");
                 });
 
-            modelBuilder.Entity("Server.Models.DangerousPlace", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("GPS")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("PlaceType")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("ReportedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("ReportedById")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ReportedById");
-
-                    b.ToTable("DangerousPlaces");
-                });
-
-            modelBuilder.Entity("Server.Models.Journey", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("EndId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("FinishedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime>("StartAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("StartId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EndId");
-
-                    b.HasIndex("StartId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Journeys");
-                });
-
-            modelBuilder.Entity("Server.Models.JourneyMessage", b =>
+            modelBuilder.Entity("Server.Features.Chats.JourneyMessage", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -133,7 +68,66 @@ namespace Server.Migrations
                     b.ToTable("JourneyMessages");
                 });
 
-            modelBuilder.Entity("Server.Models.JourneyParticipant", b =>
+            modelBuilder.Entity("Server.Features.DangerousPlaces.DangerousPlace", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("GPS")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("PlaceType")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ReportedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("ReportedById")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReportedById");
+
+                    b.ToTable("DangerousPlaces");
+                });
+
+            modelBuilder.Entity("Server.Features.Journeys.Journey", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("EndId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("FinishedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("StartAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("StartId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EndId");
+
+                    b.HasIndex("StartId");
+
+                    b.ToTable("Journeys");
+                });
+
+            modelBuilder.Entity("Server.Features.Journeys.JourneyParticipant", b =>
                 {
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -157,7 +151,7 @@ namespace Server.Migrations
                     b.ToTable("JourneyParticipants");
                 });
 
-            modelBuilder.Entity("Server.Models.Place", b =>
+            modelBuilder.Entity("Server.Features.Journeys.Place", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -424,7 +418,7 @@ namespace Server.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Server.Models.Rating", b =>
+            modelBuilder.Entity("Server.Features.Journeys.Rating", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -455,7 +449,7 @@ namespace Server.Migrations
                     b.ToTable("Ratings");
                 });
 
-            modelBuilder.Entity("Server.Models.User", b =>
+            modelBuilder.Entity("Server.Features.Users.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -467,6 +461,9 @@ namespace Server.Migrations
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("longtext");
+
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -485,15 +482,54 @@ namespace Server.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("Server.Models.Buddy", b =>
+            modelBuilder.Entity("Server.Features.Users.UserVerification", b =>
                 {
-                    b.HasOne("Server.Models.User", "Addressee")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Username")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserVerifications");
+                });
+
+            modelBuilder.Entity("Server.Features.Buddies.Buddy", b =>
+                {
+                    b.HasOne("Server.Features.Users.User", "Addressee")
                         .WithMany()
                         .HasForeignKey("AddresseeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Server.Models.User", "Requester")
+                    b.HasOne("Server.Features.Users.User", "Requester")
                         .WithMany()
                         .HasForeignKey("RequesterId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -504,49 +540,15 @@ namespace Server.Migrations
                     b.Navigation("Requester");
                 });
 
-            modelBuilder.Entity("Server.Models.DangerousPlace", b =>
+            modelBuilder.Entity("Server.Features.Chats.JourneyMessage", b =>
                 {
-                    b.HasOne("Server.Models.User", "ReportedBy")
-                        .WithMany("Reports")
-                        .HasForeignKey("ReportedById")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ReportedBy");
-                });
-
-            modelBuilder.Entity("Server.Models.Journey", b =>
-                {
-                    b.HasOne("Server.Models.Place", "End")
-                        .WithMany()
-                        .HasForeignKey("EndId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Server.Models.Place", "Start")
-                        .WithMany()
-                        .HasForeignKey("StartId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Server.Models.User", null)
-                        .WithMany("OwnedJourneys")
-                        .HasForeignKey("UserId");
-
-                    b.Navigation("End");
-
-                    b.Navigation("Start");
-                });
-
-            modelBuilder.Entity("Server.Models.JourneyMessage", b =>
-                {
-                    b.HasOne("Server.Models.Journey", "Journey")
+                    b.HasOne("Server.Features.Journeys.Journey", "Journey")
                         .WithMany("Messages")
                         .HasForeignKey("JourneyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Server.Models.User", "Sender")
+                    b.HasOne("Server.Features.Users.User", "Sender")
                         .WithMany("SentMessages")
                         .HasForeignKey("SenderId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -557,15 +559,45 @@ namespace Server.Migrations
                     b.Navigation("Sender");
                 });
 
-            modelBuilder.Entity("Server.Models.JourneyParticipant", b =>
+            modelBuilder.Entity("Server.Features.DangerousPlaces.DangerousPlace", b =>
                 {
-                    b.HasOne("Server.Models.Journey", "Journey")
+                    b.HasOne("Server.Features.Users.User", "ReportedBy")
+                        .WithMany("Reports")
+                        .HasForeignKey("ReportedById")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ReportedBy");
+                });
+
+            modelBuilder.Entity("Server.Features.Journeys.Journey", b =>
+                {
+                    b.HasOne("Server.Features.Journeys.Place", "End")
+                        .WithMany()
+                        .HasForeignKey("EndId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Server.Features.Journeys.Place", "Start")
+                        .WithMany()
+                        .HasForeignKey("StartId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("End");
+
+                    b.Navigation("Start");
+                });
+
+            modelBuilder.Entity("Server.Features.Journeys.JourneyParticipant", b =>
+                {
+                    b.HasOne("Server.Features.Journeys.Journey", "Journey")
                         .WithMany("Participants")
                         .HasForeignKey("JourneyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Server.Models.User", "User")
+                    b.HasOne("Server.Features.Users.User", "User")
                         .WithMany("JourneyParticipations")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -576,15 +608,15 @@ namespace Server.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Server.Models.Rating", b =>
+            modelBuilder.Entity("Server.Features.Journeys.Rating", b =>
                 {
-                    b.HasOne("Server.Models.Journey", "Journey")
+                    b.HasOne("Server.Features.Journeys.Journey", "Journey")
                         .WithMany("Ratings")
                         .HasForeignKey("JourneyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Server.Models.User", "User")
+                    b.HasOne("Server.Features.Users.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.SetNull);
@@ -594,7 +626,15 @@ namespace Server.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Server.Models.Journey", b =>
+            modelBuilder.Entity("Server.Features.Users.UserVerification", b =>
+                {
+                    b.HasOne("Server.Features.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("Server.Features.Journeys.Journey", b =>
                 {
                     b.Navigation("Messages");
 
@@ -603,11 +643,9 @@ namespace Server.Migrations
                     b.Navigation("Ratings");
                 });
 
-            modelBuilder.Entity("Server.Models.User", b =>
+            modelBuilder.Entity("Server.Features.Users.User", b =>
                 {
                     b.Navigation("JourneyParticipations");
-
-                    b.Navigation("OwnedJourneys");
 
                     b.Navigation("Reports");
 

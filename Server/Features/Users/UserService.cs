@@ -4,9 +4,12 @@ using Server.Common;
 using Server.Features.Buddies;
 using Server.Features.Journeys;
 using Server.Infrastructure.Data;
+using Server.Services;
 using Shared.Models.Dtos.Users;
 using Shared.Models.enums;
+using Shared.Models.Enums;
 using System.IdentityModel.Tokens.Jwt;
+using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -18,38 +21,118 @@ namespace Server.Features.Users
         private readonly AppDbContext db;
         private readonly string jwtSecret;
         private ILogger logger;
-        public UserService(AppDbContext db, ILogger<UserService> logger, IConfiguration config)
+        private ISmsService smsService;
+        public UserService(AppDbContext db, ILogger<UserService> logger, IConfiguration config, ISmsService smsService)
         {            
             this.db = db;
             this.logger = logger;
+            this.smsService = smsService;
             jwtSecret = config["JwtSettings:Secret"] ?? throw new Exception("JWT secret missing");
         }
 
-        public async Task<ServiceResult> Register(string username, string password, string email, string phoneNumber)
+        public async Task<ServiceResult> StartRegistrationAsync(string username, string password, string email, string phoneNumber)
         {
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(phoneNumber))
+            {
+                logger.LogWarning("StartRegistration Failed, Some Data is missing");
                 return ServiceResult.Fail(ServiceResultStatus.ValidationError, "Missing required data");
+            }
 
             if (await db.Users.AnyAsync(u => u.Username == username))
+            {
+                logger.LogWarning("StarRegistration Failed, User: {username} Already Exists", username);
                 return ServiceResult.Fail(ServiceResultStatus.ValidationError, $"Username {username} already exists");
+            }
+
+
+            if (await db.Users.AnyAsync(u => u.Email == email))
+            {
+                logger.LogWarning("StarRegistration Failed, Email: {email} Already Exists", email);
+                return ServiceResult.Fail(ServiceResultStatus.ValidationError, $"Email {email} already exists");
+            }
 
             if (!IsPasswordStrong(password))
+            {
+                logger.LogWarning("StarRegistration Failed, Password is too weak");
                 return ServiceResult.Fail(ServiceResultStatus.ValidationError, "Weak password");
+            }
 
+            string code = new Random().Next(100000, 999999).ToString();            
+            var oldcodes = db.UserVerifications.Where(x => x.PhoneNumber == phoneNumber && x.Type == VerificationType.Registration);
+            db.UserVerifications.RemoveRange(oldcodes);
+
+            UserVerification entity = new UserVerification
+            {
+                UserId = null,
+                PhoneNumber = phoneNumber,
+                Code = code,
+                Type = VerificationType.Registration,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(10),
+
+                Username = username,
+                Email = email,
+                PasswordHash = HashPassword(password),
+            };
+
+            db.UserVerifications.Add(entity);
+            await db.SaveChangesAsync();
+            try
+            {
+                await smsService.SendSmsAsync(phoneNumber, $"Buddy2Go verificatiecode: {code}. Deze verloopt over 10 minuten.");
+                logger.LogDebug("SendVerificationCodeAsync, Sending SMS Succesfull!");
+                return ServiceResult.Succes("Verificatiecode verstuurd.");
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning("SendVerificationCodeAsync Failed, Sending SMS Failed");
+                return ServiceResult.Fail(ServiceResultStatus.Error, "SMS verzenden mislukt: " + ex.Message);
+            }
+        }
+
+        public async Task<ServiceResult> CompleteRegistrationAsync(string phoneNumber, string code)
+        {
+            UserVerification? entry = await db.UserVerifications
+                .FirstOrDefaultAsync(x => x.PhoneNumber == phoneNumber && x.Type == VerificationType.Registration);
+
+            if (entry == null)
+            {
+                logger.LogWarning("VerifyPhoneAsync Failed, Registration Code for number: {number} not found", phoneNumber);
+                return ServiceResult.Fail(ServiceResultStatus.ResourceNotFound, "Registration Code not found");
+            }
+
+            if (entry.ExpiresAt < DateTime.UtcNow)
+            {
+                db.UserVerifications.Remove(entry);
+                await db.SaveChangesAsync();
+                logger.LogWarning("VerifyPhoneAsync Failed, Code for number: {number} has expired", phoneNumber);
+                return ServiceResult.Fail(ServiceResultStatus.ValidationError, "Code has expired.");
+            }
+
+            if (entry.Code != code)
+            {
+                logger.LogWarning("VerifyPhoneAsync Failed, Code does not match");
+                return ServiceResult.Fail(ServiceResultStatus.Unauthorized, "Ongeldige code.");
+            }
+
+            // Create user
             User user = new User
             {
-                Username = username,
-                PasswordHash = HashPassword(password),
-                Email = email,
-                Phonenumber = phoneNumber,
+                Username = entry.Username!,
+                PasswordHash = entry.PasswordHash!,
+                Email = entry.Email!,
+                Phonenumber = entry.PhoneNumber,
                 CreatedAt = DateTime.UtcNow
             };
 
-            await db.Users.AddAsync(user);
+            db.Users.Add(user);
+
+            db.UserVerifications.Remove(entry);
             await db.SaveChangesAsync();
 
-            return ServiceResult.Succes("User registered successfully");
+            logger.LogInformation("User {Username} registered successfully", user.Username);
+            return ServiceResult.Succes("Registration succesfull");
         }
+
         public async Task<ServiceResult<string>> Login(string username, string password)
         {
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
@@ -62,6 +145,7 @@ namespace Server.Features.Users
             string token = GenerateJwtToken(user.Id, user.Username);
             return ServiceResult<string>.Succes(token);
         }
+
         public async Task<ServiceResult<UserDto>> GetUserInfo(int id)
         {
             User? user = await db.Users.FindAsync(id);
@@ -297,7 +381,6 @@ namespace Server.Features.Users
             }
         }
 
-
         //---------------------- Helpers ----------------------
         /// <summary>
         /// Generate JWT token for a given user
@@ -324,7 +407,6 @@ namespace Server.Features.Users
             SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
-
 
         //----------------------- Password Helpers ----------------------
         /// <summary>
