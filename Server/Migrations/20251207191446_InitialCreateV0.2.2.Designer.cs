@@ -11,8 +11,8 @@ using Server.Infrastructure.Data;
 namespace Server.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251204201506_LocalCreateV0.2.1")]
-    partial class LocalCreateV021
+    [Migration("20251207191446_InitialCreateV0.2.2")]
+    partial class InitialCreateV022
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -464,9 +464,6 @@ namespace Server.Migrations
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("longtext");
-
-                    b.Property<bool>("IsVerified")
-                        .HasColumnType("tinyint(1)");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()

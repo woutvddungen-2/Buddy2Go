@@ -462,9 +462,6 @@ namespace Server.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<bool>("IsVerified")
-                        .HasColumnType("tinyint(1)");
-
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("longtext");

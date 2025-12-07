@@ -132,6 +132,8 @@ spec:
           ports:
             - containerPort: 5001
           env:
+            - name: PORT
+              value: "5001"
             - name: DbSettings__Ip
               value: "mysql"
             - name: DbSettings__DbName
@@ -145,7 +147,7 @@ spec:
             - name: JwtSettings__Secret
               value: "ThisIsASuperSecretKey12345678901"
             - name: AllowedOrigins
-              value: "https://prod.buddy-2-go.nl;https://www.prod.buddy-2-go.nl"
+              value: "https://prod.buddy-2-go.nl;https://www.prod.buddy-2-go.nl;https://api.buddy-2-go.nl;https://www.api.buddy-2-go.nl"
             - name: ASPNETCORE_ENVIRONMENT
               value: "Production"
             - name: SSL__Enabled
