@@ -1,4 +1,4 @@
-version: "3.9"
+version: "3.11"
 
 services:
   mysql:
@@ -22,8 +22,7 @@ services:
       DbSettings__Port: 3306
       JwtSettings__Secret: "ThisIsASuperSecretKey12345678901"
       SSL__Enabled: "true"
-      AllowedOrigins: "https://app.buddy-2-go.nl;https://www.app.buddy-2-go.nl;https://buddy2go-dev.nl;https://www.buddy2go-dev.nl;https://prod.buddy-2-go.nl.nl;https://www.prod.buddy-2-go.nl"
-      ASPNETCORE_ENVIRONMENT: Development
+      AllowedOrigins: "https://buddy2go-dev.nl;https://www.buddy2go-dev.nl;"
     ports:
       - "5001:5001"
     depends_on:
