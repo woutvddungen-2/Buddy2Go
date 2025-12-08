@@ -22,15 +22,10 @@ else if (Journey == null)
 }
 else
 {
-    <div class="max-w-lg mx-auto mt-4 flex flex-col gap-4">
+    <div class="leave-container">
+        <JourneyCard Journey="@Journey" CurrentUserId="Journey.OwnerId" />
 
-        <div class="journey-card journey-highlight">
-            <JourneyCard Journey="@Journey" CurrentUserId="Journey.OwnerId" />
-        </div>
-
-        <div class="bg-white border border-gray-200 rounded-xl shadow-lg p-5 flex flex-col gap-4 relative leave-panel">
-            <div class="absolute top-0 right-0 h-full w-2 bg-purple-300 rounded-r-xl"></div>
-
+        <div class="leave-panel">
             <h3 class="text-lg font-semibold text-gray-900">
                 Weet je zeker dat je deze reis wilt verlaten?
             </h3>

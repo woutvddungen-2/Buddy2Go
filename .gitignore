@@ -364,3 +364,5 @@ FodyWeavers.xsd
 /version.txt
 /version-local.txt
 /version-deploy.txt
+/Server/Properties/launchSettings.json
+/Build/manifest.yaml

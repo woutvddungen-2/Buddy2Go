@@ -19,7 +19,7 @@ namespace Client.Services
         {
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, "api/User/login")
             {
-                Content = JsonContent.Create(new LoginDto { Username = username, Password = password })
+                Content = JsonContent.Create(new LoginDto { Identifier = username, Password = password })
             };
             request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
             HttpResponseMessage? response = await httpClient.SendAsync(request);

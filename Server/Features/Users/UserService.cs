@@ -133,14 +133,18 @@ namespace Server.Features.Users
             return ServiceResult.Succes("Registration succesfull");
         }
 
-        public async Task<ServiceResult<string>> Login(string username, string password)
+        public async Task<ServiceResult<string>> Login(string identifier, string password)
         {
-            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
-                return ServiceResult<string>.Fail(ServiceResultStatus.ValidationError, "Username and password are required");
+            if (string.IsNullOrWhiteSpace(identifier) || string.IsNullOrWhiteSpace(password))
+                return ServiceResult<string>.Fail(ServiceResultStatus.ValidationError, "Login gegevens zijn verplicht");
 
-            User? user = await db.Users.FirstOrDefaultAsync(u => u.Username == username);
-            if (user == null || !VerifyPassword(password, user.PasswordHash))
-                return ServiceResult<string>.Fail(ServiceResultStatus.Unauthorized, "Invalid username or password");
+            User? user = await db.Users.FirstOrDefaultAsync(u => u.Username == identifier || u.Email == identifier);
+
+            if (user == null)
+                return ServiceResult<string>.Fail(ServiceResultStatus.Unauthorized, "Ongeldige login gegevens");
+
+            if (!VerifyPassword(password, user.PasswordHash))
+                return ServiceResult<string>.Fail(ServiceResultStatus.Unauthorized, "Ongeldige login gegevens");
 
             string token = GenerateJwtToken(user.Id, user.Username);
             return ServiceResult<string>.Succes(token);

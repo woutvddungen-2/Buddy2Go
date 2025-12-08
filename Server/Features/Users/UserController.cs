@@ -81,25 +81,25 @@ namespace Server.Features.Users
                 return BadRequest("Login data missing");
             }
 
-            ServiceResult<string> result = await service.Login(login.Username, login.Password);
+            ServiceResult<string> result = await service.Login(login.Identifier, login.Password);
 
             switch (result.Status)
             {
                 case ServiceResultStatus.Success:
                     Response.Cookies.Append("jwt", result.Data!, new CookieOptions { HttpOnly = true, Secure = sslEnabled, SameSite = SameSiteMode.Lax });
-                    logger.LogInformation("User {Username} logged in successfully", login.Username);
+                    logger.LogInformation("User {Username} logged in successfully", login.Identifier);
                     return Ok(new { token = result.Data });
 
                 case ServiceResultStatus.Unauthorized:
-                    logger.LogWarning("Login failed for user {Username}: {Message}", login.Username, result.Message);
+                    logger.LogWarning("Login failed for user {Username}: {Message}", login.Identifier, result.Message);
                     return Unauthorized(result.Message);
 
                 case ServiceResultStatus.ValidationError:
-                    logger.LogWarning("Login validation failed for user {Username}: {Message}", login.Username, result.Message);
+                    logger.LogWarning("Login validation failed for user {Username}: {Message}", login.Identifier, result.Message);
                     return BadRequest(result.Message);
 
                 default:
-                    logger.LogError("Unexpected login error for user {Username}: {Message}", login.Username, result.Message);
+                    logger.LogError("Unexpected login error for user {Username}: {Message}", login.Identifier, result.Message);
                     return StatusCode(500, "Unexpected login error");
             }
         }

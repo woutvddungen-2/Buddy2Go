@@ -1,22 +1,35 @@
 ﻿.home-container {
+    background-image: url('/images/backgrounds/journeyhome-bg.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 100%;
+    height: calc(100dvh - 64px);
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    padding: 1rem;
-    margin-top: 40px;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    padding: 0 1.5rem;
 }
 
 .card {
-    position:relative;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-radius: 18px;
-    padding: 20px;
-    height: 120px;
+    width: 100%;
+    max-width: 380px;
+    padding: 1.2rem;
+    border-radius: 14px;
     color: white;
+    font-size: 1.35rem;
+    font-weight: 600;
+    text-align: center;
     cursor: pointer;
+    position: relative;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+    transition: transform .1s ease;
 }
+    .card:active {
+        transform: scale(0.97);
+    }
 
 .card-title {
     font-size: 22px;
@@ -31,39 +44,38 @@
 }
 
 .purple-card {
-    background-color: #B043C0;
+    background-color: #9b4de2;
 }
 
 .green-card {
-    background-color: #1EB989;
+    background-color: #199b76;
 }
 
 .blue-card {
-    background-color: #003B66;
+    background-color: #0077b6;
 }
 .count-badge {
     position: absolute;
-    top: 12px;
-    right: 12px;
-    width: 50px;
-    height: 50px;
-    display: flex;
+    top: -10px;
+    right: -10px;
+    display: inline-flex;
     justify-content: center;
     align-items: center;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    font-size: 1.6rem;
-    font-weight: 800;
+    font-size: 0.9rem;
+    font-weight: 700;
     color: white;
-    pointer-events: none;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
 }
 
     /* Purple badge */
     .count-badge.purple {
-        background-color: #8e44ad;
+        background-color: #b46aff;
     }
 
     /* Blue badge */
     .count-badge.blue {
-        background-color: #2980b9;
+        background-color: #0096d1;
     }
