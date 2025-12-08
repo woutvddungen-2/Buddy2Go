@@ -64,7 +64,7 @@
     cursor: pointer;
 }
 
-/* Optional: purple accent on this page too */
+/* purple accent for the card  */
 .journey-card {
     border-right: 6px solid #7b2cbf;
 }
