@@ -155,11 +155,14 @@ WebApplication? app = builder.Build();
 
 // -------------------- Seed Database -----------------
 
-for (int i = 0; i < 5; i++)
+const int maxRetries = 3;
+
+for (int attempt = 1; attempt <= maxRetries; attempt++)
 {
     using IServiceScope scope = app.Services.CreateScope();
     AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     ILogger logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
     try
     {
         await DbInitializer.InitializeAsync(db, logger);
@@ -168,8 +171,15 @@ for (int i = 0; i < 5; i++)
     }
     catch (Exception ex)
     {
-        logger.LogWarning(ex, "Database init failed, retrying {i}/5...", i + 1);
-        Thread.Sleep(3000);
+        logger.LogWarning(ex, "Database init failed, attempt {Attempt}/{Max}.", attempt, maxRetries);
+
+        if (attempt == maxRetries)
+        {
+            logger.LogError("Database initialization failed after {Max} attempts. Exiting...", maxRetries);
+            throw new DbInitializeException($"Database initialization failed after {maxRetries} attempts.", ex);
+        }
+
+        await Task.Delay(3000); // wait before retry
     }
 }
 
