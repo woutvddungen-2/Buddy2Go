@@ -11,25 +11,22 @@
 
     <div class="card purple-card" @onclick='() => Nav.NavigateTo("/MyJourneys")'>
         <div class="card-title">Mijn reizen</div>
-        @* @if (!isLoading)
+        @if (!isLoading)
         {
             <div class="count-badge purple">@myJourneyCount</div>
-        } *@
-        <div class="card-image-placeholder"></div>
+        }
     </div>
 
     <div class="card green-card" @onclick='() => Nav.NavigateTo("/CreateJourney")'>
-        <div class="card-image-placeholder"></div>
         <div class="card-title">Ik zoek een reisbuddy</div>
     </div>
 
     <div class="card blue-card" @onclick='() => Nav.NavigateTo("/FindJourney")'>
         <div class="card-title">Ik ga met je mee</div>
-        @* @if (!isLoading)
+        @if (!isLoading)
         {
             <div class="count-badge blue">@buddyJourneyCount</div>
-        } *@
-        <div class="card-image-placeholder"></div>
+        }
     </div>
 
 </div>
@@ -37,11 +34,11 @@
 @code {
     private int myJourneyCount = 0;
     private int buddyJourneyCount = 0;
-    //private bool isLoading = true;
+    private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
-        //isLoading = true;
+        isLoading = true;
 
         var myJourneys = await JourneyService.GetMyJourneysAsync();
         if (myJourneys.IsSuccess)
@@ -51,6 +48,6 @@
         if (buddyJourneys.IsSuccess)
             buddyJourneyCount = buddyJourneys.Data!.Count;
 
-        //isLoading = false;
+        isLoading = false;
     }
 }
