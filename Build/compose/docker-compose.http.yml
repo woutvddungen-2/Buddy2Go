@@ -24,7 +24,7 @@ services:
       SSL__Enabled: "false"
       AllowedOrigins: "http://buddy2go-dev.nl;http://www.buddy2go-dev.nl;"
       Twilio__AccountSid: "AC6b0a611e20b549b88bf966b2a1639b17"
-      Twilio__AuthToken: "a8b90cc1504fdad720712155964c4cff"
+      Twilio__AuthToken: "d474f428a6ae0d47cceb74c27dd2e78d"
       Twilio__FromNumber: "+19706666723"
     ports:
       - "5001:5001"
