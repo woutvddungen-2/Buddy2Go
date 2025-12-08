@@ -150,6 +150,12 @@ spec:
               value: "https://prod.buddy-2-go.nl;https://www.prod.buddy-2-go.nl;https://api.buddy-2-go.nl;https://www.api.buddy-2-go.nl"
             - name: ASPNETCORE_ENVIRONMENT
               value: "Production"
+            - name: "Twilio__AccountSid"
+              value: "AC6b0a611e20b549b88bf966b2a1639b17"
+            - name: "Twilio__AuthToken"
+              value: "a8b90cc1504fdad720712155964c4cff"
+            - name: "Twilio__FromNumber"
+              value: "+19706666723"
             - name: SSL__Enabled
               value: "false"
           resources:
