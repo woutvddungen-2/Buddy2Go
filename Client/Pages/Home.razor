@@ -27,7 +27,7 @@ else
                     <button type="button" class="register-btn" @onclick="GoToRegister">Registreren</button>
                 </div>
                     <div class="form-group">
-                        <InputText @bind-Value="loginModel.Username"
+                        <InputText @bind-Value="loginModel.Identifier"
                                class="input-field-login"
                                placeholder="Gebruikersnaam of e-mailadres" />
                     </div>
@@ -72,31 +72,31 @@ else
     }
     private async Task LoginAlice()
     {
-        loginModel.Username = "Alice";
+        loginModel.Identifier = "Alice";
         loginModel.Password = "Password123!";
         await HandleLogin();
     }
     private async Task LoginBob()
     {
-        loginModel.Username = "bob";
+        loginModel.Identifier = "bob";
         loginModel.Password = "Password123!";
         await HandleLogin();
     }
     private async Task LoginCharlie()
     {
-        loginModel.Username = "Charlie";
+        loginModel.Identifier = "Charlie";
         loginModel.Password = "Password123!";
         await HandleLogin();
     }
     private async Task LoginJoseph()
     {
-        loginModel.Username = "Joseph";
+        loginModel.Identifier = "Joseph";
         loginModel.Password = "Password123!";
         await HandleLogin();
     }
     private async Task LoginDiana()
     {
-        loginModel.Username = "Diana";
+        loginModel.Identifier = "Diana";
         loginModel.Password = "Password123!";
         await HandleLogin();
     }
@@ -107,7 +107,7 @@ else
         errorMessage = null;
         isLoading = true;
 
-        ServiceResult? result = await LoginService.LoginAsync(loginModel.Username.Trim(), loginModel.Password);
+        ServiceResult? result = await LoginService.LoginAsync(loginModel.Identifier.Trim(), loginModel.Password);
 
         if (result.IsSuccess)
             Navigation.NavigateTo("/JourneyHome");

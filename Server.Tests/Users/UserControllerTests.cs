@@ -93,7 +93,7 @@ namespace Server.Tests.Controllers
             var controller = CreateController(serviceMock);
             controller.ControllerContext.HttpContext = new DefaultHttpContext();
 
-            var dto = new LoginDto { Username = "john", Password = "pass" };
+            var dto = new LoginDto { Identifier = "john", Password = "pass" };
 
             IActionResult result = await controller.Login(dto);
             Assert.IsType<OkObjectResult>(result);
