@@ -19,6 +19,7 @@
     padding-bottom: 64px;
     background-clip: content-box;
     min-height: 0;
+    background: transparent !important;
 }
 
 .bottom-nav {

@@ -1,104 +1,178 @@
-﻿.journey-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
-    justify-content:start;
-    max-width: 2000px
-}
-
-@media (max-width: 600px) {
-    .journey-list {
-        justify-content: center;
-    }
-}
-
-@media (max-width: 400px) {
-    .journey-list {
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    }
-}
-
+﻿/* Card container */
 .journey-card {
-    background: #fff;
-    border-radius: 18px;
-    padding: 1.4rem 1.6rem;
-    max-width: 700px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 8px 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 4px;
+    width: 90%;
+    max-width: 340px;
+    margin: 0 auto;
 }
 
-    .journey-card .date {
-        font-weight: 700;
-        font-size: 1.1rem;
-    }
+/* Top-right header title */
+.card-header {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    font-size: 0.8rem;
+}
 
-    .journey-card .time {
-        font-size: 0.95rem;
-        font-weight: 500;
-    }
+.card-title {
+    font-size: 0.95rem;
+    color: #555;
+    font-weight: 600;
+}
 
-    .journey-card .locations span {
+/* Each row */
+.row {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 0;
+    font-size: 0.8rem;
+}
+
+.icon {
+    width: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+    .icon img {
+        width: 18px;
+        height: 18px;
+        object-fit: contain;
         display: block;
-        font-size: 0.9rem;
-        margin-top: 3px;
+        filter: drop-shadow(0 0 0 #7b2cbf); /* ensures consistent color rendering */
     }
 
-    .journey-card .locations strong {
-        display: inline-block;
-        background: #f6f6f6;
-        border-radius: 10px;
-        padding: 3px 8px;
-        font-weight: 600;
-        font-size: 0.85rem;
-        border: 1px solid #ddd;
-    }
+.content {
+    flex: 1;
+}
 
-    /* Journey owner / finished label base styling */
-    .journey-card .owner {
-        font-size: 0.9rem;
-        margin-top: 4px;
-        color: #333;
-    }
+/* Purple divider line */
+.divider {
+    height: 1px;
+    width: 100%;
+    background: #7b2cbf;
+    opacity: 0.1;
+    margin: 1px 0;
+}
 
-    .journey-card  .journey-finished-label {
-        font-size: 0.95rem;
-        font-weight: 700;
-    }
-
-
-.buddies {
+/* Reisbuddies row */
+.buddy-row {
+    margin-top: 6px;
+    font-size: 0.85rem;
+    color: #333;
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    font-size: 0.85rem;
+    align-items: center;
 }
 
-.buddy {
-    padding: 4px 8px;
+.buddy-tag {
+    padding: 3px 8px;
     background: #ececff;
     border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.8rem;
 }
 
+/* Buttons */
 .card-actions {
+    margin-top: 8px;
     display: flex;
-    gap: 10px;
     flex-wrap: wrap;
-    justify-content: flex-end;
-    margin-top: 10px;
+    gap: 8px;
+    align-items: center;
 }
-
-    .card-actions button {
-        border: none;
-        border-radius: 20px;
-        font-size: 0.9rem;
-        font-weight: 600;
-        padding: 8px 16px;
-        cursor: pointer;
-        transition: all 0.2s ease-in-out;
+    .card-actions > .pending-requests {
+        flex-basis: 100%;
+        width: 100%;
+        order: 0; /* first row */
+    }
+    .card-actions > button {
+        order: 1;
     }
 
-        .card-actions button:active {
-            transform: scale(0.97);
-        }
+    .card-actions button {
+        padding: 6px 14px;
+        border-radius: 18px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: 0.15s ease-in-out;
+    }
+
+/* Pending requests block */
+.pending-requests {
+    background: #fafafa;
+    border-radius: 12px;
+    border: 1px solid #e4e4e4;
+    padding: 10px;
+    margin: 12px 0;
+}
+
+.pending-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Accept / Reject */
+.btn-accept {
+    background: #4caf50;
+    color: white;
+    border-radius: 6px;
+    padding: 6px 10px;
+}
+
+.btn-reject {
+    background: #e53935;
+    color: white;
+    border-radius: 6px;
+    padding: 6px 10px;
+}
+
+/* Chat = filled purple */
+.btn-chat {
+    background: #7b2cbf;
+    color: #ffffff;
+    border: none;
+}
+
+    .btn-chat:hover {
+        background: #6821a9;
+    }
+
+/* Start reis = outline purple */
+.btn-finish {
+    background: white;
+    color: #7b2cbf;
+    border: 2px solid #7b2cbf;
+}
+
+    .btn-finish:hover {
+        background: #f4eaff;
+    }
+
+/* Edit rating */
+.btn-edit-rating {
+    background: #efe3ff;
+    border: 1px solid #d8c5ff;
+    color: #5a189a;
+}
+
+/* Leave button */
+.btn-leave {
+    background: #fff0f4;
+    border: 2px solid #c62828;
+    color: #c62828;
+}
+
+    .btn-leave:hover {
+        background: #ffe5e9;
+    }
