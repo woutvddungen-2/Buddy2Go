@@ -100,6 +100,9 @@ namespace Server.Infrastructure.Data
                 .OnDelete(DeleteBehavior.SetNull);
 
 
+            modelBuilder.Entity<User>().HasData(
+                new User { Id = -1, Username = "DeletedUser", Email = "", Phonenumber = "", PasswordHash = "", CreatedAt = DateTime.UtcNow }
+                );
 
             modelBuilder.Entity<Place>().HasData(
                 new Place { Id = 1,  City = "Eindhoven", District = "Centrum",       CentreGPS = "51.4416,5.4697" },

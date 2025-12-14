@@ -23,13 +23,13 @@
         /// - Rating (user reference is nulled, but rating row is kept)
         /// Keeps the Journey row.
         /// </summary>
-        public async Task CleanupOldJourneysAsync(CancellationToken ct)
+        public async Task Cleanup(CancellationToken ct)
         {
             DateTime cutoff = DateTime.UtcNow.AddDays(-7);
 
             // Only clean up journeys that are one week old.
             var journeyIds = await db.Journeys
-                .Where(j => j.StartAt < cutoff)
+                .Where(j => j.StartAt < cutoff && j.Participants.Any())
                 .Select(j => j.Id)
                 .ToListAsync(ct);
 
