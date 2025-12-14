@@ -28,7 +28,7 @@ else
     <div class="journey-list">
         @foreach (var journey in Journeys)
         {
-                <JourneyCard Journey="@journey" CurrentUserId="@CurrentUserId">
+                <JourneyCard Journey="@journey" CurrentUserId="@CurrentUserId" ColorTheme="purple">
                     <JourneyCardButtons>
                         @if (journey.OwnerId == CurrentUserId && journey.FinishedAt == null)
                         {
