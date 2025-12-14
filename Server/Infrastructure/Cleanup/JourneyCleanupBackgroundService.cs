@@ -15,7 +15,7 @@
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            // Run hourly. Daily is also fine—hourly just ensures timely cleanup.
+            // Run 6 hourly.
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
@@ -30,7 +30,7 @@
                     logger.LogError(ex, "Background journey cleanup loop failed.");
                 }
 
-                await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
+                await Task.Delay(TimeSpan.FromHours(6), stoppingToken);
             }
         }
     }

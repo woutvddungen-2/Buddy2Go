@@ -48,10 +48,11 @@ namespace Server.Infrastructure.Data
             // ----------- Journeys -----------
             var journeys = new List<Journey>
             {
-                new Journey { Id = 1, StartId = 1, EndId = 16, CreatedAt = DateTime.UtcNow, FinishedAt = null },
-                new Journey { Id = 2, StartId = 2, EndId = 7, CreatedAt = DateTime.UtcNow, FinishedAt = null },
-                new Journey { Id = 3, StartId = 12, EndId = 10, CreatedAt = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1)), FinishedAt = null },
-                new Journey { Id = 4, StartId = 20, EndId = 32, CreatedAt = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1)), FinishedAt = DateTime.UtcNow }
+                new Journey { Id = 1, StartId = 1, EndId = 16, CreatedAt = DateTime.UtcNow, StartAt= DateTime.UtcNow, FinishedAt = null },
+                new Journey { Id = 2, StartId = 2, EndId = 7, CreatedAt = DateTime.UtcNow,  StartAt= DateTime.UtcNow,FinishedAt = null },
+                new Journey { Id = 3, StartId = 12, EndId = 10, CreatedAt = DateTime.UtcNow.AddDays(-2),  StartAt= DateTime.UtcNow.AddDays(-1), FinishedAt = null },
+                new Journey { Id = 4, StartId = 20, EndId = 32, CreatedAt = DateTime.UtcNow.AddDays(-1),  StartAt= DateTime.UtcNow.AddDays(-1), FinishedAt = DateTime.UtcNow },
+                new Journey { Id = 5, StartId = 2, EndId = 8, CreatedAt = DateTime.UtcNow.AddDays(-9),  StartAt= DateTime.UtcNow.AddDays(-8), FinishedAt = DateTime.UtcNow.AddDays(-8) }
             };
             await context.Journeys.AddRangeAsync(journeys);
             await context.SaveChangesAsync();
@@ -69,8 +70,11 @@ namespace Server.Infrastructure.Data
                 new JourneyParticipant { UserId = 4, JourneyId = 2, Role = JourneyRole.Participant, Status = RequestStatus.Pending, JoinedAt = DateTime.UtcNow },
                 new JourneyParticipant { UserId = 5, JourneyId = 2, Role = JourneyRole.Participant, Status = RequestStatus.Rejected, JoinedAt = DateTime.UtcNow },
 
-                new JourneyParticipant { UserId = 4, JourneyId = 3, Role = JourneyRole.Owner, Status = RequestStatus.Accepted, JoinedAt = DateTime.UtcNow.Subtract(TimeSpan.FromDays(12)) },
-                new JourneyParticipant { UserId = 4, JourneyId = 4, Role = JourneyRole.Owner, Status = RequestStatus.Accepted, JoinedAt = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1)) }
+                new JourneyParticipant { UserId = 4, JourneyId = 3, Role = JourneyRole.Owner, Status = RequestStatus.Accepted, JoinedAt = DateTime.UtcNow.AddDays(-12) },
+                new JourneyParticipant { UserId = 4, JourneyId = 4, Role = JourneyRole.Owner, Status = RequestStatus.Accepted, JoinedAt = DateTime.UtcNow.AddDays(-1) },
+
+                new JourneyParticipant { UserId = 3, JourneyId = 5, Role = JourneyRole.Owner, Status = RequestStatus.Accepted, JoinedAt = DateTime.UtcNow.AddDays(-9) },
+                new JourneyParticipant { UserId = 4, JourneyId = 5, Role = JourneyRole.Participant, Status = RequestStatus.Accepted, JoinedAt = DateTime.UtcNow.AddDays(-8) }
             };
             await context.JourneyParticipants.AddRangeAsync(participants);
             await context.SaveChangesAsync();
@@ -84,7 +88,13 @@ namespace Server.Infrastructure.Data
 
                 new JourneyMessage { Id = 4, JourneyId = 2, SenderId = 1, Content = "Hi Bob!", SentAt = DateTime.UtcNow },
                 new JourneyMessage { Id = 5, JourneyId = 2, SenderId = 2, Content = "Hey Alice!", SentAt = DateTime.UtcNow },
-                new JourneyMessage { Id = 6, JourneyId = 2, SenderId = 2, Content = "Hello Charlie!", SentAt = DateTime.UtcNow }
+                new JourneyMessage { Id = 6, JourneyId = 2, SenderId = 2, Content = "Hello Charlie!", SentAt = DateTime.UtcNow },
+
+
+
+                new JourneyMessage { Id = 7, JourneyId = 5, SenderId = 3, Content = "Hi Jospeh!", SentAt = DateTime.UtcNow.AddDays(-8) },
+                new JourneyMessage { Id = 8, JourneyId = 5, SenderId = 4, Content = "Hey Charlie!", SentAt = DateTime.UtcNow.AddDays(-8) },
+                new JourneyMessage { Id = 9, JourneyId = 5, SenderId = 3, Content = "How are you!", SentAt = DateTime.UtcNow.AddDays(-8) }
             };
             await context.JourneyMessages.AddRangeAsync(messages);
             await context.SaveChangesAsync();
