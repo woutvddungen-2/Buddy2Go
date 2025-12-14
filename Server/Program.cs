@@ -93,7 +93,8 @@ builder.Services.AddSingleton<ISmsService, SmsService>();
 
 // -------------------- Cleanup Services --------------------
 builder.Services.AddScoped<JourneyCleanupService>();
-builder.Services.AddHostedService<JourneyCleanupBackgroundService>();
+builder.Services.AddScoped<DangerousPlaceCleanupService>();
+builder.Services.AddHostedService<CleanupBackgroundService>();
 
 // -------------------- Swagger --------------------
 #if DEBUG
