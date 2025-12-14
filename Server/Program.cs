@@ -7,6 +7,7 @@ using Server.Features.Chats;
 using Server.Features.DangerousPlaces;
 using Server.Features.Journeys;
 using Server.Features.Users;
+using Server.Infrastructure.Cleanup;
 using Server.Infrastructure.Data;
 using Server.Infrastructure.Database;
 using Server.Services;
@@ -89,6 +90,10 @@ builder.Services.AddScoped<ChatService>();
 
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<ISmsService, SmsService>();
+
+// -------------------- Cleanup Services --------------------
+builder.Services.AddScoped<JourneyCleanupService>();
+builder.Services.AddHostedService<JourneyCleanupBackgroundService>();
 
 // -------------------- Swagger --------------------
 #if DEBUG
