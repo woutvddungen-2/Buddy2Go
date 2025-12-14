@@ -1,7 +1,7 @@
 ﻿@inject NavigationManager Nav
 
 <div class="page-header">
-    @if (!string.IsNullOrWhiteSpace(BackTo))
+    @if (!string.IsNullOrWhiteSpace(BackTo) || OnBack.HasDelegate)
     {
         <button class="back-button" @onclick="GoBack">⟵</button>
     }

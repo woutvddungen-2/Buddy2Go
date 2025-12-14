@@ -1,5 +1,69 @@
-﻿.journey-card {
-    border-left: 6px solid #004b6b;
+﻿/* ================================
+   FIND JOURNEY PAGE BACKGROUND
+   ================================ */
+.findjourney-background {
+    background-image: url('/images/backgrounds/MyJourneys-bg.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    width: 100%;
+    min-height: calc(100dvh - 64px);
+    padding: 4rem 1.5rem 90px;
+}
+    .findjourney-background p,
+    .findjourney-background .empty-state {
+        color: white;
+        text-align: center;
+        font-size: 1rem;
+        opacity: 0.9;
+        margin-top: 2rem;
+        text-shadow: 0 2px 6px rgba(0,0,0,0.45);
+    }
+/* ================================
+   JOURNEY LIST GRID 
+   (same as MyJourneys)
+   ================================ */
+.journey-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    justify-content: center;
+    gap: 3.5rem;
+    padding-bottom: 90px;
+}
+
+/* Tablet */
+@media (min-width: 700px) {
+    .journey-list {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 3rem;
+    }
+}
+
+/* Desktop */
+@media (min-width: 1100px) {
+    .journey-list {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 3rem;
+    }
+}
+
+/* XL */
+@media (min-width: 1500px) {
+    .journey-list {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 3rem;
+    }
+}
+
+/* ================================
+   JOURNEY CARD ACCENT (BLUE)
+   ================================ */
+.journey-card {
+    border-right: 6px solid #004b6b;
+    max-width: 340px;
+    width: 90%;
+    margin: 0 auto;
 }
 
     .journey-card strong,
@@ -8,50 +72,83 @@
         color: #004b6b;
     }
 
+/* ================================
+   JOIN BUTTON
+   ================================ */
 .btn-join {
     background: #004b6b;
     color: #fff;
     border: 2px solid #004b6b;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
 }
 
     .btn-join:hover {
         background: #00678c;
     }
 
+/* ================================
+   CHAT BUTTON (OUTLINE)
+   ================================ */
 .btn-chat {
-    background: #fff;
+    background: #ffffff;
     color: #004b6b;
     border: 2px solid #004b6b;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    cursor: pointer;
 }
 
     .btn-chat:hover {
         background: #e9f4fa;
     }
 
+/* ================================
+   REJECT BUTTON (RED)
+   ================================ */
 .btn-reject {
-    background: #fff;
+    background: #ffffff;
     color: #c62828;
     border: 2px solid #c62828;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    cursor: pointer;
 }
 
     .btn-reject:hover {
         background: #ffe5e5;
     }
 
-.journey-finished-label {
-    color: #004b6b;
+/* Pending state */
+.pending-action {
+    background: #e1e1e1;
+    color: #666;
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: none;
+    cursor: not-allowed;
 }
 
-/* --- Back button styling --- */
+/* ================================
+   BACK BUTTON OVERRIDE
+   ================================ */
 .back-button {
-    color: #004b6b;
-    border-color: #004b6b;
+    color: #004b6b !important;
+    border-color: #004b6b !important;
 }
 
     .back-button:hover {
-        background: #004b6b;
-        color: white;
+        background: #004b6b !important;
+        color: white !important;
     }
-
-
-
+/* Header text */
+.header-title,
+.top-title {
+    color: white !important;
+    text-shadow: 0 2px 5px rgba(0,0,0,0.4) !important;
+}

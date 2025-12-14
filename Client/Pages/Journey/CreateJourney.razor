@@ -9,9 +9,8 @@
     <link href="css/Journey/CreateJourney.css" rel="stylesheet" />
 </HeadContent>
 
-<Header Title="Reis Maken" BackTo="/JourneyHome" />
-
-<div class="card create-journey-card">
+<div class="createjourney-background">
+    <Header Title="Reis Maken" BackTo="/JourneyHome" />
     @if (!string.IsNullOrEmpty(successMessage))
     {
         <div class="alert alert-success">@successMessage</div>
@@ -20,47 +19,48 @@
     {
         <div class="alert alert-danger">@errorMessage</div>
     }
+    <div class="createjourney-wrapper">
+        <div class="createjourney-card">
+            <EditForm Model="@journeyCreateDto" OnValidSubmit="HandleCreate">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <div class="form-row">
+                    <div class="form-field date-field">
+                        <label>Datum</label>
+                        <input type="date" @bind="date" @bind:after="UpdateStartAt" class="input-field" />
+                    </div>
 
-    <EditForm Model="@journeyCreateDto" OnValidSubmit="HandleCreate">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
-        <div class="form-row">
-            <div class="form-field date-field">
-                <label>Datum</label>
-                <input type="date" @bind="date" @bind:after="UpdateStartAt" class="input-field" />
-            </div>
+                    <div class="form-field time-field">
+                        <label>Tijd</label>
+                        <input type="time" @bind="time" @bind:after="UpdateStartAt" class="input-field" />
+                    </div>
+                </div>
+                <div class="form-field">
+                    <label>Ik reis van</label>
+                    <InputSelect @bind-Value="journeyCreateDto.StartPlaceId" class="input-field">
+                        <option value=0>-- Kies een stad --</option>
+                        @foreach (var p in allPlaces)
+                        {
+                            <option value="@p.Id">@FormatPlace(p)</option>
+                        }
+                    </InputSelect>
+                </div>
 
-            <div class="form-field time-field">
-                <label>Tijd</label>
-                <input type="time" @bind="time" @bind:after="UpdateStartAt" class="input-field" />
-            </div>
+                <div class="form-field">
+                    <label>Ik reis naar</label>
+                    <InputSelect @bind-Value="journeyCreateDto.EndPlaceId" class="input-field">
+                        <option value=0>-- Kies een stad --</option>
+                        @foreach (var p in allPlaces)
+                        {
+                            <option value="@p.Id">@FormatPlace(p)</option>
+                        }
+                    </InputSelect>
+                </div>
+                <button type="submit" class="submit-button">Verstuur buddyverzoek</button>
+            </EditForm>
         </div>
-        <div class="form-field">
-            <label>Ik reis van</label>
-            <InputSelect @bind-Value="journeyCreateDto.StartPlaceId" class="input-field">
-                <option value=0>-- Kies een stad --</option>
-                @foreach (var p in allPlaces)
-                {
-                    <option value="@p.Id">@FormatPlace(p)</option>
-                }
-            </InputSelect>
-        </div>
-
-        <div class="form-field">
-            <label>Ik reis naar</label>
-            <InputSelect @bind-Value="journeyCreateDto.EndPlaceId" class="input-field">
-                <option value=0>-- Kies een stad --</option>
-                @foreach (var p in allPlaces)
-                {
-                    <option value="@p.Id">@FormatPlace(p)</option>
-                }
-            </InputSelect>
-        </div>
-
-        <button type="submit" class="submit-button">Verstuur buddyverzoek</button>
-    </EditForm>
+    </div>
 </div>
-
 
 @code {
     private DateOnly? date;

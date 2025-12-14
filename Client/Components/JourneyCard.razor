@@ -3,46 +3,38 @@
 @using Shared.Models.enums
 
 <div class="journey-card">
-    <div class="date">@Journey.StartAt.ToLocalTime().ToString("dddd dd-MM-yyyy")</div>
-    <div class="time">@Journey.StartAt.ToLocalTime().ToString("HH:mm")</div>
-
-    <div class="locations">
-        @if (Journey.Start is not null && Journey.End is not null)
-        {
-            <span>Van <strong>@FormatPlace(Journey.Start)</strong></span>
-            <span>Naar <strong>@FormatPlace(Journey.End)</strong></span>
-        }
-        else
-        {
-            <span><em>Locaties niet beschikbaar</em></span>
-        }
+    <div class="card-header">
+        <span class="card-title">
+            @(Journey.OwnerId == CurrentUserId ? "Mijn reis" : $"Reis van {Journey.OwnerName}")
+        </span>
+    </div>
+    <div class="row">
+        <div class="icon"><img src="@($"{IconFolder}calendar-24.png")" /></div>
+        <div class="content">@Journey.StartAt.ToLocalTime().ToString("dddd dd MMMM yyyy")</div>
     </div>
 
-    <div class="owner">
-        @if (Journey.FinishedAt is null)
-        {
-            <span>Eigenaar: </span>
-
-            @if (Journey.OwnerId == CurrentUserId)
-            {
-                <strong>Jij</strong>
-            }
-            else
-            {
-                <strong>@Journey.OwnerName</strong>
-            }
-        }
-        else
-        {
-            <span class="journey-finished-label"><strong>Reis is afgerond</strong></span>
-        }
+    <div class="row">
+        <div class="icon"><img src="@($"{IconFolder}clock-24.png")" /></div>
+        <div class="content">@Journey.StartAt.ToLocalTime().ToString("HH:mm")h</div>
     </div>
 
-    <div class="buddies">
-        <span>Reisbuddies:</span>
-        @foreach (var buddy in Journey.Participants.Where(p => p.UserId != CurrentUserId && p.Status == RequestStatus.Accepted))
+    <div class="row">
+        <div class="icon"><img src="@($"{IconFolder}from-24.png")" /></div>
+        <div class="content">Van @FormatPlace(Journey.Start!)</div>
+    </div>
+
+    <div class="row">
+        <div class="icon"><img src="@($"{IconFolder}to-24.png")" /></div>
+        <div class="content">Naar @FormatPlace(Journey.End!)</div>
+    </div>
+
+
+    <div class="buddy-row">
+        Reisbuddies:
+        @foreach (var buddy in Journey.Participants
+                .Where(p => p.UserId != CurrentUserId && p.Status == RequestStatus.Accepted))
         {
-            <span class="buddy">@buddy.UserName</span>
+            <span class="buddy-tag">@buddy.UserName</span>
         }
     </div>
 
@@ -58,6 +50,13 @@
     [Parameter] public JourneyDto Journey { get; set; } = default!;
     [Parameter] public int CurrentUserId { get; set; }
     [Parameter] public RenderFragment? JourneyCardButtons { get; set; }
+
+    [Parameter] public string ColorTheme { get; set; } = "purple";
+
+    private string IconFolder =>
+        ColorTheme?.Equals("blue", StringComparison.OrdinalIgnoreCase) == true
+            ? "/icons/journey-blue/"
+            : "/icons/journey-purple/";
 
     private string FormatPlace(PlaceDto place)
     {

@@ -1,157 +1,68 @@
-﻿/* --- Journey card accent styling --- */
-.journey-card {
-    border-right: 6px solid #7b2cbf;
-}
-
-    .journey-card strong,
-    .journey-card .date,
-    .journey-card .time {
-        color: #7b2cbf;
-    }
-
-/* --- Chat button --- */
-.btn-chat {
-    background: #e9e9e9;
-    color: #555;
-    cursor: pointer;
-    border: none;
-    padding: 8px 14px;
-    border-radius: 20px;
-    transition: 0.2s ease;
-}
-
-    .btn-chat:hover {
-        background: #dcdcdc;
-    }
-
-/* --- Finish button --- */
-.btn-finish {
-    background: #7b2cbf;
-    color: #fff;
-    border: 2px solid #7b2cbf;
-    padding: 8px 16px;
-    border-radius: 20px;
-    transition: 0.2s ease;
-}
-
-    .btn-finish:hover {
-        background: #673ab7;
-    }
-
-    /* Disabled finish */
-    .btn-finish.disabled,
-    .btn-finish:disabled {
-        background: #cccccc !important;
-        border-color: #bbbbbb !important;
-        color: #666 !important;
-        cursor: not-allowed !important;
-        opacity: 0.7;
-    }
-
-/* --- Pending request styling --- */
-.pending-requests {
-    margin-bottom: 0.8rem;
-    padding: 0.8rem;
-    background: #fafafa;
-    border: 1px solid #e3e3e3;
-    border-radius: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+﻿.myjourneys-background {
+    background-image: url('/images/backgrounds/MyJourneys-bg.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
     width: 100%;
+    min-height: calc(100dvh - 64px);
+    padding: 4rem 1.5rem 90px;
 }
-
-.pending-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 4px 0;
-    font-size: 0.95rem;
-}
-
-    .pending-item span {
-        flex: 1;
+    .myjourneys-background p,
+    .myjourneys-background .empty-state {
+        color: white;
+        text-align: center;
+        font-size: 1rem;
+        opacity: 0.9;
+        margin-top: 2rem;
+        text-shadow: 0 2px 6px rgba(0,0,0,0.45);
     }
 
-/* --- Accept / Reject buttons --- */
-.btn-accept,
-.btn-reject {
-    padding: 6px 12px;
-    font-size: 0.85rem;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    transition: 0.2s;
-    white-space: nowrap;
+.journey-list {
+    display: grid;
+    grid-template-columns: 1fr; /* mobile: one card */
+    justify-content: center;
+    gap: 3.5rem;
+    padding-bottom: 90px;
 }
 
-.btn-accept {
-    background-color: #4caf50;
+/* Tablet / small desktop */
+@media (min-width: 700px) {
+    .journey-list {
+        grid-template-columns: repeat(2, 1fr); /* 2 cards side-by-side */
+        gap: 3rem 3rem;
+    }
+}
+
+/* Large desktop */
+@media (min-width: 1100px) {
+    .journey-list {
+        grid-template-columns: repeat(3, 1fr); /* 3-column layout */
+        gap: 3rem;
+    }
+}
+/* very large desktop */
+@media (min-width: 1500px) {
+    .journey-list {
+        grid-template-columns: repeat(4, 1fr); /* 4-column layout */
+        gap: 3rem;
+    }
+}
+.page-header {
     color: white;
 }
-
-    .btn-accept:hover {
-        background-color: #449d48;
-    }
-
-.btn-reject {
-    background-color: #f44336;
-    color: white;
-}
-
-    .btn-reject:hover {
-        background-color: #d7382d;
-    }
-
-/* Rated buddy styling */
-.buddy-rated {
-    background-color: #f1f1f1 !important;
-}
-
-/* Edit rating button */
-.btn-edit-rating {
-    background: #e9d7ff;
-    border: 1px solid #c9b5ee;
-    color: #5a189a;
-    padding: 8px 16px;
-    border-radius: 20px;
-}
-
-    .btn-edit-rating:hover {
-        background: #d7c5fb;
-    }
-
-.journey-finished-label {
-    color: #7b2cbf;
-}
-
-/* Leave Journey button*/
-.btn-leave {
-    background: #fff0f4;
-    color: #c62828;
-    border: 2px solid #c62828;
-    padding: 8px 14px;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-    .btn-leave:hover {
-        background: #ffe5e9;
-    }
-
-
-
-/* --- Back button styling --- */
+/* BACK BUTTON */
 .back-button {
     color: #7b2cbf;
     border-color: #7b2cbf;
 }
-
     .back-button:hover {
         background: #7b2cbf;
         color: white;
     }
 
-
+/* PAGE TITLE */
+.top-title {
+    color: white;
+    text-shadow: 0px 2px 5px rgba(0,0,0,0.4);
+}

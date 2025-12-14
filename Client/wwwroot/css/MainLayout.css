@@ -19,6 +19,7 @@
     padding-bottom: 64px;
     background-clip: content-box;
     min-height: 0;
+    background: transparent !important;
 }
 
 .bottom-nav {
@@ -40,19 +41,31 @@
 .nav-button {
     flex: 1 1 auto;
     min-width: 60px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 0.9rem;
-    padding: 6px 0;
+    padding: 0;
     border: none;
     background: none;
     color: #333;
 }
 
-.nav-button:hover {
-    background-color: #ddd;
-}
+    .nav-button:hover {
+        background-color: #ddd;
+    }
+
+    .nav-button img {
+        width: 40px;
+        height: 40px;
+        object-fit: contain;
+        display: block;
+    }
 
 .logout-button {
     color: red;
 }
+
 
 
