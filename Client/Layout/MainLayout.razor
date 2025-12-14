@@ -10,12 +10,10 @@
     </div>
 
     <div class="bottom-nav">
-        <button class="nav-button" @onclick="@(() => NavigateTo("/JourneyHome"))">Mijn Reizen</button>
-        <button class="nav-button" @onclick="@(() => NavigateTo("/buddys"))">Buddys</button>
-        <button class="nav-button" @onclick ="@(() => NavigateTo("/dangerous-places"))">
-            Gevaarlijke <br /> Plekken
-        </button>
-        <button class="nav-button" @onclick ="@(() => NavigateTo("/settings"))">Instellingen</button>
+        <button class="nav-button" @onclick="@(() => NavigateTo("/JourneyHome"))"><img src="icons/Navigation/footer-home zwart.png" alt="Home"/></button>
+        <button class="nav-button" @onclick="@(() => NavigateTo("/buddys"))"><img src="icons/Navigation/footer-contacten.png" class="footer-icon" alt="Buddies"/></button>
+        <button class="nav-button" @onclick="@(() => NavigateTo("/dangerous-places"))"><img src="icons/Navigation/footer-sos.png" class="footer-icon" alt="Sos"/></button>
+        <button class="nav-button" @onclick="@(() => NavigateTo("/settings"))"><img src="icons/Navigation/footer-account.png" class="footer-icon" alt="Account"/></button>
         <button class="nav-button logout-button" @onclick="Logout">
             @username <br /> Uitloggen
         </button>
