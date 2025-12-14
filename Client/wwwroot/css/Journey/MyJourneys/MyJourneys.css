@@ -8,6 +8,15 @@
     min-height: calc(100dvh - 64px);
     padding: 4rem 1.5rem 90px;
 }
+    .myjourneys-background p,
+    .myjourneys-background .empty-state {
+        color: white;
+        text-align: center;
+        font-size: 1rem;
+        opacity: 0.9;
+        margin-top: 2rem;
+        text-shadow: 0 2px 6px rgba(0,0,0,0.45);
+    }
 
 .journey-list {
     display: grid;
@@ -47,6 +56,10 @@
     color: #7b2cbf;
     border-color: #7b2cbf;
 }
+    .back-button:hover {
+        background: #7b2cbf;
+        color: white;
+    }
 
 /* PAGE TITLE */
 .top-title {
