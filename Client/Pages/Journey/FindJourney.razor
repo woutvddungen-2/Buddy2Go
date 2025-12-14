@@ -13,44 +13,48 @@
     <link href="css/Journey/FindJourney.css" rel="stylesheet" />    
 </HeadContent>
 
-<Header Title="Ik ga met je mee" BackTo="/JourneyHome" />
+<div class="findjourney-background">
 
-@if (isLoading)
-{
-    <p>Reizen worden geladen...</p>
-}
-else if (buddyJourneys.Count == 0)
-{
-    <p>Geen openstaande reizen.</p>
-}
-else
-{
-    <div class="journey-list">
-        @foreach (var j in buddyJourneys)
-        {
-            JourneyParticipantDto? currentUser = j.Participants.FirstOrDefault(p => p.UserId == currentUserId);
-            var status = currentUser?.Status;
+    <Header Title="Ik ga met je mee" BackTo="/JourneyHome" />
 
-            <JourneyCard Journey="j" CurrentUserId="@currentUserId">
-                <JourneyCardButtons>
-                    @if (status == null || status == RequestStatus.Rejected)
-                    {
-                        <button class="btn-join" @onclick="() => SendJoinRequest(j.Id)">Ik wil Meerijzen</button>
-                        <button class="btn-chat" disabled>Open chat</button>
-                    }
-                    else if (status == RequestStatus.Pending)
-                    {
-                        <button class="pending-action" disabled>In afwachting...</button>
-                    }
-                    else if (status == RequestStatus.Accepted)
-                    {
-                        <button class="btn-chat" disabled>Geaccepteerd</button>
-                    }
-                </JourneyCardButtons>
-            </JourneyCard>
-        }
-    </div>
-}
+    @if (isLoading)
+    {
+        <p class="empty-state">Reizen worden geladen...</p>
+    }
+    else if (buddyJourneys.Count == 0)
+    {
+        <p class="empty-state">Geen openstaande reizen.</p>
+    }
+    else
+    {
+        <div class="journey-list">
+            @foreach (var j in buddyJourneys)
+            {
+                JourneyParticipantDto? currentUser = j.Participants.FirstOrDefault(p => p.UserId == currentUserId);
+                var status = currentUser?.Status;
+
+                <JourneyCard Journey="j" CurrentUserId="@currentUserId" ColorTheme="blue">
+                    <JourneyCardButtons>
+                        @if (status == null || status == RequestStatus.Rejected)
+                        {
+                            <button class="btn-join" @onclick="() => SendJoinRequest(j.Id)">Ik wil Meereizen</button>
+                        }
+                        else if (status == RequestStatus.Pending)
+                        {
+                            <button class="pending-action" disabled>In afwachting...</button>
+                            <button class="btn-chat" @onclick="(() => GoToChat(j.Id))">Open chat</button>
+                        }
+                        else if (status == RequestStatus.Accepted)
+                        {
+                            <button class="btn-chat" disabled>Geaccepteerd</button>
+                        }
+                    </JourneyCardButtons>
+                </JourneyCard>
+            }
+        </div>
+    }
+
+</div>
 
 @code {
     private int currentUserId = -1;
@@ -81,6 +85,10 @@ else
     {
         var result = await JourneyService.SendJoinRequestAsync(journeyId);
         await LoadJourneys();
+    }
+    private void GoToChat(int journeyId)
+    {
+        Nav.NavigateTo($"/JourneyChat/{journeyId}");
     }
     private void GoBack()
     {

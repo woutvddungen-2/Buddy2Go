@@ -34,7 +34,7 @@ namespace Server.Features.Chats
                 return ServiceResult<List<JourneyMessageDto>>.Fail(ServiceResultStatus.ResourceNotFound, $"Journey not Found");
             }                
 
-            if (!journey.Participants.Any(p => p.UserId == userId && p.Status == RequestStatus.Accepted))
+            if (!journey.Participants.Any(p => p.UserId == userId && (p.Status == RequestStatus.Accepted || p.Status == RequestStatus.Pending)))
             {
                 logger.LogWarning("GetMessages, user {userId} is not part of Journey: {journeyId}", userId, journeyId);
                 return ServiceResult<List<JourneyMessageDto>>.Fail(ServiceResultStatus.Unauthorized, "You are not part of this journey");
@@ -81,7 +81,7 @@ namespace Server.Features.Chats
             }
 
 
-            if (!journey.Participants.Any(p => p.UserId == userId && p.Status == RequestStatus.Accepted))
+            if (!journey.Participants.Any(p => p.UserId == userId && (p.Status == RequestStatus.Accepted || p.Status == RequestStatus.Pending)))
             {
                 logger.LogWarning("SendMessage, user {userId} is not part of journey {journeyId}", userId, journeyId);
                 return ServiceResult<JourneyMessageDto>.Fail(ServiceResultStatus.Unauthorized, "You are not part of this journey");

@@ -20,6 +20,10 @@
   <ItemGroup>
     <ProjectReference Include="..\Shared\Shared.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\icons\journey-blue\" />
+  </ItemGroup>
   
   <!-- Automatically set ASPNETCORE_ENVIRONMENT based on build configuration -->
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">

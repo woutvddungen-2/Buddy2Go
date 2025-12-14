@@ -15,7 +15,7 @@
 
 
 <div class="chat-page">
-    <Header Title="@title" BackTo="/MyJourneys" />
+    <Header Title="@title" OnBack="GoBack" />
     @if (IsLoading)
     {
         <p>Berichten laden...</p>
@@ -24,7 +24,7 @@
     {
         <div class="chat-participants">
             Je chat met:
-            @foreach (JourneyParticipantDto participant in currentJourney.Participants)
+            @foreach (JourneyParticipantDto participant in participants)
             {
                 if (participant.UserId != CurrentUserId && (participant.Status == RequestStatus.Pending || participant.Status == RequestStatus.Accepted))
                 {
@@ -79,7 +79,9 @@
     bool IsLoading = true;
     string NewMessage = "";
 
-    JourneyDto currentJourney = new();
+    JourneyDto? currentJourney;
+    List<JourneyParticipantDto> participants = new();
+
     List<JourneyMessageDto> Messages = new();
     ElementReference MessagesContainer;
     private string title = "";
@@ -93,6 +95,8 @@
 
         await LoadMessages();
         await LoadJourney();
+        await LoadParticipants();
+
         IsLoading = false;
         StateHasChanged();
         await ScrollToBottom();
@@ -134,6 +138,16 @@
         }
     }
 
+    private async Task LoadParticipants()
+    {
+        ServiceResult<List<JourneyParticipantDto>> result = await JourneyService.getJourneyParticipants(JourneyId);
+
+        if (result.IsSuccess && result.Data != null)
+        {
+            participants = result.Data;
+        }
+    }
+
     private async Task SendMessage()
     {
         if (string.IsNullOrWhiteSpace(NewMessage))
@@ -154,9 +168,9 @@
         await JS.InvokeVoidAsync("scrollHelper.scrollToEnd", MessagesContainer);
     }
 
-    private void GoBack()
+    private async Task GoBack()
     {
-        Nav.NavigateTo("/MyJourneys");
+        await JS.InvokeVoidAsync("history.back");
     }
 
     private void StartAutoRefresh()

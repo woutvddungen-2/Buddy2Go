@@ -1,8 +1,9 @@
 ﻿using Client.Common;
 using Microsoft.AspNetCore.Components.WebAssembly.Http;
-using Shared.Models.Dtos.Shared;
 using Shared.Models.Dtos.Journeys;
+using Shared.Models.Dtos.Shared;
 using Shared.Models.enums;
+using System.Collections.Generic;
 using System.Net.Http.Json;
 
 namespace Client.Services
@@ -53,6 +54,26 @@ namespace Client.Services
             catch (Exception ex)
             {
                 return ServiceResult<List<JourneyDto>>.Fail(ex.Message);
+            }
+        }
+
+        public async Task<ServiceResult<List<JourneyParticipantDto>>> getJourneyParticipants(int journeyId)
+        {
+            try
+            {
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"api/Journey/GetParticipants/{journeyId}");
+                request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
+                HttpResponseMessage? response = await httpClient.SendAsync(request);
+
+                if (!response.IsSuccessStatusCode)
+                    return ServiceResult<List<JourneyParticipantDto>>.Fail(await response.Content.ReadAsStringAsync());
+
+                List<JourneyParticipantDto>? data = await response.Content.ReadFromJsonAsync<List<JourneyParticipantDto>>();
+                return ServiceResult<List<JourneyParticipantDto>>.Succes(data ?? new());
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<List<JourneyParticipantDto>>.Fail(ex.Message);
             }
         }
 
@@ -238,10 +259,6 @@ namespace Client.Services
                 return ServiceResult.Fail(ex.Message);
             }
         }
-
-
-
-
 
         public async Task<ServiceResult<List<PlaceDto>>> GetPlacesAsync()
         {
