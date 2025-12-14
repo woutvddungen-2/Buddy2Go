@@ -13,18 +13,28 @@
     <link href="css/Journey/MyJourneys/Chat.css" rel="stylesheet" />
 </HeadContent>
 
-<Header Title="@title" BackTo="/MyJourneys" />
 
 <div class="chat-page">
-
+    <Header Title="@title" BackTo="/MyJourneys" />
     @if (IsLoading)
     {
         <p>Berichten laden...</p>
     }
     else
     {
+        <div class="chat-participants">
+            Je chat met:
+            @foreach (JourneyParticipantDto participant in currentJourney.Participants)
+            {
+                if (participant.UserId != CurrentUserId && (participant.Status == RequestStatus.Pending || participant.Status == RequestStatus.Accepted))
+                {
+                    <span class="chat-with-bubble @(GetUserColorClass(participant.UserId))">@participant.UserName</span>
+                }                
+            }
+        </div>
+
         <div class="chat-messages" @ref="MessagesContainer">
-            @foreach (var msg in Messages)
+            @foreach (JourneyMessageDto msg in Messages)
             {
                 @if (msg.SenderId == CurrentUserId)
                 {
@@ -40,7 +50,7 @@
                 }
                 else
                 {
-                    <div class="chat-message other @( "user-" + msg.SenderId)">
+                    <div class="chat-message other @(GetUserColorClass(msg.SenderId))">
                         <div class="bubble">
                             <strong>@msg.SenderName:</strong><br />
                             @msg.Content
@@ -65,10 +75,11 @@
 
     private System.Timers.Timer? refreshTimer;
 
-
     private int CurrentUserId;
     bool IsLoading = true;
     string NewMessage = "";
+
+    JourneyDto currentJourney = new();
     List<JourneyMessageDto> Messages = new();
     ElementReference MessagesContainer;
     private string title = "";
@@ -79,6 +90,7 @@
         ServiceResult<int> result = await UserService.GetUserId();
         if (result.IsSuccess)
             CurrentUserId = result.Data;
+
         await LoadMessages();
         await LoadJourney();
         IsLoading = false;
@@ -104,6 +116,7 @@
 
         if (journey != null)
         {
+            currentJourney = journey;
             title = $"Chat voor: {journey.Start.City}";
             if (journey.Start.District != null)
                 title += $", {journey.Start.District}";
@@ -113,7 +126,7 @@
             if (journey.OwnerId == CurrentUserId)
                 title += $" (Reis van jou)";
             else
-                title += $" (Reis van {journey.OwnerName})";
+                title += $" (Reis van {journey.OwnerName})";            
         }
         else
         {
@@ -175,6 +188,13 @@
             // ignore refresh errors
         }
     }
+
+    private string GetUserColorClass(int userId)
+    {
+        int colorIndex = (userId % 5) + 1;
+        return $"user-{colorIndex}";
+    }
+
     public void Dispose()
     {
         try
