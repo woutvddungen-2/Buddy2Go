@@ -10,6 +10,7 @@
     <link href="css/Journey/MyJourneys/RateJourney.css" rel="stylesheet" />
 </HeadContent>
 
+<div class="ratejourney-background">
 <Header Title="Reis beoordelen" OnBack="GoBack" BackTo="/MyJourneys" />
 
 @if (isLoading)
@@ -63,7 +64,7 @@ else
         </div>
     </div>
 }
-
+</div>
 @code {
     [Parameter] public int JourneyId { get; set; }
 
