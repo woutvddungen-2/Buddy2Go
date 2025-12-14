@@ -98,4 +98,16 @@
     outline: none;
     border-color: #2ebd8c;
     box-shadow: 0 0 3px rgba(46, 189, 140, 0.4);
+    margin-top: 20px;
+}
+.help-icon a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.help-icon img {
+    width: 48px !important;
+    height: 48px !important;
 }
