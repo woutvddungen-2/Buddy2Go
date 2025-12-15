@@ -21,11 +21,11 @@
                 try
                 {
                     using IServiceScope scope = scopeFactory.CreateScope();
-                    DangerousPlaceCleanupService DPcleanup = scope.ServiceProvider.GetRequiredService<DangerousPlaceCleanupService>();
+                    //DangerousPlaceCleanupService DPcleanup = scope.ServiceProvider.GetRequiredService<DangerousPlaceCleanupService>();
                     JourneyCleanupService Journeycleanup = scope.ServiceProvider.GetRequiredService<JourneyCleanupService>();
 
                     await Journeycleanup.Cleanup(stoppingToken);
-                    await DPcleanup.Cleanup(stoppingToken);  
+                    //await DPcleanup.Cleanup(stoppingToken);  
                     
                 }
                 catch (Exception ex)
