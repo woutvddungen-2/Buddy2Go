@@ -1,49 +1,21 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Moq;
-using Server.Common;
 using Server.Features.Users;
-using Server.Tests.TestUtilities;
 using Shared.Models.Dtos.Users;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Server.Tests.Users
+namespace Server.Tests.Users.Integration
 {
     public class UserIntegrationTests
     {
 
         [Fact]
-        public async Task FullRegistrationFlow_ShouldCreateVerifiedUser()
+        public async Task FullRegistrationTest()
         {
             // ───────────────────────────────────────────────────────────────
             // Arrange: Setup InMemory DB + Mock SMS service
             // ───────────────────────────────────────────────────────────────
-            var db = InMemoryDbContextFactory.Create("RegisterFlowTest");
+            var harness = UserTestHarness.Create(nameof(FullRegistrationTest));
 
-            var smsMock = new Mock<ISmsService>();
-            smsMock.Setup(s => s.SendSmsAsync(It.IsAny<string>(), It.IsAny<string>()))
-                   .ReturnsAsync("OK");
-
-            var config = new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string?>
-                {
-                    { "JwtSettings:Secret", "ThisIsASuperSecretKey12345678901" },
-                    { "SSL:Enabled", "false" }
-                })
-                .Build();
-
-            var logger = Mock.Of<ILogger<UserService>>();
-            var service = new UserService(db, logger, config, smsMock.Object);
-
-            var controllerLogger = Mock.Of<ILogger<UserController>>();
-            var env = Mock.Of<IHostEnvironment>();
-            var controller = new UserController(service, controllerLogger, env, config);
 
             // ───────────────────────────────────────────────────────────────
             // Step 1: Call StartRegister
@@ -56,17 +28,17 @@ namespace Server.Tests.Users
                 PhoneNumber = "0612345678"
             };
 
-            IActionResult startResult = await controller.StartRegister(dto);
+            IActionResult startResult = await harness.Controller.StartRegister(dto);
 
             Assert.IsType<OkObjectResult>(startResult);
 
             // Verify SMS was triggered
-            smsMock.Verify(s => s.SendSmsAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            harness.SmsMock.Verify(s => s.SendSmsAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
 
             // ───────────────────────────────────────────────────────────────
             // Step 2: Retrieve verification code from DB
             // ───────────────────────────────────────────────────────────────
-            var verification = db.UserVerifications.FirstOrDefault();
+            UserVerification? verification = harness.Db.UserVerifications.FirstOrDefault();
             Assert.NotNull(verification);
 
             string code = verification!.Code;
@@ -75,24 +47,56 @@ namespace Server.Tests.Users
             // ───────────────────────────────────────────────────────────────
             // Step 3: Call VerifyRegister
             // ───────────────────────────────────────────────────────────────
-            var verifyDto = new VerifyUserDto
+            VerifyUserDto verifyDto = new VerifyUserDto
             {
                 PhoneNumber = normalizedPhone,
                 Code = code
             };
 
-            IActionResult verifyResult = await controller.VerifyRegister(verifyDto);
+            IActionResult verifyResult = await harness.Controller.VerifyRegister(verifyDto);
 
             Assert.IsType<OkObjectResult>(verifyResult);
 
             // ───────────────────────────────────────────────────────────────
             // Step 4: Verify user was created in DB
             // ───────────────────────────────────────────────────────────────
-            var user = db.Users.FirstOrDefault(u => u.Username == "john");
+            User? user = harness.Db.Users.FirstOrDefault(u => u.Username == "john");
 
             Assert.NotNull(user);
-            Assert.Equal("john@test.com", user!.Email);
             Assert.Equal(normalizedPhone, user!.Phonenumber);
+            Assert.Equal(dto.Email, user!.Email);
+            Assert.Equal(dto.Username, user!.Username);
+        }
+
+        [Fact]
+        public async Task FullLoginTest()
+        {
+            // Setup: Seed a user in the InMemory DB
+            var harness = UserTestHarness.Create(nameof(FullLoginTest));
+            User Seeduser = await harness.SeedUserAsync();
+
+            User? user = harness.Db.Users.FirstOrDefault(u => u.Username == "john");
+            Assert.Equal(Seeduser, user);
+
+            // Login
+            LoginDto loginDto = new()
+            {
+                Identifier = "john",
+                Password = "Password123!"
+            };
+
+            IActionResult loginResult = await harness.Controller.Login(loginDto);
+
+            // Assert: expected OK 
+            var ok = Assert.IsType<OkObjectResult>(loginResult);
+
+            var tokenProp = ok.Value?.GetType().GetProperty("token");
+            Assert.NotNull(tokenProp);
+
+            var token = tokenProp!.GetValue(ok.Value) as string;
+            Assert.False(string.IsNullOrWhiteSpace(token));
         }
     }
 }
+
+
