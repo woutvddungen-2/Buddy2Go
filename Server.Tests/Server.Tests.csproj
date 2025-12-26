@@ -27,9 +27,4 @@
     <ProjectReference Include="..\Shared\Shared.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Users\Integration\" />
-    <Folder Include="Users\Unit\" />
-  </ItemGroup>
-
 </Project>

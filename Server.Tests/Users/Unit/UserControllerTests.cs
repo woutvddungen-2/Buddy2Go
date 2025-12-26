@@ -9,7 +9,7 @@ using Server.Features.Users;
 using Shared.Models.Dtos.Users;
 using System.Security.Claims;
 
-namespace Server.Tests.Controllers
+namespace Server.Tests.Users.Unit
 {
     public class UserControllerTests
     {

@@ -8,7 +8,7 @@ using Server.Features.Users;
 using Server.Infrastructure.Data;
 using Server.Tests.TestUtilities;
 
-namespace Server.Tests.Users
+namespace Server.Tests.Users.Integration
 {
     public sealed class UserTestHarness
     {
