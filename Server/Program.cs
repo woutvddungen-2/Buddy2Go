@@ -154,38 +154,44 @@ builder.Services.AddCors(options =>
 });
 
 // -------------------- Database --------------------
-DbConnectHelper.AddDatabase(builder.Services, builder.Configuration.GetSection("DbSettings"));
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    DbConnectHelper.AddDatabase(builder.Services, builder.Configuration.GetSection("DbSettings"));
+}
 
 // -------------------- Build App --------------------
 WebApplication? app = builder.Build();
 
 // -------------------- Seed Database -----------------
 
-const int maxRetries = 3;
-
-for (int attempt = 1; attempt <= maxRetries; attempt++)
+if (!builder.Environment.IsEnvironment("Testing"))
 {
-    using IServiceScope scope = app.Services.CreateScope();
-    AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    ILogger logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    const int maxRetries = 3;
 
-    try
+    for (int attempt = 1; attempt <= maxRetries; attempt++)
     {
-        await DbInitializer.InitializeAsync(db, logger);
-        logger.LogInformation("Database ready.");
-        break;
-    }
-    catch (Exception ex)
-    {
-        logger.LogWarning(ex, "Database init failed, attempt {Attempt}/{Max}.", attempt, maxRetries);
+        using IServiceScope scope = app.Services.CreateScope();
+        AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        ILogger logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
-        if (attempt == maxRetries)
+        try
         {
-            logger.LogError("Database initialization failed after {Max} attempts. Exiting...", maxRetries);
-            throw new DbInitializeException($"Database initialization failed after {maxRetries} attempts.", ex);
+            await DbInitializer.InitializeAsync(db, logger);
+            logger.LogInformation("Database ready.");
+            break;
         }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Database init failed, attempt {Attempt}/{Max}.", attempt, maxRetries);
 
-        await Task.Delay(3000); // wait before retry
+            if (attempt == maxRetries)
+            {
+                logger.LogError("Database initialization failed after {Max} attempts. Exiting...", maxRetries);
+                throw new DbInitializeException($"Database initialization failed after {maxRetries} attempts.", ex);
+            }
+
+            await Task.Delay(3000); // wait before retry
+        }
     }
 }
 
