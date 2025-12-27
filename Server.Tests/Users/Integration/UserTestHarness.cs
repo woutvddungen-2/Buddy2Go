@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -7,6 +8,8 @@ using Server.Common;
 using Server.Features.Users;
 using Server.Infrastructure.Data;
 using Server.Tests.TestUtilities;
+using System.Security.Claims;
+using System.Xml.Linq;
 
 namespace Server.Tests.Users.Integration
 {
@@ -18,23 +21,14 @@ namespace Server.Tests.Users.Integration
         public UserService Service { get; }
         public UserController Controller { get; }
 
-        private UserTestHarness(AppDbContext db, IConfiguration config, Mock<ISmsService> smsMock, UserService service, UserController controller)
+        public UserTestHarness(string dbName)
         {
-            Db = db;
-            Config = config;
-            SmsMock = smsMock;
-            Service = service;
-            Controller = controller;
-        }
+            Db = InMemoryDbContextFactory.Create(dbName);
 
-        public static UserTestHarness Create(string dbName)
-        {
-            var db = InMemoryDbContextFactory.Create(dbName);
+            SmsMock = new Mock<ISmsService>(MockBehavior.Strict);
+            SmsMock.Setup(s => s.SendSmsAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync("OK");
 
-            var smsMock = new Mock<ISmsService>(MockBehavior.Strict);
-            smsMock.Setup(s => s.SendSmsAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync("OK");
-
-            IConfiguration config = new ConfigurationBuilder()
+            Config = new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string?>
                 {
                     { "JwtSettings:Secret", "ThisIsASuperSecretKey12345678901" },
@@ -43,28 +37,26 @@ namespace Server.Tests.Users.Integration
                 .Build();
 
             ILogger<UserService> logger = Mock.Of<ILogger<UserService>>();
-            var service = new UserService(db, logger, config, smsMock.Object);
+            Service = new UserService(Db, logger, Config, SmsMock.Object);
 
             ILogger<UserController> controllerLogger = Mock.Of<ILogger<UserController>>();
             IHostEnvironment env = Mock.Of<IHostEnvironment>();
-            var controller = new UserController(service, controllerLogger, env, config);
+            Controller = new UserController(Service, controllerLogger, env, Config);
 
             //provide HttpContext so Response.Cookies works if your Login writes cookies
-            controller.ControllerContext = new Microsoft.AspNetCore.Mvc.ControllerContext
+            Controller.ControllerContext = new Microsoft.AspNetCore.Mvc.ControllerContext
             {
                 HttpContext = new DefaultHttpContext()
             };
-
-            return new UserTestHarness(db, config, smsMock, service, controller);
         }
 
-        public async Task<User> SeedUserAsync(string username = "john", string email = "john@test.com", string phonenumber = "+31612345678", string password = "Password123!")
+        public async Task<User> SeedUserAsync(string username, string password, string phonenumber)
         {
             User user = new User
             {
                 Username = username,
                 PasswordHash = UserService.HashPassword(password),
-                Email = email,
+                Email = $"{username}@test.nl",
                 Phonenumber = phonenumber,
                 CreatedAt = DateTime.UtcNow
             };
@@ -73,5 +65,22 @@ namespace Server.Tests.Users.Integration
             return user;
         }
 
+        public void SetAuthenticatedUser(int userId, string username)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                new Claim(ClaimTypes.Name, username)
+            };
+
+            var identity = new ClaimsIdentity(claims, "TestAuth");
+            var principal = new ClaimsPrincipal(identity);
+
+            Controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = principal }
+            };
+        }
     }
 }
+

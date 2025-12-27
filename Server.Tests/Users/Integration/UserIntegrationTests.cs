@@ -8,18 +8,14 @@ namespace Server.Tests.Users.Integration
     public class UserIntegrationTests
     {
 
+        // ---------------- Registration flow test ----------------
         [Fact]
         public async Task FullRegistrationTest()
         {
-            // ───────────────────────────────────────────────────────────────
             // Arrange: Setup InMemory DB + Mock SMS service
-            // ───────────────────────────────────────────────────────────────
-            var harness = UserTestHarness.Create(nameof(FullRegistrationTest));
+            UserTestHarness harness = new UserTestHarness(nameof(FullRegistrationTest));
 
-
-            // ───────────────────────────────────────────────────────────────
             // Step 1: Call StartRegister
-            // ───────────────────────────────────────────────────────────────
             RegisterDto dto = new()
             {
                 Username = "john",
@@ -31,22 +27,16 @@ namespace Server.Tests.Users.Integration
             IActionResult startResult = await harness.Controller.StartRegister(dto);
 
             Assert.IsType<OkObjectResult>(startResult);
-
-            // Verify SMS was triggered
             harness.SmsMock.Verify(s => s.SendSmsAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
 
-            // ───────────────────────────────────────────────────────────────
             // Step 2: Retrieve verification code from DB
-            // ───────────────────────────────────────────────────────────────
             UserVerification? verification = harness.Db.UserVerifications.FirstOrDefault();
             Assert.NotNull(verification);
 
             string code = verification!.Code;
             string normalizedPhone = verification!.PhoneNumber;
 
-            // ───────────────────────────────────────────────────────────────
             // Step 3: Call VerifyRegister
-            // ───────────────────────────────────────────────────────────────
             VerifyUserDto verifyDto = new VerifyUserDto
             {
                 PhoneNumber = normalizedPhone,
@@ -57,9 +47,7 @@ namespace Server.Tests.Users.Integration
 
             Assert.IsType<OkObjectResult>(verifyResult);
 
-            // ───────────────────────────────────────────────────────────────
             // Step 4: Verify user was created in DB
-            // ───────────────────────────────────────────────────────────────
             User? user = harness.Db.Users.FirstOrDefault(u => u.Username == "john");
 
             Assert.NotNull(user);
@@ -68,12 +56,13 @@ namespace Server.Tests.Users.Integration
             Assert.Equal(dto.Username, user!.Username);
         }
 
+        // ---------------- Login flow test ----------------
         [Fact]
         public async Task FullLoginTest()
         {
             // Setup: Seed a user in the InMemory DB
-            var harness = UserTestHarness.Create(nameof(FullLoginTest));
-            User Seeduser = await harness.SeedUserAsync();
+            UserTestHarness harness = new UserTestHarness(nameof(FullLoginTest));
+            User Seeduser = await harness.SeedUserAsync("john", "Password123!", "+3161000000");
 
             User? user = harness.Db.Users.FirstOrDefault(u => u.Username == "john");
             Assert.Equal(Seeduser, user);
