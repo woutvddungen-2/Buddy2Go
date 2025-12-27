@@ -85,6 +85,136 @@ namespace Server.Tests.Users.Integration
             var token = tokenProp!.GetValue(ok.Value) as string;
             Assert.False(string.IsNullOrWhiteSpace(token));
         }
+
+
+        // ---------------- null body tests ----------------
+        [Fact]
+        public async Task StartRegister_ShouldReturnBadRequest_WhenBodyNull()
+        {
+            UserTestHarness harness = new UserTestHarness(nameof(StartRegister_ShouldReturnBadRequest_WhenBodyNull));
+
+            var result = await harness.Controller.StartRegister(null!);
+
+            Assert.IsType<BadRequestObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task VerifyRegister_ShouldReturnBadRequest_WhenBodyNull()
+        {
+            UserTestHarness harness = new UserTestHarness(nameof(VerifyRegister_ShouldReturnBadRequest_WhenBodyNull));
+
+            var result = await harness.Controller.VerifyRegister(null!);
+
+            Assert.IsType<BadRequestObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task Login_ShouldReturnBadRequest_WhenBodyNull()
+        {
+            UserTestHarness harness = new UserTestHarness(nameof(Login_ShouldReturnBadRequest_WhenBodyNull));
+
+            var result = await harness.Controller.Login(null!);
+
+            Assert.IsType<BadRequestObjectResult>(result);
+        }
+
+        // ---------------- invalid password test ----------------
+        [Fact]
+        public async Task Login_ShouldReturnUnauthorized_WhenWrongPassword()
+        {
+            UserTestHarness harness = new UserTestHarness(nameof(Login_ShouldReturnUnauthorized_WhenWrongPassword));
+
+            await harness.SeedUserAsync("john", "Password123!", "+3161000000");
+
+            var result = await harness.Controller.Login(new LoginDto
+            {
+                Identifier = "john",
+                Password = "WrongPassword!"
+            });
+
+            Assert.IsType<UnauthorizedObjectResult>(result);
+        }
+
+        // ---------------- verification code invalid test ----------------
+        [Fact]
+        public async Task VerifyRegister_ShouldReturnUnauthorizedOrBadRequest_WhenCodeWrong()
+        {
+            UserTestHarness harness = new UserTestHarness(nameof(VerifyRegister_ShouldReturnUnauthorizedOrBadRequest_WhenCodeWrong));
+
+            await harness.Controller.StartRegister(new RegisterDto
+            {
+                Username = "john",
+                Password = "Password123!",
+                Email = "john@test.com",
+                PhoneNumber = "0612345678"
+            });
+
+            var v = harness.Db.UserVerifications.FirstOrDefault();
+            Assert.NotNull(v);
+
+            var result = await harness.Controller.VerifyRegister(new VerifyUserDto{
+                PhoneNumber = v!.PhoneNumber,
+                Code = "000000"
+            });
+            Assert.IsType<UnauthorizedObjectResult>(result);
+        }
+
+        // ---------------- Authenticated user tests ----------------
+        [Fact]
+        public void ReturnJwt_ShouldReturnOk_WithClaims()
+        {
+            UserTestHarness harness = new UserTestHarness(nameof(ReturnJwt_ShouldReturnOk_WithClaims));
+            harness.SetAuthenticatedUser(5, "john");
+
+            var result = harness.Controller.Verify();
+
+            var ok = Assert.IsType<OkObjectResult>(result);
+            var dto = Assert.IsType<UserDto>(ok.Value);
+
+            Assert.Equal(5, dto.Id);
+            Assert.Equal("john", dto.Username);
+        }
+
+        [Fact]
+        public async Task GetUserInfo_ShouldReturnOk_WhenUserExists()
+        {
+            UserTestHarness harness = new UserTestHarness(nameof(GetUserInfo_ShouldReturnOk_WhenUserExists));
+
+            var seeded = await harness.SeedUserAsync("john", "Password123!", "+3161000000");
+            harness.SetAuthenticatedUser(seeded.Id, seeded.Username);
+
+            var result = await harness.Controller.GetUserInfo();
+
+            var ok = Assert.IsType<OkObjectResult>(result);
+            var dto = Assert.IsType<UserDto>(ok.Value);
+
+            Assert.Equal(seeded.Id, dto.Id);
+            Assert.Equal("john", dto.Username);
+        }
+
+        [Fact]
+        public async Task GetUserInfo_ShouldReturnNotFound_WhenUserMissing()
+        {
+            UserTestHarness harness = new UserTestHarness(nameof(GetUserInfo_ShouldReturnNotFound_WhenUserMissing));
+
+            harness.SetAuthenticatedUser(999, "ghost");
+
+            var result = await harness.Controller.GetUserInfo();
+
+            Assert.IsType<NotFoundObjectResult>(result);
+        }
+
+        [Fact]
+        public void Logout_ShouldReturnOk()
+        {
+            UserTestHarness harness = new UserTestHarness(nameof(Logout_ShouldReturnOk));
+            harness.SetAuthenticatedUser(1, "john");
+
+            var result = harness.Controller.Logout();
+
+            var ok = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal("Logged out", ok.Value);
+        }
     }
 }
 
