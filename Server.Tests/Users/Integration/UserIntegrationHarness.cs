@@ -9,11 +9,10 @@ using Server.Features.Users;
 using Server.Infrastructure.Data;
 using Server.Tests.TestUtilities;
 using System.Security.Claims;
-using System.Xml.Linq;
 
 namespace Server.Tests.Users.Integration
 {
-    public sealed class UserTestHarness
+    public class UserIntegrationHarness
     {
         public AppDbContext Db { get; }
         public IConfiguration Config { get; }
@@ -21,7 +20,7 @@ namespace Server.Tests.Users.Integration
         public UserService Service { get; }
         public UserController Controller { get; }
 
-        public UserTestHarness(string dbName)
+        public UserIntegrationHarness(string dbName)
         {
             Db = InMemoryDbContextFactory.Create(dbName);
 
@@ -43,14 +42,13 @@ namespace Server.Tests.Users.Integration
             IHostEnvironment env = Mock.Of<IHostEnvironment>();
             Controller = new UserController(Service, controllerLogger, env, Config);
 
-            //provide HttpContext so Response.Cookies works if your Login writes cookies
-            Controller.ControllerContext = new Microsoft.AspNetCore.Mvc.ControllerContext
+            Controller.ControllerContext = new ControllerContext
             {
                 HttpContext = new DefaultHttpContext()
             };
         }
 
-        public async Task<User> SeedUserAsync(string username, string password, string phonenumber)
+        public async Task<User> CreateUserAsync(string username, string password, string phonenumber)
         {
             User user = new User
             {
@@ -67,14 +65,14 @@ namespace Server.Tests.Users.Integration
 
         public void SetAuthenticatedUser(int userId, string username)
         {
-            var claims = new List<Claim>
-            {
+            Claim[] claims =
+            [
                 new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
                 new Claim(ClaimTypes.Name, username)
-            };
+            ];
 
-            var identity = new ClaimsIdentity(claims, "TestAuth");
-            var principal = new ClaimsPrincipal(identity);
+            ClaimsIdentity identity = new ClaimsIdentity(claims, "TestAuth");
+            ClaimsPrincipal principal = new ClaimsPrincipal(identity);
 
             Controller.ControllerContext = new ControllerContext
             {

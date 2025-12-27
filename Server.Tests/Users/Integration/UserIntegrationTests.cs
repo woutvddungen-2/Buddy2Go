@@ -13,7 +13,7 @@ namespace Server.Tests.Users.Integration
         public async Task FullRegistrationTest()
         {
             // Arrange: Setup InMemory DB + Mock SMS service
-            UserTestHarness harness = new UserTestHarness(nameof(FullRegistrationTest));
+            UserIntegrationHarness harness = new UserIntegrationHarness(nameof(FullRegistrationTest));
 
             // Step 1: Call StartRegister
             RegisterDto dto = new()
@@ -61,8 +61,8 @@ namespace Server.Tests.Users.Integration
         public async Task FullLoginTest()
         {
             // Setup: Seed a user in the InMemory DB
-            UserTestHarness harness = new UserTestHarness(nameof(FullLoginTest));
-            User Seeduser = await harness.SeedUserAsync("john", "Password123!", "+3161000000");
+            UserIntegrationHarness harness = new UserIntegrationHarness(nameof(FullLoginTest));
+            User Seeduser = await harness.CreateUserAsync("john", "Password123!", "+3161000000");
 
             User? user = harness.Db.Users.FirstOrDefault(u => u.Username == "john");
             Assert.Equal(Seeduser, user);
@@ -91,7 +91,7 @@ namespace Server.Tests.Users.Integration
         [Fact]
         public async Task StartRegister_ShouldReturnBadRequest_WhenBodyNull()
         {
-            UserTestHarness harness = new UserTestHarness(nameof(StartRegister_ShouldReturnBadRequest_WhenBodyNull));
+            UserIntegrationHarness harness = new UserIntegrationHarness(nameof(StartRegister_ShouldReturnBadRequest_WhenBodyNull));
 
             var result = await harness.Controller.StartRegister(null!);
 
@@ -101,7 +101,7 @@ namespace Server.Tests.Users.Integration
         [Fact]
         public async Task VerifyRegister_ShouldReturnBadRequest_WhenBodyNull()
         {
-            UserTestHarness harness = new UserTestHarness(nameof(VerifyRegister_ShouldReturnBadRequest_WhenBodyNull));
+            UserIntegrationHarness harness = new UserIntegrationHarness(nameof(VerifyRegister_ShouldReturnBadRequest_WhenBodyNull));
 
             var result = await harness.Controller.VerifyRegister(null!);
 
@@ -111,7 +111,7 @@ namespace Server.Tests.Users.Integration
         [Fact]
         public async Task Login_ShouldReturnBadRequest_WhenBodyNull()
         {
-            UserTestHarness harness = new UserTestHarness(nameof(Login_ShouldReturnBadRequest_WhenBodyNull));
+            UserIntegrationHarness harness = new UserIntegrationHarness(nameof(Login_ShouldReturnBadRequest_WhenBodyNull));
 
             var result = await harness.Controller.Login(null!);
 
@@ -122,9 +122,9 @@ namespace Server.Tests.Users.Integration
         [Fact]
         public async Task Login_ShouldReturnUnauthorized_WhenWrongPassword()
         {
-            UserTestHarness harness = new UserTestHarness(nameof(Login_ShouldReturnUnauthorized_WhenWrongPassword));
+            UserIntegrationHarness harness = new UserIntegrationHarness(nameof(Login_ShouldReturnUnauthorized_WhenWrongPassword));
 
-            await harness.SeedUserAsync("john", "Password123!", "+3161000000");
+            await harness.CreateUserAsync("john", "Password123!", "+3161000000");
 
             var result = await harness.Controller.Login(new LoginDto
             {
@@ -139,7 +139,7 @@ namespace Server.Tests.Users.Integration
         [Fact]
         public async Task VerifyRegister_ShouldReturnUnauthorizedOrBadRequest_WhenCodeWrong()
         {
-            UserTestHarness harness = new UserTestHarness(nameof(VerifyRegister_ShouldReturnUnauthorizedOrBadRequest_WhenCodeWrong));
+            UserIntegrationHarness harness = new UserIntegrationHarness(nameof(VerifyRegister_ShouldReturnUnauthorizedOrBadRequest_WhenCodeWrong));
 
             await harness.Controller.StartRegister(new RegisterDto
             {
@@ -163,7 +163,7 @@ namespace Server.Tests.Users.Integration
         [Fact]
         public void ReturnJwt_ShouldReturnOk_WithClaims()
         {
-            UserTestHarness harness = new UserTestHarness(nameof(ReturnJwt_ShouldReturnOk_WithClaims));
+            UserIntegrationHarness harness = new UserIntegrationHarness(nameof(ReturnJwt_ShouldReturnOk_WithClaims));
             harness.SetAuthenticatedUser(5, "john");
 
             var result = harness.Controller.Verify();
@@ -178,9 +178,9 @@ namespace Server.Tests.Users.Integration
         [Fact]
         public async Task GetUserInfo_ShouldReturnOk_WhenUserExists()
         {
-            UserTestHarness harness = new UserTestHarness(nameof(GetUserInfo_ShouldReturnOk_WhenUserExists));
+            UserIntegrationHarness harness = new UserIntegrationHarness(nameof(GetUserInfo_ShouldReturnOk_WhenUserExists));
 
-            var seeded = await harness.SeedUserAsync("john", "Password123!", "+3161000000");
+            var seeded = await harness.CreateUserAsync("john", "Password123!", "+3161000000");
             harness.SetAuthenticatedUser(seeded.Id, seeded.Username);
 
             var result = await harness.Controller.GetUserInfo();
@@ -195,7 +195,7 @@ namespace Server.Tests.Users.Integration
         [Fact]
         public async Task GetUserInfo_ShouldReturnNotFound_WhenUserMissing()
         {
-            UserTestHarness harness = new UserTestHarness(nameof(GetUserInfo_ShouldReturnNotFound_WhenUserMissing));
+            UserIntegrationHarness harness = new UserIntegrationHarness(nameof(GetUserInfo_ShouldReturnNotFound_WhenUserMissing));
 
             harness.SetAuthenticatedUser(999, "ghost");
 
@@ -207,7 +207,7 @@ namespace Server.Tests.Users.Integration
         [Fact]
         public void Logout_ShouldReturnOk()
         {
-            UserTestHarness harness = new UserTestHarness(nameof(Logout_ShouldReturnOk));
+            UserIntegrationHarness harness = new UserIntegrationHarness(nameof(Logout_ShouldReturnOk));
             harness.SetAuthenticatedUser(1, "john");
 
             var result = harness.Controller.Logout();
