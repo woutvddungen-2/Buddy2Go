@@ -1,7 +1,7 @@
 ﻿namespace Server.Common
 {
     // Base class for all service results
-    public class ServiceResultBase
+    public abstract class ServiceResultBase
     {
         public ServiceResultStatus Status { get; protected set; }
         public string? Message { get; protected set; }
@@ -13,6 +13,7 @@
         }
 
         public bool IsSuccess => Status == ServiceResultStatus.Success;
+        
     }
 
     // Non-generic result (for void-like operations)
@@ -20,8 +21,15 @@
     {
         private ServiceResult(ServiceResultStatus status, string? message = null) : base(status, message) { }
 
-        public static ServiceResult Succes(string? message = null) => new(ServiceResultStatus.Success, message);
-        public static ServiceResult Fail(ServiceResultStatus status, string message) => new(status, message);
+        public static ServiceResult Succes(string? message = null)
+        {
+            return new ServiceResult(ServiceResultStatus.Success, message);
+        }
+
+        public static ServiceResult Fail(ServiceResultStatus status, string message)
+        {
+            return new ServiceResult(status, message);
+        }
     }
 
     // Generic result (for operations returning data)
@@ -35,7 +43,14 @@
             Data = data;
         }
 
-        public static ServiceResult<T> Succes(T data, string? message = null) => new(ServiceResultStatus.Success, data, message);
-        public static ServiceResult<T> Fail(ServiceResultStatus status, string? message = null) => new(status, default, message);
+        public static ServiceResult<T> Succes(T data, string? message = null)
+        {
+            return new ServiceResult<T>(ServiceResultStatus.Success, data, message);
+        }
+
+        public static ServiceResult<T> Fail(ServiceResultStatus status, string? message = null)
+        {
+            return new ServiceResult<T>(status, default, message);
+        }
     }
 }
