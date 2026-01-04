@@ -76,17 +76,15 @@ namespace Server.Features.Users
 
             db.UserVerifications.Add(entity);
             await db.SaveChangesAsync();
-            try
-            {
-                await smsService.SendSmsAsync(phoneNumber, $"Buddy2Go verificatiecode: {code}. Deze verloopt over 10 minuten.");
-                logger.LogDebug("SendVerificationCodeAsync, Sending SMS Succesfull!");
-                return ServiceResult.Succes("Verificatiecode verstuurd.");
-            }
-            catch (Exception ex)
+            ServiceResult result = await smsService.SendSmsAsync(phoneNumber, $"Buddy2Go verificatiecode: {code}. Deze verloopt over 10 minuten.");
+            if (!result.IsSuccess)
             {
                 logger.LogWarning("SendVerificationCodeAsync Failed, Sending SMS Failed");
-                return ServiceResult.Fail(ServiceResultStatus.Error, "SMS verzenden mislukt: " + ex.Message);
-            }
+                return ServiceResult.Fail(result.Status, result.Message!);
+            }                
+
+            logger.LogDebug("SendVerificationCodeAsync, Sending SMS Succesfull!");
+            return ServiceResult.Succes("Verificatiecode verstuurd.");
         }
 
         public async Task<ServiceResult> CompleteRegistrationAsync(string phoneNumber, string code)

@@ -248,7 +248,7 @@ namespace Server.Tests.Users.Unit
             var logger = Mock.Of<ILogger<UserService>>();
 
             var smsMock = new Mock<ISmsService>();
-            smsMock.Setup(s => s.SendSmsAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync("OK");
+            smsMock.Setup(s => s.SendSmsAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(ServiceResult.Succes());
             return new UserService(db, logger, config, smsMock.Object);
         }
         private static IConfiguration CreateConfig()

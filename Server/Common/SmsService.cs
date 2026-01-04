@@ -1,5 +1,4 @@
 ﻿using Server.Common;
-using Server.Features.Users;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -30,7 +29,7 @@ namespace Server.Services
                 new AuthenticationHeaderValue("Basic", Convert.ToBase64String(bytes));
         }
 
-        public async Task<string> SendSmsAsync(string toNumber, string body)
+        public async Task<ServiceResult> SendSmsAsync(string toNumber, string body)
         {
             var form = new FormUrlEncodedContent(new Dictionary<string, string>
             {
@@ -40,14 +39,37 @@ namespace Server.Services
             });
 
             var url = $"https://api.twilio.com/2010-04-01/Accounts/{sid}/Messages.json";
+            HttpResponseMessage response;
+            try
+            {
+                response = await client.PostAsync(url, form);
+            }
+            catch (HttpRequestException ex)
+            {
+                return ServiceResult.Fail(ServiceResultStatus.ExternalServiceError, $"Failed to reach SMS provider: {ex.Message}");
+            }
+            if (!response.IsSuccessStatusCode)
+                return ServiceResult.Fail(ServiceResultStatus.ExternalServiceError,$"SMS provider returned {(int)response.StatusCode} ({response.StatusCode})");
 
-            HttpResponseMessage resp = await client.PostAsync(url, form);
-            resp.EnsureSuccessStatusCode();
+            string json = await response.Content.ReadAsStringAsync();
 
-            string json = await resp.Content.ReadAsStringAsync();
-            using var doc = JsonDocument.Parse(json);
+            try
+            {
+                using var doc = JsonDocument.Parse(json);
 
-            return doc.RootElement.GetProperty("sid").GetString()!;
+                if (!doc.RootElement.TryGetProperty("sid", out var sidElement))
+                    return ServiceResult.Fail(ServiceResultStatus.UnexpectedError,"SMS provider response did not contain a message SID");
+                
+                string? messageSid = sidElement.GetString();
+                if (string.IsNullOrWhiteSpace(messageSid))
+                    return ServiceResult.Fail(ServiceResultStatus.UnexpectedError, "SMS provider returned an empty message SID");
+
+                return ServiceResult.Succes(messageSid);
+            }
+            catch (JsonException)
+            {
+                return ServiceResult.Fail(ServiceResultStatus.UnexpectedError, "Failed to parse SMS provider response");
+            }
         }
     }
 }

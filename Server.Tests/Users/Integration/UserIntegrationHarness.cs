@@ -25,7 +25,7 @@ namespace Server.Tests.Users.Integration
             Db = InMemoryDbContextFactory.Create(dbName);
 
             SmsMock = new Mock<ISmsService>(MockBehavior.Strict);
-            SmsMock.Setup(s => s.SendSmsAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync("OK");
+            SmsMock.Setup(s => s.SendSmsAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(ServiceResult.Succes());
 
             Config = new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string?>

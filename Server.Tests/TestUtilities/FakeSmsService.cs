@@ -7,10 +7,10 @@ namespace Server.Tests.Integration.Fakes
     {
         public List<(string Phone, string Message)> Sent { get; } = new();
 
-        public Task<string> SendSmsAsync(string phoneNumber, string message)
+        public Task<ServiceResult> SendSmsAsync(string phoneNumber, string message)
         {
             Sent.Add((phoneNumber, message));
-            return Task.FromResult("OK");
+            return Task.FromResult(ServiceResult.Succes());
         }
     }
 }
