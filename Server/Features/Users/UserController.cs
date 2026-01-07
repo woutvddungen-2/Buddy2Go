@@ -38,8 +38,10 @@ namespace Server.Features.Users
                     return Ok($"User {register.Username} registered successfully");
                 case ServiceResultStatus.ValidationError:
                     return BadRequest(result.Message);
-                case ServiceResultStatus.Error:
-                    return StatusCode(500, $"Error in sms module: {result.Message}");
+                case ServiceResultStatus.ExternalServiceError:
+                    return StatusCode(502, $"External service error: {result.Message}");
+                case ServiceResultStatus.UnexpectedError:
+                    return StatusCode(500, $"Unexpected error: {result.Message}");
                 default:
                     logger.LogError("Unknown registration error: {Message}", result.Message);
                     return StatusCode(500, "Unknown registration error");

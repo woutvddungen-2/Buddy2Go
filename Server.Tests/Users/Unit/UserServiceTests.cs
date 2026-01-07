@@ -8,7 +8,7 @@ using Server.Tests.TestUtilities;
 using Shared.Models.Dtos.Users;
 using Shared.Models.Enums;
 
-namespace Server.Tests.Users
+namespace Server.Tests.Users.Unit
 {
     public class UserServiceTests
     {
@@ -248,7 +248,7 @@ namespace Server.Tests.Users
             var logger = Mock.Of<ILogger<UserService>>();
 
             var smsMock = new Mock<ISmsService>();
-            smsMock.Setup(s => s.SendSmsAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync("OK");
+            smsMock.Setup(s => s.SendSmsAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(ServiceResult.Succes());
             return new UserService(db, logger, config, smsMock.Object);
         }
         private static IConfiguration CreateConfig()

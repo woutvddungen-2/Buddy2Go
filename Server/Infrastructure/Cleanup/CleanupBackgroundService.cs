@@ -1,13 +1,13 @@
 ﻿namespace Server.Infrastructure.Cleanup
 {
-    public class JourneyCleanupBackgroundService : BackgroundService
+    public class CleanupBackgroundService : BackgroundService
     {
         private readonly IServiceScopeFactory scopeFactory;
-        private readonly ILogger<JourneyCleanupBackgroundService> logger;
+        private readonly ILogger<CleanupBackgroundService> logger;
 
-        public JourneyCleanupBackgroundService(
+        public CleanupBackgroundService(
             IServiceScopeFactory scopeFactory,
-            ILogger<JourneyCleanupBackgroundService> logger)
+            ILogger<CleanupBackgroundService> logger)
         {
             this.scopeFactory = scopeFactory;
             this.logger = logger;
@@ -21,9 +21,12 @@
                 try
                 {
                     using IServiceScope scope = scopeFactory.CreateScope();
-                    JourneyCleanupService cleanup = scope.ServiceProvider.GetRequiredService<JourneyCleanupService>();
+                    //DangerousPlaceCleanupService DPcleanup = scope.ServiceProvider.GetRequiredService<DangerousPlaceCleanupService>();
+                    JourneyCleanupService Journeycleanup = scope.ServiceProvider.GetRequiredService<JourneyCleanupService>();
 
-                    await cleanup.CleanupOldJourneysAsync(stoppingToken);
+                    await Journeycleanup.Cleanup(stoppingToken);
+                    //await DPcleanup.Cleanup(stoppingToken);  
+                    
                 }
                 catch (Exception ex)
                 {

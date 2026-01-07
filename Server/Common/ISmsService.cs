@@ -2,7 +2,7 @@
 {
     public interface ISmsService
     {
-        Task<string> SendSmsAsync(string toNumber, string body);
+        Task<ServiceResult> SendSmsAsync(string toNumber, string body);
         
     }
 

@@ -278,12 +278,12 @@
 
                 foreach (var number in formattedPhones)
                 {
-                    var item = new ContactDisplayItem
+                    ContactDisplayItem item = new ContactDisplayItem
                     {
                         Name = c.Name != null ? string.Join(" ", c.Name) : "(Naam onbekend)",
                         Phone = number
                     };
-                    var lookup = await UserService.FindUserbyPhone(number);
+                    ServiceResult<UserDto> lookup = await UserService.FindUserbyPhone(number);
 
                     if (!lookup.IsSuccess || lookup.Data == null)
                     {

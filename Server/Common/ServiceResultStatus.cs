@@ -9,6 +9,8 @@
         ValidationError,
         InvalidOperation,
         Blocked,
+        ExternalServiceError,
+        UnexpectedError,
         Error
     }
 
